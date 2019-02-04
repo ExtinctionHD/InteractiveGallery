@@ -1,7 +1,5 @@
 #include "android_native_app_glue.h"
-
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "VulkanAndroid", __VA_ARGS__))
-#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "VulkanAndroid", __VA_ARGS__))
+#include "Core.h"
 
 /**
 * This is the main entry point of a native application that is using
@@ -12,6 +10,7 @@ void android_main(android_app *app)
 {
 	int events;
 	android_poll_source *source = nullptr;
+	Core core;
 
 	LOGI("Android main entry");
 
@@ -21,7 +20,6 @@ void android_main(android_app *app)
 		{
 			if (source)
 			{
-				LOGI("Process source");
 				source->process(app, source);
 			}
 
