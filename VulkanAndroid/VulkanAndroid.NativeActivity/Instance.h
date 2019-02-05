@@ -12,18 +12,15 @@ public:
 	VkInstance get() const;
 
 private:
-    const std::vector<const char*> REQUIRED_LAYERS{  
-#ifndef NDEBUG
+    std::vector<const char*> validationLayers{  
 		"VK_LAYER_LUNARG_standard_validation",
-#endif
 	};
-	const std::vector<const char*> REQUIRED_EXTENSIONS{
+	std::vector<const char*> extensions{
         VK_KHR_SURFACE_EXTENSION_NAME,
 		VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
-#ifndef NDEBUG
-		VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-#endif
 	};
+
+	bool validationEnabled;
 
 	VkInstance instance{};
 

@@ -3,11 +3,11 @@
 #include "vulkan_wrapper.h"
 #include "Instance.h"
 
-class Core
+class Engine
 {
 public:
-	Core();
-	~Core();
+	Engine();
+	~Engine();
 
 private:
 	Instance *instance;

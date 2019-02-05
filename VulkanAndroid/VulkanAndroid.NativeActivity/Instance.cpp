@@ -2,16 +2,40 @@
 
 Instance::Instance()
 {
+#ifdef NDEBUG
+	validationLayers.clear();
+#endif
+
+	if (!checkLayersSupport(validationLayers))
+	{
+		validationLayers.clear();
+		LOGW("Validation layers not supported");
+	}
+
+	validationEnabled = !validationLayers.empty();
+
+	if (validationEnabled)
+	{
+		extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+		LOGI("Validation layers enabled");
+	}
+
+	assert(checkExtensionsSupport(extensions));
+
 	createInstance();
 
-#ifndef NDEBUG
-	createDebugCallback();
-#endif
+	if (validationEnabled)
+	{
+		createDebugCallback();
+	}
 }
 
 Instance::~Instance()
 {
-    if (callback) vkDestroyDebugReportCallbackEXT(instance, callback, nullptr);
+	if (callback)
+	{
+		vkDestroyDebugReportCallbackEXT(instance, callback, nullptr);
+	}
 	vkDestroyInstance(instance, nullptr);
 }
 
@@ -22,13 +46,10 @@ VkInstance Instance::get() const
 
 void Instance::createInstance()
 {
-	assert(checkLayersSupport(REQUIRED_LAYERS));
-	assert(checkExtensionsSupport(REQUIRED_EXTENSIONS));
-
 	VkApplicationInfo appInfo{
 		VK_STRUCTURE_TYPE_APPLICATION_INFO,
 		nullptr,
-		"VulkanScene",
+		"VulkanAndroid",
 		VK_MAKE_VERSION(1, 0, 0),
 		"No Engine",
 		VK_MAKE_VERSION(1, 0, 0),
@@ -40,16 +61,15 @@ void Instance::createInstance()
 		nullptr,
 		0,
 		&appInfo,
-		uint32_t(REQUIRED_LAYERS.size()),
-		REQUIRED_LAYERS.data(),
-		uint32_t(REQUIRED_EXTENSIONS.size()),
-		REQUIRED_EXTENSIONS.data()
+		uint32_t(validationLayers.size()),
+		validationLayers.data(),
+		uint32_t(extensions.size()),
+		extensions.data()
 	};
 
-	const VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
-	assert(result == VK_SUCCESS);
+	CALL_VK(vkCreateInstance(&createInfo, nullptr, &instance));
 
-	LOGI("Create Vulkan instance");
+	LOGI("Vulkan instance created");
 }
 
 bool Instance::checkLayersSupport(const std::vector<const char*> &requiredLayers)
@@ -100,8 +120,7 @@ void Instance::createDebugCallback()
 		nullptr
 	};
 
-	const VkResult result = vkCreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback);
-	assert(result == VK_SUCCESS);
+	CALL_VK(vkCreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback));
 }
 
 VkResult Instance::vkCreateDebugReportCallbackEXT(
@@ -143,8 +162,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Instance::validationLayerCallback(
 	const char *msg,
 	void *userData)
 {
-	LOGW("Validation layer warning");
-	assert(false);
+	LOGW("Validation layer: %s", msg);
 
 	return false;
 }

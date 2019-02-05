@@ -1,18 +1,14 @@
 #include "android_native_app_glue.h"
-#include "Core.h"
+#include "Engine.h"
 
-/**
-* This is the main entry point of a native application that is using
-* android_native_app_glue.  It runs in its own thread, with its own
-* event loop for receiving input events and doing other things.
-*/
 void android_main(android_app *app) 
 {
+	LOGI("Application started");
+
+	Engine engine;
+
 	int events;
 	android_poll_source *source = nullptr;
-	Core core;
-
-	LOGI("Android main entry");
 
 	while (true)
 	{
@@ -25,7 +21,7 @@ void android_main(android_app *app)
 
 			if (app->destroyRequested)
 			{
-				LOGI("Destroy activity");
+				LOGI("Application destroyed");
 				return;
 			}
 		}

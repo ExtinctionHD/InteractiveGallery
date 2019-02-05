@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="Core.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="android_native_app_glue.h">
       <Filter>Android</Filter>
     </ClInclude>
@@ -11,19 +8,19 @@
       <Filter>Main</Filter>
     </ClInclude>
     <ClInclude Include="Instance.h">
-      <Filter>Core\Instance</Filter>
-    </ClInclude>
-    <ClInclude Include="Log.h">
-      <Filter>Main</Filter>
+      <Filter>Engine\Instance</Filter>
     </ClInclude>
     <ClInclude Include="vulkan_wrapper.h">
-      <Filter>Core\Instance</Filter>
+      <Filter>Android</Filter>
+    </ClInclude>
+    <ClInclude Include="Macro.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine.h">
+      <Filter>Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Core.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="android_native_app_glue.c">
       <Filter>Android</Filter>
     </ClCompile>
@@ -31,23 +28,26 @@
       <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="Instance.cpp">
-      <Filter>Core\Instance</Filter>
+      <Filter>Engine\Instance</Filter>
     </ClCompile>
     <ClCompile Include="vulkan_wrapper.cpp">
-      <Filter>Core\Instance</Filter>
+      <Filter>Android</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine.cpp">
+      <Filter>Engine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Core">
-      <UniqueIdentifier>{bb3f5770-dc6b-4098-9d1f-a95dfdf54593}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Android">
       <UniqueIdentifier>{2bb6fbd1-438d-481f-9fe3-2c892b858b7b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Main">
       <UniqueIdentifier>{5cca6fed-5e28-4785-aa62-7d37f7de9c0a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Core\Instance">
+    <Filter Include="Engine">
+      <UniqueIdentifier>{bb3f5770-dc6b-4098-9d1f-a95dfdf54593}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Instance">
       <UniqueIdentifier>{d282d704-7070-4a73-8611-c4ad4822a518}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

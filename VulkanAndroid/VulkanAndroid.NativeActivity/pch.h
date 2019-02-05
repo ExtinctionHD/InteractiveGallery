@@ -19,4 +19,4 @@
 #include <set>
 #include <string>
 
-#include "Log.h"
+#include "Macro.h"

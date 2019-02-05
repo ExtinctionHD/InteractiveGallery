@@ -1,13 +1,13 @@
-#include "Core.h"
+#include "Engine.h"
 
-Core::Core()
+Engine::Engine()
 {
 	InitVulkan();
 
 	instance = new Instance();
 }
 
-Core::~Core()
+Engine::~Engine()
 {
 	delete instance;
 }
