@@ -248,6 +248,7 @@
     <ClInclude Include="Macro.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="android_native_app_glue.h" />
+    <ClInclude Include="Surface.h" />
     <ClInclude Include="vulkan_wrapper.h" />
   </ItemGroup>
   <ItemGroup>
@@ -255,6 +256,7 @@
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Surface.cpp" />
     <ClCompile Include="vulkan_wrapper.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

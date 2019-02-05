@@ -1,15 +1,18 @@
 #pragma once
-#define VK_USE_PLATFORM_ANDROID_KHR
-#include "vulkan_wrapper.h"
 #include "Instance.h"
+#include "Surface.h"
 
 class Engine
 {
 public:
-	Engine();
+	Engine(ANativeWindow *window);
+
 	~Engine();
 
+
 private:
-	Instance *instance;
+	Instance *instance{};
+
+	Surface *surface{};
 };
 

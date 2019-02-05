@@ -1,7 +1,4 @@
 #pragma once
-#define VK_USE_PLATFORM_ANDROID_KHR
-#include "vulkan_wrapper.h"
-#include <vector>
 
 class Instance
 {

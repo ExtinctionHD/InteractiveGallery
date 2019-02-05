@@ -19,6 +19,9 @@
     <ClInclude Include="Engine.h">
       <Filter>Engine</Filter>
     </ClInclude>
+    <ClInclude Include="Surface.h">
+      <Filter>Engine\Surface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="android_native_app_glue.c">
@@ -36,6 +39,9 @@
     <ClCompile Include="Engine.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
+    <ClCompile Include="Surface.cpp">
+      <Filter>Engine\Surface</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Android">
@@ -49,6 +55,9 @@
     </Filter>
     <Filter Include="Engine\Instance">
       <UniqueIdentifier>{d282d704-7070-4a73-8611-c4ad4822a518}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Surface">
+      <UniqueIdentifier>{cd81467c-e8f6-45bb-8c43-656ea6c12cdc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
