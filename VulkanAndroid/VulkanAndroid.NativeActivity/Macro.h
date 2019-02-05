@@ -9,9 +9,13 @@
     #define LOGV(...)  ((void)0)
 #endif
 
-#define CALL_VK(func)                                                   \
-if(VK_SUCCESS != (func))                                                \
-{                                                                       \
-	LOGE("Vulkan call failed. File[%s], line[%d]", __FILE__, __LINE__); \
-	assert(false);                                                      \
-}
+#define CALL_VK(vkFunc)                                                     \
+	if(VK_SUCCESS != (vkFunc))                                              \
+	{                                                                       \
+		LOGE("Vulkan call failed. File[%s], line[%d]", __FILE__, __LINE__); \
+		assert(false);                                                      \
+	}
+
+#define ERROR(...)      \
+	LOGE(__VA_ARGS__);  \
+	assert(false)

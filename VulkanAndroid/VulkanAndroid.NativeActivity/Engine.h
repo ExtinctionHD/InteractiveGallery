@@ -1,6 +1,7 @@
 #pragma once
 #include "Instance.h"
 #include "Surface.h"
+#include "Device.h"
 
 class Engine
 {
@@ -11,8 +12,10 @@ public:
 
 
 private:
-	Instance *instance{};
+	Instance *instance;
 
-	Surface *surface{};
+	Surface *surface;
+
+	Device *device;
 };
 

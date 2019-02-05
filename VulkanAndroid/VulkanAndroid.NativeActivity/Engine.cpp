@@ -6,6 +6,7 @@ Engine::Engine(ANativeWindow *window)
 
 	instance = new Instance();
 	surface = new Surface(instance->get(), window);
+	device = new Device(instance->get(), surface->get(), instance->getLayers());
 }
 
 Engine::~Engine()

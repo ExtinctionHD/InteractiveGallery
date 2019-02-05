@@ -44,6 +44,11 @@ VkInstance Instance::get() const
 	return instance;
 }
 
+std::vector<const char*> Instance::getLayers() const
+{
+	return validationLayers;
+}
+
 void Instance::createInstance()
 {
 	VkApplicationInfo appInfo{

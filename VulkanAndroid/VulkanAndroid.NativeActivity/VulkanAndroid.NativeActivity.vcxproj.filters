@@ -22,6 +22,15 @@
     <ClInclude Include="Surface.h">
       <Filter>Engine\Surface</Filter>
     </ClInclude>
+    <ClInclude Include="Device.h">
+      <Filter>Engine\Device</Filter>
+    </ClInclude>
+    <ClInclude Include="SurfaceSupportDetails.h">
+      <Filter>Engine\Device\SurfaceSupportDetails</Filter>
+    </ClInclude>
+    <ClInclude Include="QueueFamilyIndices.h">
+      <Filter>Engine\Device\QueueFamilyIndices</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="android_native_app_glue.c">
@@ -42,6 +51,15 @@
     <ClCompile Include="Surface.cpp">
       <Filter>Engine\Surface</Filter>
     </ClCompile>
+    <ClCompile Include="Device.cpp">
+      <Filter>Engine\Device</Filter>
+    </ClCompile>
+    <ClCompile Include="SurfaceSupportDetails.cpp">
+      <Filter>Engine\Device\SurfaceSupportDetails</Filter>
+    </ClCompile>
+    <ClCompile Include="QueueFamilyIndices.cpp">
+      <Filter>Engine\Device\QueueFamilyIndices</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Android">
@@ -58,6 +76,15 @@
     </Filter>
     <Filter Include="Engine\Surface">
       <UniqueIdentifier>{cd81467c-e8f6-45bb-8c43-656ea6c12cdc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Device">
+      <UniqueIdentifier>{ceea7941-a18b-4920-9f4f-1068ebba7c32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Device\SurfaceSupportDetails">
+      <UniqueIdentifier>{927df72a-a38d-4840-927c-bac019607a99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Device\QueueFamilyIndices">
+      <UniqueIdentifier>{539419c8-9b79-4415-bf53-ad4980ccf0e8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
