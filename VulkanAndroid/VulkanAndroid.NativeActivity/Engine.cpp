@@ -11,6 +11,7 @@ Engine::Engine(ANativeWindow *window)
 
 Engine::~Engine()
 {
+	delete device;
 	delete surface;
 	delete instance;
 }

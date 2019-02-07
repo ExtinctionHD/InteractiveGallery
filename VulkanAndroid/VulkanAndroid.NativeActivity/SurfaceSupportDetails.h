@@ -3,8 +3,6 @@
 class SurfaceSupportDetails
 {
 public:
-	SurfaceSupportDetails() = default;
-
 	SurfaceSupportDetails(VkPhysicalDevice device, VkSurfaceKHR surface);
 
 	VkSurfaceCapabilitiesKHR getCapabilities() const;

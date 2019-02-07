@@ -3,8 +3,6 @@
 class QueueFamilyIndices
 {
 public:
-	QueueFamilyIndices() = default;
-
     // try to find required queue families and save they indices
 	QueueFamilyIndices(VkPhysicalDevice device, VkSurfaceKHR surface);
 

@@ -4,6 +4,7 @@ class Instance
 {
 public:
 	Instance();
+
 	~Instance();
 
 	VkInstance get() const;
@@ -14,6 +15,7 @@ private:
     std::vector<const char*> validationLayers{  
 		"VK_LAYER_LUNARG_standard_validation",
 	};
+
 	std::vector<const char*> extensions{
         VK_KHR_SURFACE_EXTENSION_NAME,
 		VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,

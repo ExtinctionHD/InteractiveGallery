@@ -31,20 +31,14 @@ QueueFamilyIndices::QueueFamilyIndices(VkPhysicalDevice device, VkSurfaceKHR sur
 
 uint32_t QueueFamilyIndices::getGraphics() const
 {
-    if (graphics < 0)
-    {
-		assert(false);
-    }
+    LOGA(graphics >= 0, "No suitable queue family");
 
 	return uint32_t(graphics);
 }
 
 uint32_t QueueFamilyIndices::getPresent() const
 {
-	if (present < 0)
-	{
-		assert(false);
-	}
+    LOGA(present >= 0, "No suitable queue family");
 
 	return uint32_t(present);
 }

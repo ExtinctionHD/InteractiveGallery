@@ -13,6 +13,11 @@ Device::~Device()
 	vkDestroyDevice(device, nullptr);
 }
 
+VkDevice Device::get() const
+{
+	return device;
+}
+
 VkQueue Device::getGraphicsQueue() const
 {
 	return graphicsQueue;
@@ -159,10 +164,7 @@ void Device::pickPhysicalDevice(VkInstance instance, const std::vector<const cha
 	uint32_t deviceCount = 0;
 	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);  // get count
 
-	if (!deviceCount)
-	{
-		ERROR("No physical device that supports vulkan");
-	}
+    LOGA(deviceCount, "No physical device that supports vulkan");
 
 	std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
 	vkEnumeratePhysicalDevices(instance, &deviceCount, physicalDevices.data());  // get devices
@@ -175,7 +177,7 @@ void Device::pickPhysicalDevice(VkInstance instance, const std::vector<const cha
 		}
 	}
 
-	ERROR("Failed to find suitable physical device");
+    LOGA(physicalDevice, "Failed to find suitable physical device");
 }
 
 bool Device::physicalDeviceSuitable(

@@ -1,5 +1,4 @@
 ﻿#pragma once
-
 #include "QueueFamilyIndices.h"
 #include "SurfaceSupportDetails.h"
 
@@ -9,6 +8,8 @@ public:
 	Device(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char*> &requiredLayers);
 
 	~Device();
+
+	VkDevice get() const;
 
 	VkQueue getGraphicsQueue() const;
 
@@ -46,7 +47,7 @@ private:
 
 	VkDevice device;
 
-	VkPhysicalDevice physicalDevice;
+	VkPhysicalDevice physicalDevice{};
 
 	VkSurfaceKHR surface;
 

@@ -20,7 +20,7 @@ Instance::Instance()
 		LOGI("Validation layers enabled");
 	}
 
-	assert(checkExtensionsSupport(extensions));
+	LOGA(checkExtensionsSupport(extensions), "Required extensions not presented by instance");
 
 	createInstance();
 

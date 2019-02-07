@@ -10,7 +10,6 @@ public:
 
 	~Engine();
 
-
 private:
 	Instance *instance;
 

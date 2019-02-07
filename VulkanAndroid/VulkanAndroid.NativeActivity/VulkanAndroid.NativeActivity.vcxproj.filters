@@ -31,6 +31,21 @@
     <ClInclude Include="QueueFamilyIndices.h">
       <Filter>Engine\Device\QueueFamilyIndices</Filter>
     </ClInclude>
+    <ClInclude Include="Image.h">
+      <Filter>Engine\Images</Filter>
+    </ClInclude>
+    <ClInclude Include="SwapChainImage.h">
+      <Filter>Engine\Images</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureImage.h">
+      <Filter>Engine\Images</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffer.h">
+      <Filter>Engine\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="StagingBuffer.h">
+      <Filter>Engine\Buffers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="android_native_app_glue.c">
@@ -60,6 +75,21 @@
     <ClCompile Include="QueueFamilyIndices.cpp">
       <Filter>Engine\Device\QueueFamilyIndices</Filter>
     </ClCompile>
+    <ClCompile Include="Image.cpp">
+      <Filter>Engine\Images</Filter>
+    </ClCompile>
+    <ClCompile Include="SwapChainImage.cpp">
+      <Filter>Engine\Images</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureImage.cpp">
+      <Filter>Engine\Images</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffer.cpp">
+      <Filter>Engine\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="StagingBuffer.cpp">
+      <Filter>Engine\Buffers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Android">
@@ -85,6 +115,12 @@
     </Filter>
     <Filter Include="Engine\Device\QueueFamilyIndices">
       <UniqueIdentifier>{539419c8-9b79-4415-bf53-ad4980ccf0e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Images">
+      <UniqueIdentifier>{42cf9e21-2b5d-4b52-b5e6-575a3235055e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Buffers">
+      <UniqueIdentifier>{3837a656-983b-40b5-b724-4e136a56fe34}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
