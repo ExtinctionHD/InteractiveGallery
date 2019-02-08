@@ -48,41 +48,53 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>Clang_5_0</PlatformToolset>
+    <UseOfStl>gnustl_shared</UseOfStl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>Clang_5_0</PlatformToolset>
+    <UseOfStl>gnustl_shared</UseOfStl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>Clang_5_0</PlatformToolset>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <UseOfStl>gnustl_shared</UseOfStl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>Clang_5_0</PlatformToolset>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <UseOfStl>gnustl_shared</UseOfStl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>Clang_5_0</PlatformToolset>
+    <UseOfStl>gnustl_shared</UseOfStl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>Clang_5_0</PlatformToolset>
+    <UseOfStl>gnustl_shared</UseOfStl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>Clang_5_0</PlatformToolset>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <UseOfStl>gnustl_shared</UseOfStl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>Clang_5_0</PlatformToolset>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <UseOfStl>gnustl_shared</UseOfStl>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -127,7 +139,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <CompileAs>CompileAsCpp</CompileAs>
-      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <CppLanguageStandard>gnu++1z</CppLanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)external\stb;$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -142,8 +154,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <CompileAs>CompileAsCpp</CompileAs>
-      <CppLanguageStandard>c++1z</CppLanguageStandard>
-      <AdditionalIncludeDirectories>$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CppLanguageStandard>gnu++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\stb;$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;</LibraryDependencies>
@@ -157,7 +169,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <CompileAs>CompileAsCpp</CompileAs>
-      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <CppLanguageStandard>gnu++1z</CppLanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)external\stb;$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -172,8 +184,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <CompileAs>CompileAsCpp</CompileAs>
-      <CppLanguageStandard>c++1z</CppLanguageStandard>
-      <AdditionalIncludeDirectories>$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CppLanguageStandard>gnu++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\stb;$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;</LibraryDependencies>
@@ -187,7 +199,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <CompileAs>CompileAsCpp</CompileAs>
-      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <CppLanguageStandard>gnu++1z</CppLanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)external\stb;$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -202,8 +214,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <CompileAs>CompileAsCpp</CompileAs>
-      <CppLanguageStandard>c++1z</CppLanguageStandard>
-      <AdditionalIncludeDirectories>$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CppLanguageStandard>gnu++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\stb;$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;</LibraryDependencies>
@@ -217,7 +229,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <CompileAs>CompileAsCpp</CompileAs>
-      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <CppLanguageStandard>gnu++1z</CppLanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)external\stb;$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -232,8 +244,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <CompileAs>CompileAsCpp</CompileAs>
-      <CppLanguageStandard>c++1z</CppLanguageStandard>
-      <AdditionalIncludeDirectories>$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CppLanguageStandard>gnu++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\stb;$(Vulkan_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;</LibraryDependencies>
@@ -255,6 +267,7 @@
     <ClInclude Include="StagingBuffer.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="SurfaceSupportDetails.h" />
+    <ClInclude Include="SwapChain.h" />
     <ClInclude Include="SwapChainImage.h" />
     <ClInclude Include="TextureImage.h" />
     <ClInclude Include="vulkan_wrapper.h" />
@@ -271,6 +284,7 @@
     <ClCompile Include="StagingBuffer.cpp" />
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="SurfaceSupportDetails.cpp" />
+    <ClCompile Include="SwapChain.cpp" />
     <ClCompile Include="SwapChainImage.cpp" />
     <ClCompile Include="TextureImage.cpp" />
     <ClCompile Include="vulkan_wrapper.cpp" />

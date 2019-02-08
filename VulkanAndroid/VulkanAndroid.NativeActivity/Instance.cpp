@@ -9,7 +9,7 @@ Instance::Instance()
 	if (!checkLayersSupport(validationLayers))
 	{
 		validationLayers.clear();
-		LOGW("Validation layers not supported");
+		LOGW("Validation layers not supported.");
 	}
 
 	validationEnabled = !validationLayers.empty();
@@ -17,10 +17,10 @@ Instance::Instance()
 	if (validationEnabled)
 	{
 		extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-		LOGI("Validation layers enabled");
+		LOGI("Validation layers enabled.");
 	}
 
-	LOGA(checkExtensionsSupport(extensions), "Required extensions not presented by instance");
+	LOGA(checkExtensionsSupport(extensions), "Required extensions not presented by instance.");
 
 	createInstance();
 
@@ -74,7 +74,7 @@ void Instance::createInstance()
 
 	CALL_VK(vkCreateInstance(&createInfo, nullptr, &instance));
 
-	LOGI("Vulkan instance created");
+	LOGI("Vulkan instance created.");
 }
 
 bool Instance::checkLayersSupport(const std::vector<const char*> &requiredLayers)
@@ -167,7 +167,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Instance::validationLayerCallback(
 	const char *msg,
 	void *userData)
 {
-	LOGW("Validation layer: %s", msg);
+	LOGW("Validation layer: %s.", msg);
 
 	return false;
 }

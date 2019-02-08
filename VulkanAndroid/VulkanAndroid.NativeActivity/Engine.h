@@ -2,6 +2,7 @@
 #include "Instance.h"
 #include "Surface.h"
 #include "Device.h"
+#include "SwapChain.h"
 
 class Engine
 {
@@ -16,5 +17,7 @@ private:
 	Surface *surface;
 
 	Device *device;
+
+    SwapChain *swapChain;
 };
 

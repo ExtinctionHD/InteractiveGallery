@@ -240,7 +240,7 @@ void Image::createThisImage(
 
 		if (cubeMap)
 		{
-			LOGA(arrayLayers >= 6, "For cubemaps number of array layers must be greater than or equal to 6");
+			LOGA(arrayLayers >= 6, "For cubemaps number of array layers must be greater than or equal to 6.");
 
 			flags = flags | VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 			viewType = VK_IMAGE_VIEW_TYPE_CUBE;

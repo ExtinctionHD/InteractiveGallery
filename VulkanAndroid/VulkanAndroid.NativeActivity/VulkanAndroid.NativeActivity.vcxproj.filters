@@ -46,6 +46,9 @@
     <ClInclude Include="StagingBuffer.h">
       <Filter>Engine\Buffers</Filter>
     </ClInclude>
+    <ClInclude Include="SwapChain.h">
+      <Filter>Engine\SwapChain</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="android_native_app_glue.c">
@@ -90,6 +93,9 @@
     <ClCompile Include="StagingBuffer.cpp">
       <Filter>Engine\Buffers</Filter>
     </ClCompile>
+    <ClCompile Include="SwapChain.cpp">
+      <Filter>Engine\SwapChain</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Android">
@@ -121,6 +127,9 @@
     </Filter>
     <Filter Include="Engine\Buffers">
       <UniqueIdentifier>{3837a656-983b-40b5-b724-4e136a56fe34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\SwapChain">
+      <UniqueIdentifier>{5cd65a9a-9e0b-4485-b1e8-be2ee13957fc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -16,7 +16,7 @@ TextureImage::TextureImage(
 
     extent.depth = 1;
 	mipLevels = static_cast<uint32_t>(std::ceil(
-		std::log(std::max(extent.width, extent.height)) / std::log(2)   // log2
+		std::log(std::max(extent.width, extent.height)) / std::log(2)
     ));
 	mipLevels = mipLevels > 0 ? mipLevels : 1;
 
@@ -82,13 +82,11 @@ VkSampler TextureImage::getSampler() const
 	return sampler;
 }
 
-// protected:
-
 stbi_uc* TextureImage::loadPixels(const std::string &path)
 {
-	/*stbi_uc *pixels = stbi_load_from_memory()
+    stbi_uc *pixels = stbi_load_from_memory(nullptr, 0, 0, 0, 0, 0);
 
-	LOGA(pixels, "Failed to load image: %s", path);*/
+	LOGA(pixels, "Failed to load image: %s", path.c_str());
 
 	return nullptr;
 }
@@ -96,7 +94,7 @@ stbi_uc* TextureImage::loadPixels(const std::string &path)
 void TextureImage::generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filter) const
 {
 	const auto featureFlags = device->getFormatProperties(format).optimalTilingFeatures;
-	LOGA(featureFlags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT, "Image doesn't support mipmapping");
+	LOGA(featureFlags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT, "Image doesn't support mipmapping.");
 
 	VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
 
