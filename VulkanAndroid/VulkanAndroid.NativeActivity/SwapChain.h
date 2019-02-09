@@ -47,9 +47,7 @@ private:
 
 	static VkExtent2D chooseExtent(VkSurfaceCapabilitiesKHR capabilities, VkExtent2D actualExtent);
 
-	static uint32_t chooseMinImageCount(VkSurfaceCapabilitiesKHR capabilities);
-
-	void saveImages(uint32_t imageCount);
+	void saveImages();
 
 	void createImageViews();
 

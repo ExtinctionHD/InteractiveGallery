@@ -73,8 +73,7 @@ void Instance::createInstance()
 	};
 
 	CALL_VK(vkCreateInstance(&createInfo, nullptr, &instance));
-
-	LOGI("Vulkan instance created.");
+	LOGI("Instance created.");
 }
 
 bool Instance::checkLayersSupport(const std::vector<const char*> &requiredLayers)

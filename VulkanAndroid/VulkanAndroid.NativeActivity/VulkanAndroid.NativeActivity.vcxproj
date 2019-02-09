@@ -261,6 +261,7 @@
     <ClInclude Include="Image.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="Macro.h" />
+    <ClInclude Include="general.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="android_native_app_glue.h" />
     <ClInclude Include="QueueFamilyIndices.h" />
@@ -280,6 +281,7 @@
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="general.cpp" />
     <ClCompile Include="QueueFamilyIndices.cpp" />
     <ClCompile Include="StagingBuffer.cpp" />
     <ClCompile Include="Surface.cpp" />

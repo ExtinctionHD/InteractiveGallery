@@ -3,6 +3,11 @@
 Device::Device(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char*> &requiredLayers) : surface(surface)
 {
 	pickPhysicalDevice(instance, requiredLayers);
+
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+    LOGD("Physical device: %s", properties.deviceName);
+
 	createDevice(requiredLayers);
 	createCommandPool();
 }
@@ -164,7 +169,7 @@ void Device::pickPhysicalDevice(VkInstance instance, const std::vector<const cha
 	uint32_t deviceCount = 0;
 	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);  // get count
 
-    LOGA(deviceCount, "No physical device that supports vulkan");
+    LOGA(deviceCount, "No physical device that supports vulkan.");
 
 	std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
 	vkEnumeratePhysicalDevices(instance, &deviceCount, physicalDevices.data());  // get devices
@@ -177,7 +182,7 @@ void Device::pickPhysicalDevice(VkInstance instance, const std::vector<const cha
 		}
 	}
 
-    LOGA(physicalDevice, "Failed to find suitable physical device");
+    LOGA(physicalDevice, "Failed to find suitable physical device.");
 }
 
 bool Device::physicalDeviceSuitable(
@@ -277,7 +282,7 @@ void Device::createDevice(const std::vector<const char*> &layers)
 	};
 
 	CALL_VK(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device));
-	LOGI("Vulkan logical device created");
+	LOGI("Device created.");
 
 	// save queue handlers
 	vkGetDeviceQueue(device, queueFamilyIndices.getGraphics(), 0, &graphicsQueue);

@@ -55,20 +55,16 @@ void SwapChain::create(VkExtent2D surfaceExtent)
     const auto surfaceFormat = chooseSurfaceFormat(details.getFormats());
     const auto presentMode = choosePresentMode(details.getPresentModes());
 	const auto surfaceCapabilities = details.getCapabilities();
-	const auto minImageCount = chooseMinImageCount(surfaceCapabilities);
 
 	extent = chooseExtent(details.getCapabilities(), surfaceExtent);
 	imageFormat = surfaceFormat.format;
-
-    LOGI("SwapChain extent: %d x %d", extent.width, extent.height);
-    LOGI("SwapChain format: %d", imageFormat);
 
 	VkSwapchainCreateInfoKHR createInfo{
 		VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
 		nullptr,
 		0,
 		surface,
-		minImageCount,
+        surfaceCapabilities.minImageCount,
 		surfaceFormat.format,
 		surfaceFormat.colorSpace,
 		extent,
@@ -100,7 +96,12 @@ void SwapChain::create(VkExtent2D surfaceExtent)
     CALL_VK(vkCreateSwapchainKHR(device->get(), &createInfo, nullptr, &swapChain));
     LOGI("SwapChain created.");
 
-	saveImages(minImageCount);
+	saveImages();
+
+    LOGD("SwapChain extent: %d x %d.", extent.width, extent.height);
+    LOGD("SwapChain format: %d.", imageFormat);
+    LOGD("SwapChain present mode: %d.", presentMode);
+    LOGD("SwapChain image count: %d.", uint32_t(images.size()));
 }
 
 VkSurfaceFormatKHR SwapChain::chooseSurfaceFormat(std::vector<VkSurfaceFormatKHR> availableFormats) const
@@ -158,20 +159,10 @@ VkExtent2D SwapChain::chooseExtent(VkSurfaceCapabilitiesKHR capabilities, VkExte
     return actualExtent;
 }
 
-uint32_t SwapChain::chooseMinImageCount(VkSurfaceCapabilitiesKHR capabilities)
+void SwapChain::saveImages()
 {
-	uint32_t imageCount = capabilities.minImageCount + 1;
-	if (capabilities.maxImageCount > 0 &&
-		imageCount > capabilities.maxImageCount)
-	{
-		imageCount = capabilities.maxImageCount;
-	}
+    uint32_t imageCount;
 
-	return imageCount;
-}
-
-void SwapChain::saveImages(uint32_t imageCount)
-{
 	// real count of images can be greater than requested
 	vkGetSwapchainImagesKHR(device->get(), swapChain, &imageCount, nullptr);  // get count
 	images.resize(imageCount);

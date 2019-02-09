@@ -25,5 +25,5 @@ void Surface::createSurface(ANativeWindow *window)
 	};
 
 	CALL_VK(vkCreateAndroidSurfaceKHR(instance, &createInfo, nullptr, &surface));
-	LOGI("Android surface created");
+	LOGI("Surface created.");
 }

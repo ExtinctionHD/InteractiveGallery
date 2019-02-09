@@ -1,17 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="android_native_app_glue.h">
-      <Filter>Android</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Main</Filter>
     </ClInclude>
     <ClInclude Include="Instance.h">
       <Filter>Engine\Instance</Filter>
-    </ClInclude>
-    <ClInclude Include="vulkan_wrapper.h">
-      <Filter>Android</Filter>
     </ClInclude>
     <ClInclude Include="Macro.h">
       <Filter>Main</Filter>
@@ -49,19 +43,22 @@
     <ClInclude Include="SwapChain.h">
       <Filter>Engine\SwapChain</Filter>
     </ClInclude>
+    <ClInclude Include="general.h">
+      <Filter>General</Filter>
+    </ClInclude>
+    <ClInclude Include="android_native_app_glue.h">
+      <Filter>General\Android</Filter>
+    </ClInclude>
+    <ClInclude Include="vulkan_wrapper.h">
+      <Filter>General\Vulkan</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="android_native_app_glue.c">
-      <Filter>Android</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="Instance.cpp">
       <Filter>Engine\Instance</Filter>
-    </ClCompile>
-    <ClCompile Include="vulkan_wrapper.cpp">
-      <Filter>Android</Filter>
     </ClCompile>
     <ClCompile Include="Engine.cpp">
       <Filter>Engine</Filter>
@@ -96,11 +93,17 @@
     <ClCompile Include="SwapChain.cpp">
       <Filter>Engine\SwapChain</Filter>
     </ClCompile>
+    <ClCompile Include="general.cpp">
+      <Filter>General</Filter>
+    </ClCompile>
+    <ClCompile Include="android_native_app_glue.c">
+      <Filter>General\Android</Filter>
+    </ClCompile>
+    <ClCompile Include="vulkan_wrapper.cpp">
+      <Filter>General\Vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Android">
-      <UniqueIdentifier>{2bb6fbd1-438d-481f-9fe3-2c892b858b7b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Main">
       <UniqueIdentifier>{5cca6fed-5e28-4785-aa62-7d37f7de9c0a}</UniqueIdentifier>
     </Filter>
@@ -130,6 +133,15 @@
     </Filter>
     <Filter Include="Engine\SwapChain">
       <UniqueIdentifier>{5cd65a9a-9e0b-4485-b1e8-be2ee13957fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="General">
+      <UniqueIdentifier>{2bb6fbd1-438d-481f-9fe3-2c892b858b7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="General\Android">
+      <UniqueIdentifier>{e863f993-0c82-489a-ad04-44d79a75e56f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="General\Vulkan">
+      <UniqueIdentifier>{9bb518d8-1dc3-4a5c-9f46-c21265b58932}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

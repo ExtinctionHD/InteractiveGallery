@@ -3,9 +3,7 @@
 
 void android_main(android_app *app) 
 {
-	LOGI("Application started");
-
-	// Engine engine(app->window);
+	LOGI("Application started.");
 
 	int events;
 	android_poll_source *source = nullptr;
@@ -27,7 +25,7 @@ void android_main(android_app *app)
 
 			if (app->destroyRequested)
 			{
-				LOGI("Application destroyed");
+				LOGI("Application destroyed.");
 
 				delete engine;
 				return;

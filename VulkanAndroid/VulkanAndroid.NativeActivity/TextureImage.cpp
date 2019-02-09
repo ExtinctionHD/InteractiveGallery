@@ -1,5 +1,5 @@
 #include "TextureImage.h"
-#include <cmath>
+#include "general.h"
 
 TextureImage::TextureImage(
 	Device *device,
@@ -15,9 +15,7 @@ TextureImage::TextureImage(
 	}
 
     extent.depth = 1;
-	mipLevels = static_cast<uint32_t>(std::ceil(
-		std::log(std::max(extent.width, extent.height)) / std::log(2)
-    ));
+	mipLevels = math::ceilLog2(std::max(extent.width, extent.height));
 	mipLevels = mipLevels > 0 ? mipLevels : 1;
 
 	createThisImage(
@@ -84,9 +82,9 @@ VkSampler TextureImage::getSampler() const
 
 stbi_uc* TextureImage::loadPixels(const std::string &path)
 {
-    stbi_uc *pixels = stbi_load_from_memory(nullptr, 0, 0, 0, 0, 0);
+    /*stbi_uc *pixels = stbi_load_from_memory(nullptr, 0, 0, 0, 0, 0);
 
-	LOGA(pixels, "Failed to load image: %s", path.c_str());
+	LOGA(pixels, "Failed to load image: %s", path.c_str());*/
 
 	return nullptr;
 }
