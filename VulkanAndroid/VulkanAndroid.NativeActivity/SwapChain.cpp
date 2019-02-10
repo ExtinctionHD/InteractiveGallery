@@ -84,7 +84,7 @@ void SwapChain::create(VkExtent2D surfaceExtent)
     const QueueFamilyIndices queueFamilyIndices = device->getQueueFamilyIndices();
 	std::vector<uint32_t> indices{
 		queueFamilyIndices.getGraphics(),
-		queueFamilyIndices.getPresent()
+		queueFamilyIndices.getPresentation()
 	};
 	if (indices[0] != indices[1])
 	{

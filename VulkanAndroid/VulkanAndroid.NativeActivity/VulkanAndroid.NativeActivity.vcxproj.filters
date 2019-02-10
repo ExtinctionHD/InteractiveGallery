@@ -52,6 +52,12 @@
     <ClInclude Include="vulkan_wrapper.h">
       <Filter>General\Vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass.h">
+      <Filter>Engine\RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="MainRenderPass.h">
+      <Filter>Engine\RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -102,6 +108,12 @@
     <ClCompile Include="vulkan_wrapper.cpp">
       <Filter>General\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass.cpp">
+      <Filter>Engine\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="MainRenderPass.cpp">
+      <Filter>Engine\RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Main">
@@ -142,6 +154,9 @@
     </Filter>
     <Filter Include="General\Vulkan">
       <UniqueIdentifier>{9bb518d8-1dc3-4a5c-9f46-c21265b58932}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\RenderPasses">
+      <UniqueIdentifier>{2ebcd2a5-c415-45be-abd0-161d28e63eab}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

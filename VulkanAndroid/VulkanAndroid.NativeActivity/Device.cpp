@@ -6,7 +6,8 @@ Device::Device(VkInstance instance, VkSurfaceKHR surface, const std::vector<cons
 
     VkPhysicalDeviceProperties properties;
     vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-    LOGD("Physical device: %s", properties.deviceName);
+    LOGD("Physical device: %s.", properties.deviceName);
+    LOGD("Maximum sample count: %d.", getMaxSampleCount());
 
 	createDevice(requiredLayers);
 	createCommandPool();
@@ -95,6 +96,26 @@ QueueFamilyIndices Device::getQueueFamilyIndices() const
 	return { physicalDevice, surface };
 }
 
+VkSampleCountFlagBits Device::getMaxSampleCount() const
+{
+    VkPhysicalDeviceProperties physicalDeviceProperties;
+    vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+
+    const VkSampleCountFlags counts = std::min(
+        physicalDeviceProperties.limits.framebufferColorSampleCounts,
+        physicalDeviceProperties.limits.framebufferDepthSampleCounts
+    );
+
+    if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
+    if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
+    if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
+    if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
+    if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
+    if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
+
+    return VK_SAMPLE_COUNT_1_BIT;
+}
+
 VkCommandBuffer Device::beginOneTimeCommands() const
 {
 	VkCommandBuffer commandBuffer;
@@ -142,26 +163,6 @@ void Device::endOneTimeCommands(VkCommandBuffer commandBuffer) const
 	vkQueueWaitIdle(graphicsQueue);
 
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-}
-
-VkSampleCountFlagBits Device::getMaxSupportedSampleCount(VkPhysicalDevice physicalDevice) const
-{
-	VkPhysicalDeviceProperties physicalDeviceProperties;
-	vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-
-	const VkSampleCountFlags counts = std::min(
-		physicalDeviceProperties.limits.framebufferColorSampleCounts,
-		physicalDeviceProperties.limits.framebufferDepthSampleCounts
-	);
-
-	if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
-	if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
-	if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
-	if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
-	if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
-	if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
-
-	return VK_SAMPLE_COUNT_1_BIT;
 }
 
 void Device::pickPhysicalDevice(VkInstance instance, const std::vector<const char*> &layers)
@@ -244,7 +245,7 @@ void Device::createDevice(const std::vector<const char*> &layers)
 
 	std::set<uint32_t> uniqueQueueFamilyIndices{
 		queueFamilyIndices.getGraphics(),
-		queueFamilyIndices.getPresent()
+		queueFamilyIndices.getPresentation()
 	};
 
 	// info about each unique queue family
@@ -286,7 +287,7 @@ void Device::createDevice(const std::vector<const char*> &layers)
 
 	// save queue handlers
 	vkGetDeviceQueue(device, queueFamilyIndices.getGraphics(), 0, &graphicsQueue);
-	vkGetDeviceQueue(device, queueFamilyIndices.getPresent(), 0, &presentQueue);
+	vkGetDeviceQueue(device, queueFamilyIndices.getPresentation(), 0, &presentQueue);
 }
 
 void Device::createCommandPool()

@@ -32,13 +32,13 @@ public:
 
 	QueueFamilyIndices getQueueFamilyIndices() const;
 
+    VkSampleCountFlagBits getMaxSampleCount() const;
+
 	// returns command buffer to write one time commands
 	VkCommandBuffer beginOneTimeCommands() const;
 
 	// ends command buffer and submit it to graphics queue
 	void endOneTimeCommands(VkCommandBuffer commandBuffer) const;
-
-	VkSampleCountFlagBits getMaxSupportedSampleCount(VkPhysicalDevice physicalDevice) const;
 
 private:
 	const std::vector<const char*> EXTENSIONS{

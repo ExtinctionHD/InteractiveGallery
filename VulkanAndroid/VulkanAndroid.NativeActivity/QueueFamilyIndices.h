@@ -8,7 +8,7 @@ public:
 
 	uint32_t getGraphics() const;
 
-	uint32_t getPresent() const;
+	uint32_t getPresentation() const;
 
 	// this device have all required queue families (for this surface)
 	bool completed() const;
@@ -16,6 +16,6 @@ public:
 private:
 	// queue family indices
 	int graphics = -1;
-	int present = -1;
+	int presentation = -1;
 };
 

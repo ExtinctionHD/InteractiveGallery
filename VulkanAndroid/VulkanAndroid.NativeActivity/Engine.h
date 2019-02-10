@@ -3,6 +3,7 @@
 #include "Surface.h"
 #include "Device.h"
 #include "SwapChain.h"
+#include "MainRenderPass.h"
 
 class Engine
 {
@@ -19,5 +20,7 @@ private:
 	Device *device;
 
     SwapChain *swapChain;
+
+    MainRenderPass *mainRenderPass;
 };
 

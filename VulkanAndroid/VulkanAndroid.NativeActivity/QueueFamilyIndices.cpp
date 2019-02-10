@@ -15,11 +15,11 @@ QueueFamilyIndices::QueueFamilyIndices(VkPhysicalDevice device, VkSurfaceKHR sur
 			graphics = i;
 		}
 
-		VkBool32 presentSupport = false;
-		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-		if (queueFamilies[i].queueCount > 0 && presentSupport)
+		VkBool32 presentationSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentationSupport);
+		if (queueFamilies[i].queueCount > 0 && presentationSupport)
 		{
-			present = i;
+            presentation = i;
 		}
 
 		if (completed())
@@ -31,19 +31,19 @@ QueueFamilyIndices::QueueFamilyIndices(VkPhysicalDevice device, VkSurfaceKHR sur
 
 uint32_t QueueFamilyIndices::getGraphics() const
 {
-    LOGA(graphics >= 0, "No suitable queue family");
+    LOGA(graphics >= 0, "No queue family suitable for drawing graphics.");
 
 	return uint32_t(graphics);
 }
 
-uint32_t QueueFamilyIndices::getPresent() const
+uint32_t QueueFamilyIndices::getPresentation() const
 {
-    LOGA(present >= 0, "No suitable queue family");
+    LOGA(presentation >= 0, "No queue family suitable for presentation.");
 
-	return uint32_t(present);
+	return uint32_t(presentation);
 }
 
 bool QueueFamilyIndices::completed() const
 {
-	return graphics >= 0 && present >= 0;
+	return graphics >= 0 && presentation >= 0;
 }

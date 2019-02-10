@@ -16,7 +16,10 @@ Engine::Engine(ANativeWindow *window)
 	device = new Device(instance->get(), surface->get(), instance->getLayers());
     swapChain = new SwapChain(device, surface->get(), extent);
 
-    LOGI("Engine initialized");
+    mainRenderPass = new MainRenderPass(device, swapChain);
+    mainRenderPass->create();
+
+    LOGI("Engine initialized.");
 }
 
 Engine::~Engine()
