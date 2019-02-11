@@ -4,6 +4,7 @@
 #include "Device.h"
 #include "SwapChain.h"
 #include "MainRenderPass.h"
+#include "DescriptorPool.h"
 
 class Engine
 {
@@ -22,5 +23,7 @@ private:
     SwapChain *swapChain;
 
     MainRenderPass *mainRenderPass;
+
+    DescriptorPool *descriptorPool;
 };
 

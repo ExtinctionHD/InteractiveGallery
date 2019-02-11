@@ -1,11 +1,11 @@
 #pragma once
 
-float pow(float x, float exp)
+inline float pow(float x, float exp)
 {
     return 0.0f;
 }
 
-float ldexp(float x, int exp)
+inline float ldexp(float x, int exp)
 {
     return 0.0f;
 }

@@ -58,6 +58,9 @@
     <ClInclude Include="MainRenderPass.h">
       <Filter>Engine\RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="DescriptorPool.h">
+      <Filter>Engine\DescriptorPool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -114,6 +117,9 @@
     <ClCompile Include="MainRenderPass.cpp">
       <Filter>Engine\RenderPasses</Filter>
     </ClCompile>
+    <ClCompile Include="DescriptorPool.cpp">
+      <Filter>Engine\DescriptorPool</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Main">
@@ -157,6 +163,9 @@
     </Filter>
     <Filter Include="Engine\RenderPasses">
       <UniqueIdentifier>{2ebcd2a5-c415-45be-abd0-161d28e63eab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\DescriptorPool">
+      <UniqueIdentifier>{c859c8b5-fd46-4f15-930b-7279d1550579}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

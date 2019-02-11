@@ -82,9 +82,11 @@ VkSampler TextureImage::getSampler() const
 
 stbi_uc* TextureImage::loadPixels(const std::string &path)
 {
-    /*stbi_uc *pixels = stbi_load_from_memory(nullptr, 0, 0, 0, 0, 0);
+    // TODO
 
-	LOGA(pixels, "Failed to load image: %s", path.c_str());*/
+    stbi_uc *pixels = stbi_load_from_memory(nullptr, 0, 0, 0, 0, 0);
+
+	LOGA(pixels, "Failed to load image: %s", path.c_str());
 
 	return nullptr;
 }

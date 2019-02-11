@@ -15,6 +15,7 @@ Engine::Engine(ANativeWindow *window)
 	surface = new Surface(instance->get(), window);
 	device = new Device(instance->get(), surface->get(), instance->getLayers());
     swapChain = new SwapChain(device, surface->get(), extent);
+    descriptorPool = new DescriptorPool(device, 1, 1, 1);
 
     mainRenderPass = new MainRenderPass(device, swapChain);
     mainRenderPass->create();
