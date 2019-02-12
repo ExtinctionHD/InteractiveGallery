@@ -1,5 +1,6 @@
 #include "android_native_app_glue.h"
 #include "Engine.h"
+#include "AssetManager.h"
 
 void android_main(android_app *app) 
 {
@@ -8,6 +9,8 @@ void android_main(android_app *app)
 	int events;
 	android_poll_source *source = nullptr;
 	Engine *engine = nullptr;
+
+    AssetManager::setManager(app->activity->assetManager);
 
 	while (true)
 	{

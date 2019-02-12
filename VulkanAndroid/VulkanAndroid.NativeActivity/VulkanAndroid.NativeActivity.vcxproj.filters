@@ -61,6 +61,9 @@
     <ClInclude Include="DescriptorPool.h">
       <Filter>Engine\DescriptorPool</Filter>
     </ClInclude>
+    <ClInclude Include="AssetManager.h">
+      <Filter>General\Android</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -119,6 +122,9 @@
     </ClCompile>
     <ClCompile Include="DescriptorPool.cpp">
       <Filter>Engine\DescriptorPool</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetManager.cpp">
+      <Filter>General\Android</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
