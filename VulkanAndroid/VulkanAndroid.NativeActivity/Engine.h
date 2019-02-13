@@ -6,6 +6,7 @@
 #include "MainRenderPass.h"
 #include "DescriptorPool.h"
 #include "GraphicsPipeline.h"
+#include <map>
 
 class Engine
 {
@@ -13,6 +14,8 @@ public:
 	Engine(ANativeWindow *window);
 
 	~Engine();
+
+    void drawFrame();
 
 private:
 	Instance *instance;
@@ -28,5 +31,15 @@ private:
     DescriptorPool *descriptorPool;
 
     GraphicsPipeline *graphicsPipeline;
+
+    VkSemaphore imageAvailableSemaphore;
+
+    std::vector<VkSemaphore> passFinishedSemaphores;
+
+    std::vector<VkCommandBuffer> graphicsCommands;
+
+    VkSemaphore createSemaphore() const;
+
+    void initGraphicsCommands();
 };
 

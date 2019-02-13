@@ -6,6 +6,12 @@
 class RenderPass
 {
 public:
+    enum Type
+    {
+        MAIN,
+        LAST = MAIN
+    };
+
     virtual ~RenderPass();
 
 	VkRenderPass get() const;
