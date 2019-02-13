@@ -162,7 +162,7 @@ void Engine::initGraphicsCommands()
 
         vkCmdBeginRenderPass(graphicsCommands[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        // TODO rendering here
+        // TODO: rendering here
 
         vkCmdEndRenderPass(graphicsCommands[i]);
 

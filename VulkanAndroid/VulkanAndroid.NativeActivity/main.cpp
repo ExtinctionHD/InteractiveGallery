@@ -6,33 +6,38 @@ void android_main(android_app *app)
 {
 	LOGI("Application started.");
 
-	int events;
-	android_poll_source *source = nullptr;
-	Engine *engine = nullptr;
+    int events;
+
+    android_poll_source *source;
+    Engine *engine = nullptr;
 
     AssetManager::setManager(app->activity->assetManager);
 
-	while (true)
-	{
-		while (ALooper_pollAll(-1, nullptr, &events, reinterpret_cast<void**>(&source)))
-		{
-            if (app->window && !engine)
+    while (true) 
+    {
+        while (ALooper_pollAll(0, nullptr, &events, reinterpret_cast<void**>(&source)) >= 0)
+        {
+            if (source) 
             {
-				engine = new Engine(app->window);
+                source->process(app, source);
             }
 
-			if (source)
-			{
-				source->process(app, source);
-			}
+            if (app->destroyRequested) 
+            {
+                LOGI("Applicatoin destroy requested.");
+                delete engine;
+                return;
+            }
+        }
 
-			if (app->destroyRequested)
-			{
-				LOGI("Application destroyed.");
+        if (app->window && !engine)
+        {
+            engine = new Engine(app->window);
+        }
 
-				delete engine;
-				return;
-			}
-		}
-	}
+        if (engine) 
+        {
+            engine->drawFrame();
+        }
+    }
 }
