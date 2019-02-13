@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include "Vertex.h"
 
 Engine::Engine(ANativeWindow *window)
 {
@@ -19,6 +20,16 @@ Engine::Engine(ANativeWindow *window)
 
     mainRenderPass = new MainRenderPass(device, swapChain);
     mainRenderPass->create();
+
+    graphicsPipeline = new GraphicsPipeline(
+        device,
+        mainRenderPass,
+        {},
+        {},
+        {},
+        { Vertex::getBindingDescription(0) },
+        Vertex::getAttributeDescriptions(0, 0),
+        true);
 
     LOGI("Engine initialized.");
 }

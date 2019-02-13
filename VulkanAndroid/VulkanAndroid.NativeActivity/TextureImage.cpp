@@ -1,5 +1,6 @@
 #include "TextureImage.h"
 #include "general.h"
+#include "AssetManager.h"
 
 TextureImage::TextureImage(
 	Device *device,
@@ -8,13 +9,14 @@ TextureImage::TextureImage(
 	VkFilter filter,
 	VkSamplerAddressMode samplerAddressMode)
 {
+    extent = VkExtent3D{};
+
 	std::vector<const void*> pixels(paths.size());
 	for (uint32_t i = 0; i < paths.size(); i++)
 	{
 		pixels[i] = loadPixels(paths[i]);
 	}
 
-    extent.depth = 1;
 	mipLevels = math::ceilLog2(std::max(extent.width, extent.height));
 	mipLevels = mipLevels > 0 ? mipLevels : 1;
 
@@ -82,13 +84,32 @@ VkSampler TextureImage::getSampler() const
 
 stbi_uc* TextureImage::loadPixels(const std::string &path)
 {
-    // TODO
+    std::vector<stbi_uc> buffer = AssetManager::getBytes(path);
 
-    stbi_uc *pixels = stbi_load_from_memory(nullptr, 0, 0, 0, 0, 0);
+    int width, height;
 
-	LOGA(pixels, "Failed to load image: %s", path.c_str());
+    stbi_uc *pixels = stbi_load_from_memory(
+        buffer.data(), 
+        buffer.size(), 
+        &width, 
+        &height, 
+        nullptr,
+        STBI_rgb_alpha);
 
-	return nullptr;
+    LOGA(pixels, "Failed to load image: %s", path.c_str());
+
+    if (extent.width && extent.height)
+    {
+        const bool sameExtent = extent.width == uint32_t(width) && extent.height == uint32_t(height);
+        LOGA(sameExtent, "Images in the array must have the same extent.");
+    }
+    else
+    {
+        extent.width = uint32_t(width);
+        extent.height = uint32_t(height);
+    }
+
+	return pixels;
 }
 
 void TextureImage::generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filter) const

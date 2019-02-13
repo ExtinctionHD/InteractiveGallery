@@ -5,6 +5,7 @@
 #include "SwapChain.h"
 #include "MainRenderPass.h"
 #include "DescriptorPool.h"
+#include "GraphicsPipeline.h"
 
 class Engine
 {
@@ -25,5 +26,7 @@ private:
     MainRenderPass *mainRenderPass;
 
     DescriptorPool *descriptorPool;
+
+    GraphicsPipeline *graphicsPipeline;
 };
 

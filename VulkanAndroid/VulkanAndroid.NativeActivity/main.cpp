@@ -1,10 +1,14 @@
 #include "android_native_app_glue.h"
 #include "Engine.h"
 #include "AssetManager.h"
+#include <cmath>
 
 void android_main(android_app *app) 
 {
 	LOGI("Application started.");
+
+    float a = std::log(1.0);
+    LOGI("%f", a);
 
 	int events;
 	android_poll_source *source = nullptr;

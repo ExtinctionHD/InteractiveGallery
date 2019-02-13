@@ -64,6 +64,15 @@
     <ClInclude Include="AssetManager.h">
       <Filter>General\Android</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsPipeline.h">
+      <Filter>Engine\Pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderModule.h">
+      <Filter>Engine\ShaderModule</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>Engine\Vertex</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -126,6 +135,15 @@
     <ClCompile Include="AssetManager.cpp">
       <Filter>General\Android</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsPipeline.cpp">
+      <Filter>Engine\Pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderModule.cpp">
+      <Filter>Engine\ShaderModule</Filter>
+    </ClCompile>
+    <ClCompile Include="Vertex.cpp">
+      <Filter>Engine\Vertex</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Main">
@@ -172,6 +190,15 @@
     </Filter>
     <Filter Include="Engine\DescriptorPool">
       <UniqueIdentifier>{c859c8b5-fd46-4f15-930b-7279d1550579}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Pipelines">
+      <UniqueIdentifier>{29bc6133-1d57-4bda-88ba-c9791b839d8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ShaderModule">
+      <UniqueIdentifier>{be2ddf0f-4a3d-4311-877a-9d8a3b02aeb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Vertex">
+      <UniqueIdentifier>{b80b7609-5e7e-4967-9b5c-6968b04619a7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
