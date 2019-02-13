@@ -96,7 +96,7 @@ stbi_uc* TextureImage::loadPixels(const std::string &path)
         nullptr,
         STBI_rgb_alpha);
 
-    LOGA(pixels, "Failed to load image: %s", path.c_str());
+    LOGA(pixels, "Failed to load image: [%s]", path.c_str());
 
     if (extent.width && extent.height)
     {

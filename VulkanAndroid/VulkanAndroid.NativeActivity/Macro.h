@@ -20,7 +20,7 @@
 #define CALL_VK(vkFunc)                                                     \
     if(VK_SUCCESS != (vkFunc))                                              \
     {                                                                       \
-        LOGF("Vulkan call failed. File[%s], line[%d]", __FILE__, __LINE__); \
+        LOGF("Vulkan call failed. File [%s], line %d", __FILE__, __LINE__); \
         assert(false);                                                      \
     }
 

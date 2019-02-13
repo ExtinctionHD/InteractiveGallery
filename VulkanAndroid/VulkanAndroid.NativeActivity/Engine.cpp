@@ -21,12 +21,18 @@ Engine::Engine(ANativeWindow *window)
     mainRenderPass = new MainRenderPass(device, swapChain);
     mainRenderPass->create();
 
+    const std::string shadersPath = "shaders/Main/";
+    const std::vector<std::shared_ptr<ShaderModule>> shaders{
+        std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+        std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+    };
+
     graphicsPipeline = new GraphicsPipeline(
         device,
         mainRenderPass,
         {},
         {},
-        {},
+        shaders,
         { Vertex::getBindingDescription(0) },
         Vertex::getAttributeDescriptions(0, 0),
         true);

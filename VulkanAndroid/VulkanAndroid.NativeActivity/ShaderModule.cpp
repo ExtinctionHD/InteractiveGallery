@@ -15,6 +15,7 @@ ShaderModule::ShaderModule(Device *device, const std::string &path, VkShaderStag
 	};
 
     CALL_VK(vkCreateShaderModule(device->get(), &createInfo, nullptr, &module));
+    LOGI("Shader module [%s] created.", path.c_str());
 }
 
 ShaderModule::ShaderModule(
