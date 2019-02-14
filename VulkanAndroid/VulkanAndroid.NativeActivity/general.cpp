@@ -1,4 +1,5 @@
 #include "general.h"
+#include <android/native_window.h>
 
 uint32_t math::ceilLog2(uint32_t x)
 {
@@ -23,4 +24,12 @@ uint32_t math::ceilLog2(uint32_t x)
     }
 
     return y;
+}
+
+VkExtent2D window::getExtent(ANativeWindow *window)
+{
+    return VkExtent2D{
+        uint32_t(ANativeWindow_getWidth(window)),
+        uint32_t(ANativeWindow_getHeight(window))
+    };
 }

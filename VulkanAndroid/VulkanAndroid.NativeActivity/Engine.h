@@ -6,16 +6,21 @@
 #include "MainRenderPass.h"
 #include "DescriptorPool.h"
 #include "GraphicsPipeline.h"
-#include <map>
 
 class Engine
 {
 public:
-	Engine(ANativeWindow *window);
+    Engine();
 
 	~Engine();
 
-    void drawFrame();
+    bool create(ANativeWindow *window);
+
+    bool resize(VkExtent2D newExtent);
+
+    bool drawFrame();
+
+    bool destroy();
 
 private:
 	Instance *instance;
@@ -37,6 +42,8 @@ private:
     std::vector<VkSemaphore> passFinishedSemaphores;
 
     std::vector<VkCommandBuffer> graphicsCommands;
+
+    bool created;
 
     VkSemaphore createSemaphore() const;
 

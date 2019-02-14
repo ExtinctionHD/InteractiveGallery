@@ -1,23 +1,32 @@
 #include "Engine.h"
 #include "Vertex.h"
+#include "general.h"
 
-Engine::Engine(ANativeWindow *window)
+Engine::Engine() : created(false)
 {
 	InitVulkan();
 
-    const VkExtent2D extent{
-        uint32_t(ANativeWindow_getWidth(window)),
-        uint32_t(ANativeWindow_getHeight(window))
-    };
+	instance = new Instance();
+}
 
+Engine::~Engine()
+{
+    destroy();
+
+	delete instance;
+}
+
+bool Engine::create(ANativeWindow *window)
+{
+    if (created) return false;
+
+    const auto extent = window::getExtent(window);
     LOGD("Window extent: %d x %d.", extent.width, extent.height);
 
-	instance = new Instance();
-	surface = new Surface(instance->get(), window);
-	device = new Device(instance->get(), surface->get(), instance->getLayers());
+    surface = new Surface(instance->get(), window);
+    device = new Device(instance->get(), surface->get(), instance->getLayers());
     swapChain = new SwapChain(device, surface->get(), extent);
     descriptorPool = new DescriptorPool(device, 1, 1, 1);
-
     mainRenderPass = new MainRenderPass(device, swapChain);
     mainRenderPass->create();
 
@@ -42,28 +51,50 @@ Engine::Engine(ANativeWindow *window)
 
     initGraphicsCommands();
 
-    LOGI("Engine initialized.");
+    created = true;
+    LOGI("Engine created.");
+
+    return true;
 }
 
-Engine::~Engine()
+bool Engine::resize(VkExtent2D newExtent)
 {
-    delete swapChain;
-	delete device;
-	delete surface;
-	delete instance;
+    if (!created) return false;
+
+    vkDeviceWaitIdle(device->get());
+
+    swapChain->recreate(newExtent);
+    mainRenderPass->recreate(newExtent);
+    graphicsPipeline->recreate();
+
+    initGraphicsCommands();
+
+    return true;
 }
 
-void Engine::drawFrame()
+bool Engine::drawFrame()
 {
+    if (!created) return false;
+
     uint32_t imageIndex;
 
-    CALL_VK(vkAcquireNextImageKHR(
+    VkResult result = vkAcquireNextImageKHR(
         device->get(), 
         swapChain->get(), 
         UINT64_MAX, 
         imageAvailableSemaphore, 
         nullptr, 
-        &imageIndex));
+        &imageIndex);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        LOGE("vkAcquireNextImageKHR: VK_ERROR_OUT_OF_DATE_KHR.");
+        return false;
+    }
+    if (result != VK_SUBOPTIMAL_KHR)
+    {
+        CALL_VK(result);
+    }
 
     std::vector<VkSemaphore> waitSemaphores = {  imageAvailableSemaphore };
     std::vector<VkPipelineStageFlags> waitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -92,7 +123,39 @@ void Engine::drawFrame()
         &imageIndex,
         nullptr,
     };
-    CALL_VK(vkQueuePresentKHR(device->getPresentQueue(), &presentInfo));
+    result = vkQueuePresentKHR(device->getPresentQueue(), &presentInfo);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+    {
+        return false;
+    }
+
+    CALL_VK(result);
+
+    return true;
+}
+
+bool Engine::destroy()
+{
+    if (!created) return false;
+
+    for (auto &semaphore : passFinishedSemaphores)
+    {
+        vkDestroySemaphore(device->get(), semaphore, nullptr);
+    }
+    vkDestroySemaphore(device->get(), imageAvailableSemaphore, nullptr);
+
+    delete graphicsPipeline;
+    delete mainRenderPass;
+    delete descriptorPool;
+    delete swapChain;
+    delete device;
+    delete surface;
+
+    created = false;
+    LOGI("Engine destroyed.");
+
+    return true;
 }
 
 VkSemaphore Engine::createSemaphore() const
@@ -169,5 +232,5 @@ void Engine::initGraphicsCommands()
         CALL_VK(vkEndCommandBuffer(graphicsCommands[i]));
     }
 
-    LOGI("Graphics commands initialized.");
+    LOGI("Graphics commands created.");
 }
