@@ -15,11 +15,14 @@ void handleAppCommand(android_app *app, int32_t cmd)
     case APP_CMD_INIT_WINDOW:
         LOGD("APP_CMD_INIT_WINDOW");
         LOGA(app->window, "Window undefined.");
-        engine->create(app->window);
+        if (!engine->recreate(app->window))
+        {
+            engine->create(app->window);
+        }
         break;
     case APP_CMD_TERM_WINDOW:
         LOGD("APP_CMD_TERM_WINDOW");
-        engine->destroy();
+        engine->outdate();
         break;
     case APP_CMD_WINDOW_RESIZED:
         LOGD("APP_CMD_WINDOW_RESIZED");

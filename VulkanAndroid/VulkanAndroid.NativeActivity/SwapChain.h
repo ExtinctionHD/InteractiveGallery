@@ -20,6 +20,8 @@ public:
 
 	void recreate(VkExtent2D newExtent);
 
+    void recreate(VkSurfaceKHR surface, VkExtent2D newExtent);
+
 private:
 	const VkSurfaceFormatKHR PREFERRED_PRESENT_FORMAT = { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
 

@@ -2,7 +2,7 @@
 #include "Vertex.h"
 #include "general.h"
 
-Engine::Engine() : created(false)
+Engine::Engine() : created(false), outdated(false)
 {
 	InitVulkan();
 
@@ -18,7 +18,7 @@ Engine::~Engine()
 
 bool Engine::create(ANativeWindow *window)
 {
-    if (created) return false;
+    if (created) return true;
 
     const auto extent = window::getExtent(window);
     LOGD("Window extent: %d x %d.", extent.width, extent.height);
@@ -57,6 +57,31 @@ bool Engine::create(ANativeWindow *window)
     return true;
 }
 
+bool Engine::recreate(ANativeWindow *window)
+{
+    if (!created) return false;
+
+    if (outdated)
+    {
+        vkDeviceWaitIdle(device->get());
+
+        const auto extent = window::getExtent(window);
+
+        delete surface;
+        surface = new Surface(instance->get(), window);
+
+        swapChain->recreate(surface->get(), extent);
+        mainRenderPass->recreate(extent);
+        graphicsPipeline->recreate();
+
+        initGraphicsCommands();
+
+        outdated = false;
+    }
+
+    return true;
+}
+
 bool Engine::resize(VkExtent2D newExtent)
 {
     if (!created) return false;
@@ -69,12 +94,19 @@ bool Engine::resize(VkExtent2D newExtent)
 
     initGraphicsCommands();
 
+    LOGI("Engine resized.");
+
     return true;
+}
+
+void Engine::outdate()
+{
+    outdated = true;
 }
 
 bool Engine::drawFrame()
 {
-    if (!created) return false;
+    if (!created || outdated) return false;
 
     uint32_t imageIndex;
 
@@ -137,7 +169,9 @@ bool Engine::drawFrame()
 
 bool Engine::destroy()
 {
-    if (!created) return false;
+    if (!created) return true;
+
+    vkDeviceWaitIdle(device->get());
 
     for (auto &semaphore : passFinishedSemaphores)
     {
@@ -153,6 +187,7 @@ bool Engine::destroy()
     delete surface;
 
     created = false;
+
     LOGI("Engine destroyed.");
 
     return true;

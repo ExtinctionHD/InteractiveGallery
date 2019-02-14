@@ -48,6 +48,13 @@ void SwapChain::recreate(VkExtent2D newExtent)
 	createImageViews();
 }
 
+void SwapChain::recreate(VkSurfaceKHR surface, VkExtent2D newExtent)
+{
+    this->surface = surface;
+
+    recreate(newExtent);
+}
+
 void SwapChain::create(VkExtent2D surfaceExtent)
 {
     // get necessary swapchain properties

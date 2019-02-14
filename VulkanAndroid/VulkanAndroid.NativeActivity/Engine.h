@@ -16,13 +16,21 @@ public:
 
     bool create(ANativeWindow *window);
 
+    bool recreate(ANativeWindow *window);
+
     bool resize(VkExtent2D newExtent);
+
+    void outdate();
 
     bool drawFrame();
 
     bool destroy();
 
 private:
+    bool created;
+
+    bool outdated;
+
 	Instance *instance;
 
 	Surface *surface;
@@ -42,8 +50,6 @@ private:
     std::vector<VkSemaphore> passFinishedSemaphores;
 
     std::vector<VkCommandBuffer> graphicsCommands;
-
-    bool created;
 
     VkSemaphore createSemaphore() const;
 
