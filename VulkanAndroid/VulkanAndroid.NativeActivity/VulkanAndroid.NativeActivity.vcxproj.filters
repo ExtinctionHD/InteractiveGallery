@@ -73,6 +73,10 @@
     <ClInclude Include="Vertex.h">
       <Filter>Engine\Vertex</Filter>
     </ClInclude>
+    <ClInclude Include="sphere.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -144,6 +148,7 @@
     <ClCompile Include="Vertex.cpp">
       <Filter>Engine\Vertex</Filter>
     </ClCompile>
+    <ClCompile Include="Camera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Main">
@@ -199,6 +204,9 @@
     </Filter>
     <Filter Include="Engine\Vertex">
       <UniqueIdentifier>{b80b7609-5e7e-4967-9b5c-6968b04619a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{0210aae9-3f29-412d-a587-6c610e5dab71}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

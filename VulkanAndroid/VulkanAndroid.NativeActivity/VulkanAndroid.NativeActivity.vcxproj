@@ -265,6 +265,7 @@
   <ItemGroup>
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="Buffer.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="DescriptorPool.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Engine.h" />
@@ -279,6 +280,7 @@
     <ClInclude Include="QueueFamilyIndices.h" />
     <ClInclude Include="RenderPass.h" />
     <ClInclude Include="ShaderModule.h" />
+    <ClInclude Include="sphere.h" />
     <ClInclude Include="StagingBuffer.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="SurfaceSupportDetails.h" />
@@ -292,6 +294,7 @@
     <ClCompile Include="android_native_app_glue.c" />
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="Buffer.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DescriptorPool.cpp" />
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="Engine.cpp" />

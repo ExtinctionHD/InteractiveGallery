@@ -1,6 +1,7 @@
 #include "Engine.h"
 #include "Vertex.h"
 #include "general.h"
+#include "sphere.h"
 
 Engine::Engine() : created(false), outdated(false)
 {
@@ -30,27 +31,41 @@ bool Engine::create(ANativeWindow *window)
     mainRenderPass = new MainRenderPass(device, swapChain);
     mainRenderPass->create();
 
+    const Camera::Attributes attributes{
+        extent,
+        glm::vec3(0.0f, 0.0f, -500.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, -1.0f, 0.0f),
+        60.0f,
+        1.0f,
+        1000.0f
+    };
+    camera = new Camera(device, attributes);
+
+    descriptor.layout = descriptorPool->createDescriptorSetLayout({ VK_PIPELINE_STAGE_VERTEX_SHADER_BIT }, {});
+    descriptor.sets = { descriptorPool->getDescriptorSet(descriptor.layout) };
+    descriptorPool->updateDescriptorSet(descriptor.sets[0], { camera->getBuffer() }, {});
+
     const std::string shadersPath = "shaders/Main/";
     const std::vector<std::shared_ptr<ShaderModule>> shaders{
         std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
         std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
     };
-
     graphicsPipeline = new GraphicsPipeline(
         device,
         mainRenderPass,
-        {},
+        { descriptor.layout },
         {},
         shaders,
         { Vertex::getBindingDescription(0) },
         Vertex::getAttributeDescriptions(0, 0),
         true);
 
-    imageAvailableSemaphore = createSemaphore();
-    passFinishedSemaphores.resize(RenderPass::LAST + 1, createSemaphore());
 
     createMesh();
 
+    imageAvailableSemaphore = createSemaphore();
+    passFinishedSemaphores.resize(RenderPass::LAST + 1, createSemaphore());
     initGraphicsCommands();
 
     created = true;
@@ -181,6 +196,10 @@ bool Engine::destroy()
     }
     vkDestroySemaphore(device->get(), imageAvailableSemaphore, nullptr);
 
+    vkDestroyDescriptorSetLayout(device->get(), descriptor.layout, nullptr);
+
+    delete indexBuffer;
+    delete vertexBuffer;
     delete graphicsPipeline;
     delete mainRenderPass;
     delete descriptorPool;
@@ -197,19 +216,15 @@ bool Engine::destroy()
 
 void Engine::createMesh()
 {
-    std::vector<Vertex> vertices{
-        { glm::vec3(0.0f, -0.5f, 0.0f), glm::vec2(0.0f), glm::vec3(1.0f, 0.0f, 0.0f) },
-        { glm::vec3(0.5f, 0.5f, 0.0f), glm::vec2(0.0f), glm::vec3(0.0f, 1.0f, 0.0f) },
-        { glm::vec3(-0.5f, 0.5f, 0.0f), glm::vec2(0.0f), glm::vec3(0.0f, 0.0f, 1.0f) }
-    };
-    std::vector<uint32_t> indices{ 0, 1, 2 };
+    vertexBuffer = new Buffer(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, sphere::VERTICES.size() * sizeof(Vertex));
+    vertexBuffer->updateData(sphere::VERTICES.data());
 
-    vertexBuffer = new Buffer(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, sizeof(Vertex) * vertices.size());
-    vertexBuffer->updateData(vertices.data());
-    indexBuffer = new Buffer(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, sizeof(uint32_t) * indices.size());
-    indexBuffer->updateData(indices.data());
+    indexBuffer = new Buffer(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, sphere::INDICES.size() * sizeof(uint32_t));
+    indexBuffer->updateData(sphere::INDICES.data());
 
-    indexCount = indices.size();
+    indexCount = sphere::INDICES.size() / sizeof(uint32_t);
+
+    LOGI("Mesh created.");
 }
 
 VkSemaphore Engine::createSemaphore() const

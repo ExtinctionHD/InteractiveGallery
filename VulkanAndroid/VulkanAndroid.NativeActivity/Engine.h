@@ -6,6 +6,7 @@
 #include "MainRenderPass.h"
 #include "DescriptorPool.h"
 #include "GraphicsPipeline.h"
+#include "Camera.h"
 
 class Engine
 {
@@ -50,6 +51,10 @@ private:
     Buffer *indexBuffer;
 
     uint32_t indexCount;
+
+    Camera *camera;
+
+    DescriptorStruct descriptor;
 
     VkSemaphore imageAvailableSemaphore;
 
