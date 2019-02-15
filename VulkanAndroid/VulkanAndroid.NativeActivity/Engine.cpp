@@ -49,6 +49,8 @@ bool Engine::create(ANativeWindow *window)
     imageAvailableSemaphore = createSemaphore();
     passFinishedSemaphores.resize(RenderPass::LAST + 1, createSemaphore());
 
+    createMesh();
+
     initGraphicsCommands();
 
     created = true;
@@ -193,6 +195,23 @@ bool Engine::destroy()
     return true;
 }
 
+void Engine::createMesh()
+{
+    std::vector<Vertex> vertices{
+        { glm::vec3(0.0f, -0.5f, 0.0f), glm::vec2(0.0f), glm::vec3(1.0f, 0.0f, 0.0f) },
+        { glm::vec3(0.5f, 0.5f, 0.0f), glm::vec2(0.0f), glm::vec3(0.0f, 1.0f, 0.0f) },
+        { glm::vec3(-0.5f, 0.5f, 0.0f), glm::vec2(0.0f), glm::vec3(0.0f, 0.0f, 1.0f) }
+    };
+    std::vector<uint32_t> indices{ 0, 1, 2 };
+
+    vertexBuffer = new Buffer(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, sizeof(Vertex) * vertices.size());
+    vertexBuffer->updateData(vertices.data());
+    indexBuffer = new Buffer(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, sizeof(uint32_t) * indices.size());
+    indexBuffer->updateData(indices.data());
+
+    indexCount = indices.size();
+}
+
 VkSemaphore Engine::createSemaphore() const
 {
     VkSemaphore semaphore;
@@ -260,7 +279,16 @@ void Engine::initGraphicsCommands()
 
         vkCmdBeginRenderPass(graphicsCommands[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        // TODO: rendering here
+        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->get());
+
+        VkBuffer buffer = vertexBuffer->get();
+        VkDeviceSize offset = 0;
+        vkCmdBindVertexBuffers(graphicsCommands[i], 0, 1, &buffer, &offset);
+
+        buffer = indexBuffer->get();
+        vkCmdBindIndexBuffer(graphicsCommands[i], buffer, 0, VK_INDEX_TYPE_UINT32);
+
+        vkCmdDrawIndexed(graphicsCommands[i], indexCount, 1, 0, 0, 0);
 
         vkCmdEndRenderPass(graphicsCommands[i]);
 

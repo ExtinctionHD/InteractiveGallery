@@ -25,7 +25,7 @@ std::vector<VkClearValue> RenderPass::getClearValues() const
 	std::vector<VkClearValue> clearValues(getColorAttachmentCount());
     for(auto &clearValue : clearValues)
     {
-        clearValue.color = { { 0.0f, 1.0f, 0.0f, 1.0f } };
+        clearValue.color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
     }
     if (getColorAttachmentCount() < attachments.size())
     {

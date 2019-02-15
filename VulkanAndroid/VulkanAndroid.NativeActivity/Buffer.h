@@ -10,6 +10,8 @@ public:
 
 	VkBuffer get() const;
 
+    void updateData(const void *data);
+
 	void updateData(const void *data, VkDeviceSize offset, VkDeviceSize dataSize) override;
 
 private:

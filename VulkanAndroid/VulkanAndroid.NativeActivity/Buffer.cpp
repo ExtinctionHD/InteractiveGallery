@@ -22,6 +22,11 @@ VkBuffer Buffer::get() const
 	return buffer;
 }
 
+void Buffer::updateData(const void *data)
+{
+    updateData(data, 0, size);
+}
+
 void Buffer::updateData(const void *data, VkDeviceSize offset, VkDeviceSize dataSize)
 {
 	StagingBuffer::updateData(data, offset, dataSize);

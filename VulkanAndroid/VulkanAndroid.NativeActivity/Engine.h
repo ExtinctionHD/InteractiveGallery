@@ -45,11 +45,19 @@ private:
 
     GraphicsPipeline *graphicsPipeline;
 
+    Buffer *vertexBuffer;
+
+    Buffer *indexBuffer;
+
+    uint32_t indexCount;
+
     VkSemaphore imageAvailableSemaphore;
 
     std::vector<VkSemaphore> passFinishedSemaphores;
 
     std::vector<VkCommandBuffer> graphicsCommands;
+
+    void createMesh();
 
     VkSemaphore createSemaphore() const;
 
