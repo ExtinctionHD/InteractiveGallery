@@ -127,8 +127,15 @@
     </AntPackage>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <Content Include="libs\arm64-v8a\libVkLayer_core_validation.so" />
     <Content Include="assets\shaders\Main\frag.spv" />
     <Content Include="assets\shaders\Main\vert.spv" />
+    <Content Include="libs\arm64-v8a\libVkLayer_image.so" />
+    <Content Include="libs\arm64-v8a\libVkLayer_object_tracker.so" />
+    <Content Include="libs\arm64-v8a\libVkLayer_parameter_validation.so" />
+    <Content Include="libs\arm64-v8a\libVkLayer_swapchain.so" />
+    <Content Include="libs\arm64-v8a\libVkLayer_threading.so" />
+    <Content Include="libs\arm64-v8a\libVkLayer_unique_objects.so" />
     <Content Include="res\values\strings.xml" />
     <AntBuildXml Include="build.xml" />
     <AndroidManifest Include="AndroidManifest.xml" />

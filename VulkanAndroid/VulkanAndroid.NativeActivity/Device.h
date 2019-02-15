@@ -19,6 +19,8 @@ public:
 
 	VkFormatProperties getFormatProperties(VkFormat format) const;
 
+    void updateSurface(VkSurfaceKHR surface);
+
 	// returns index of memory type with such properties (for this physical device)
 	uint32_t findMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 

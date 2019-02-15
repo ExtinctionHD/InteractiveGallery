@@ -27,7 +27,7 @@ bool Engine::create(ANativeWindow *window)
     surface = new Surface(instance->get(), window);
     device = new Device(instance->get(), surface->get(), instance->getLayers());
     swapChain = new SwapChain(device, surface->get(), extent);
-    descriptorPool = new DescriptorPool(device, 1, 1, 1);
+    descriptorPool = new DescriptorPool(device, 1, 0, 1);
     mainRenderPass = new MainRenderPass(device, swapChain);
     mainRenderPass->create();
 
@@ -38,11 +38,11 @@ bool Engine::create(ANativeWindow *window)
         glm::vec3(0.0f, -1.0f, 0.0f),
         60.0f,
         1.0f,
-        1000.0f
+        800.0f
     };
     camera = new Camera(device, attributes);
 
-    descriptor.layout = descriptorPool->createDescriptorSetLayout({ VK_PIPELINE_STAGE_VERTEX_SHADER_BIT }, {});
+    descriptor.layout = descriptorPool->createDescriptorSetLayout({ VK_SHADER_STAGE_VERTEX_BIT }, {});
     descriptor.sets = { descriptorPool->getDescriptorSet(descriptor.layout) };
     descriptorPool->updateDescriptorSet(descriptor.sets[0], { camera->getBuffer() }, {});
 
@@ -60,7 +60,6 @@ bool Engine::create(ANativeWindow *window)
         { Vertex::getBindingDescription(0) },
         Vertex::getAttributeDescriptions(0, 0),
         true);
-
 
     createMesh();
 
@@ -85,8 +84,9 @@ bool Engine::recreate(ANativeWindow *window)
         const auto extent = window::getExtent(window);
 
         delete surface;
-        surface = new Surface(instance->get(), window);
 
+        surface = new Surface(instance->get(), window);
+        device->updateSurface(surface->get());
         swapChain->recreate(surface->get(), extent);
         mainRenderPass->recreate(extent);
         graphicsPipeline->recreate();
@@ -201,6 +201,7 @@ bool Engine::destroy()
     delete indexBuffer;
     delete vertexBuffer;
     delete graphicsPipeline;
+    delete camera;
     delete mainRenderPass;
     delete descriptorPool;
     delete swapChain;
@@ -222,7 +223,7 @@ void Engine::createMesh()
     indexBuffer = new Buffer(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, sphere::INDICES.size() * sizeof(uint32_t));
     indexBuffer->updateData(sphere::INDICES.data());
 
-    indexCount = sphere::INDICES.size() / sizeof(uint32_t);
+    indexCount = sphere::INDICES.size();
 
     LOGI("Mesh created.");
 }
@@ -295,6 +296,16 @@ void Engine::initGraphicsCommands()
         vkCmdBeginRenderPass(graphicsCommands[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->get());
+
+        vkCmdBindDescriptorSets(
+            graphicsCommands[i],
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            graphicsPipeline->getLayout(),
+            0,
+            descriptor.sets.size(),
+            descriptor.sets.data(),
+            0,
+            nullptr);
 
         VkBuffer buffer = vertexBuffer->get();
         VkDeviceSize offset = 0;

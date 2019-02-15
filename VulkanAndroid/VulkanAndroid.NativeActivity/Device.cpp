@@ -47,6 +47,11 @@ VkFormatProperties Device::getFormatProperties(VkFormat format) const
 	return formatProperties;
 }
 
+void Device::updateSurface(VkSurfaceKHR surface)
+{
+    this->surface = surface;
+}
+
 uint32_t Device::findMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
 {
 	VkPhysicalDeviceMemoryProperties memProperties;
@@ -266,7 +271,6 @@ void Device::createDevice(const std::vector<const char*> &layers)
 	}
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
-	deviceFeatures.samplerAnisotropy = true;
 	deviceFeatures.sampleRateShading = true;
 
 	VkDeviceCreateInfo deviceCreateInfo{

@@ -166,7 +166,18 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Instance::validationLayerCallback(
 	const char *msg,
 	void *userData)
 {
-	LOGW("Validation layer: %s.", msg);
+    if (flags >= VK_DEBUG_REPORT_ERROR_BIT_EXT)
+    {
+        LOGE("Validation layer: %s.", msg);
+    }
+    else if (flags >= VK_DEBUG_REPORT_WARNING_BIT_EXT)
+    {
+        LOGW("Validation layer: %s.", msg);
+    }
+    else
+    {
+        LOGI("Validation layer: %s.", msg);
+    }
 
 	return false;
 }

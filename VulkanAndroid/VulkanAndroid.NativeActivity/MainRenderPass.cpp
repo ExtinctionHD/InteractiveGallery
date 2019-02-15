@@ -40,7 +40,7 @@ void MainRenderPass::createAttachments()
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         subresourceRange);
 
-    subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 
     depthImage = std::make_shared<Image>(
         device,

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Device.h"
 #include "Image.h"
 #include <memory>
