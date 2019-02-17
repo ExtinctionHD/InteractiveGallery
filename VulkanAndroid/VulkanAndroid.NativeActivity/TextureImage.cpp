@@ -1,5 +1,5 @@
 #include "TextureImage.h"
-#include "general.h"
+#include "utils.h"
 #include "AssetManager.h"
 
 TextureImage::TextureImage(

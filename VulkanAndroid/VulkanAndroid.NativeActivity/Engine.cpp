@@ -1,6 +1,6 @@
 #include "Engine.h"
 #include "Vertex.h"
-#include "general.h"
+#include "utils.h"
 #include "sphere.h"
 
 Engine::Engine() : created(false), outdated(false)
@@ -36,7 +36,7 @@ bool Engine::create(ANativeWindow *window)
         glm::vec3(0.0f, 0.0f, -500.0f),
         glm::vec3(0.0f, 0.0f, 1.0f),
         glm::vec3(0.0f, -1.0f, 0.0f),
-        60.0f,
+        90.0f,
         1.0f,
         800.0f
     };
@@ -121,9 +121,19 @@ void Engine::outdate()
     outdated = true;
 }
 
+void Engine::pause()
+{
+    paused = true;
+}
+
+void Engine::unpause()
+{
+    paused = false;
+}
+
 bool Engine::drawFrame()
 {
-    if (!created || outdated) return false;
+    if (!created || outdated || paused) return false;
 
     uint32_t imageIndex;
 

@@ -1,4 +1,4 @@
-#include "general.h"
+#include "utils.h"
 #include <android/native_window.h>
 
 uint32_t math::ceilLog2(uint32_t x)

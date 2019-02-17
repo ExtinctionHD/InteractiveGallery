@@ -1,4 +1,5 @@
 #include "Buffer.h"
+#include <limits>
 
 Buffer::Buffer(Device *device, VkBufferUsageFlags usage, VkDeviceSize size) : StagingBuffer(device, size)
 {
@@ -22,13 +23,13 @@ VkBuffer Buffer::get() const
 	return buffer;
 }
 
-void Buffer::updateData(const void *data)
-{
-    updateData(data, 0, size);
-}
-
 void Buffer::updateData(const void *data, VkDeviceSize offset, VkDeviceSize dataSize)
 {
+    if (dataSize == VkDeviceSize(-1))
+    {
+        dataSize = size - offset;
+    }
+
 	StagingBuffer::updateData(data, offset, dataSize);
 
 	VkCommandBuffer commandBuffer = device->beginOneTimeCommands();

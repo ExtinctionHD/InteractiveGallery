@@ -29,6 +29,11 @@ VkDeviceSize StagingBuffer::getSize() const
 
 void StagingBuffer::updateData(const void *data, VkDeviceSize offset, VkDeviceSize dataSize)
 {
+    if (dataSize == VkDeviceSize(-1))
+    {
+        dataSize = size - offset;
+    }
+
 	LOGA(offset + dataSize <= size, "Size of updated data can't be bigger than buffer size");
 
 	void *bufferData;

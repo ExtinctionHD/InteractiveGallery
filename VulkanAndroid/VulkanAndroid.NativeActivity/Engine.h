@@ -23,6 +23,10 @@ public:
 
     void outdate();
 
+    void pause();
+
+    void unpause();
+
     bool drawFrame();
 
     bool destroy();
@@ -31,6 +35,8 @@ private:
     bool created;
 
     bool outdated;
+
+    bool paused;
 
 	Instance *instance;
 

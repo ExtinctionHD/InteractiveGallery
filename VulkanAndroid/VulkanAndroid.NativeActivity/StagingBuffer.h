@@ -13,7 +13,7 @@ public:
 
     VkDeviceSize getSize() const;
 
-	virtual void updateData(const void *data, VkDeviceSize offset, VkDeviceSize dataSize);
+	virtual void updateData(const void *data, VkDeviceSize offset = 0, VkDeviceSize dataSize = VkDeviceSize(-1));
 
 	void copyToImage(VkImage image, std::vector<VkBufferImageCopy> regions) const;
 

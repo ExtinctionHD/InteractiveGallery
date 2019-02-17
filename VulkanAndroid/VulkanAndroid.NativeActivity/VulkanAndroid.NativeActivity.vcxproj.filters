@@ -43,14 +43,11 @@
     <ClInclude Include="SwapChain.h">
       <Filter>Engine\SwapChain</Filter>
     </ClInclude>
-    <ClInclude Include="general.h">
-      <Filter>General</Filter>
-    </ClInclude>
     <ClInclude Include="android_native_app_glue.h">
-      <Filter>General\Android</Filter>
+      <Filter>Utils\Android</Filter>
     </ClInclude>
     <ClInclude Include="vulkan_wrapper.h">
-      <Filter>General\Vulkan</Filter>
+      <Filter>Utils\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass.h">
       <Filter>Engine\RenderPasses</Filter>
@@ -62,7 +59,7 @@
       <Filter>Engine\DescriptorPool</Filter>
     </ClInclude>
     <ClInclude Include="AssetManager.h">
-      <Filter>General\Android</Filter>
+      <Filter>Utils\Android</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsPipeline.h">
       <Filter>Engine\Pipelines</Filter>
@@ -77,6 +74,12 @@
       <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Application.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -118,14 +121,11 @@
     <ClCompile Include="SwapChain.cpp">
       <Filter>Engine\SwapChain</Filter>
     </ClCompile>
-    <ClCompile Include="general.cpp">
-      <Filter>General</Filter>
-    </ClCompile>
     <ClCompile Include="android_native_app_glue.c">
-      <Filter>General\Android</Filter>
+      <Filter>Utils\Android</Filter>
     </ClCompile>
     <ClCompile Include="vulkan_wrapper.cpp">
-      <Filter>General\Vulkan</Filter>
+      <Filter>Utils\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass.cpp">
       <Filter>Engine\RenderPasses</Filter>
@@ -137,7 +137,7 @@
       <Filter>Engine\DescriptorPool</Filter>
     </ClCompile>
     <ClCompile Include="AssetManager.cpp">
-      <Filter>General\Android</Filter>
+      <Filter>Utils\Android</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsPipeline.cpp">
       <Filter>Engine\Pipelines</Filter>
@@ -149,6 +149,12 @@
       <Filter>Engine\Vertex</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Application.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Main">
@@ -181,15 +187,6 @@
     <Filter Include="Engine\SwapChain">
       <UniqueIdentifier>{5cd65a9a-9e0b-4485-b1e8-be2ee13957fc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="General">
-      <UniqueIdentifier>{2bb6fbd1-438d-481f-9fe3-2c892b858b7b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="General\Android">
-      <UniqueIdentifier>{e863f993-0c82-489a-ad04-44d79a75e56f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="General\Vulkan">
-      <UniqueIdentifier>{9bb518d8-1dc3-4a5c-9f46-c21265b58932}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\RenderPasses">
       <UniqueIdentifier>{2ebcd2a5-c415-45be-abd0-161d28e63eab}</UniqueIdentifier>
     </Filter>
@@ -207,6 +204,18 @@
     </Filter>
     <Filter Include="Scene">
       <UniqueIdentifier>{0210aae9-3f29-412d-a587-6c610e5dab71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="App">
+      <UniqueIdentifier>{d7ecee0a-377d-40b0-a2b4-9896944fbbde}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{2bb6fbd1-438d-481f-9fe3-2c892b858b7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\Android">
+      <UniqueIdentifier>{e863f993-0c82-489a-ad04-44d79a75e56f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\Vulkan">
+      <UniqueIdentifier>{9bb518d8-1dc3-4a5c-9f46-c21265b58932}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
