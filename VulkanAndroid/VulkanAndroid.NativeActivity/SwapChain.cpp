@@ -84,7 +84,7 @@ void SwapChain::create(VkExtent2D surfaceExtent)
 		VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,				
 		presentMode,									
 		true,
-	    VK_NULL_HANDLE
+	    nullptr
 	};
 
 	// concurrent sharing mode only when using different queue families

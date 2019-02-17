@@ -19,8 +19,6 @@ public:
 
     bool recreate(ANativeWindow *window);
 
-    bool resize(VkExtent2D newExtent);
-
     void outdate();
 
     void pause();

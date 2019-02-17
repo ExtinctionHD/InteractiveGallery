@@ -90,28 +90,12 @@ bool Engine::recreate(ANativeWindow *window)
         swapChain->recreate(surface->get(), extent);
         mainRenderPass->recreate(extent);
         graphicsPipeline->recreate();
+        camera->resize();
 
         initGraphicsCommands();
 
         outdated = false;
     }
-
-    return true;
-}
-
-bool Engine::resize(VkExtent2D newExtent)
-{
-    if (!created) return false;
-
-    vkDeviceWaitIdle(device->get());
-
-    swapChain->recreate(newExtent);
-    mainRenderPass->recreate(newExtent);
-    graphicsPipeline->recreate();
-
-    initGraphicsCommands();
-
-    LOGI("Engine resized.");
 
     return true;
 }

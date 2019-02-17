@@ -17,7 +17,5 @@ private:
     Engine engine;
 
     static void handleAppCommand(android_app *app, int32_t cmd);
-
-    static bool equals(VkExtent2D x, VkExtent2D y);
 };
 

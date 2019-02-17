@@ -54,10 +54,6 @@ void Application::handleAppCommand(android_app *app, int32_t cmd)
         LOGD("APP_CMD_TERM_WINDOW");
         engine->outdate();
         break;
-    case APP_CMD_WINDOW_RESIZED:
-        LOGD("APP_CMD_WINDOW_RESIZED");
-        engine->resize(window::getExtent(app->window));
-        break;
     case APP_CMD_GAINED_FOCUS:
         LOGD("APP_CMD_GAINED_FOCUS");
         engine->unpause();
@@ -66,11 +62,6 @@ void Application::handleAppCommand(android_app *app, int32_t cmd)
         LOGD("APP_CMD_LOST_FOCUS");
         engine->pause();
         break;
-    default:;
+    default: ;
     }
-}
-
-bool Application::equals(VkExtent2D x, VkExtent2D y)
-{
-    return x.width == y.width && x.height == y.height;
 }

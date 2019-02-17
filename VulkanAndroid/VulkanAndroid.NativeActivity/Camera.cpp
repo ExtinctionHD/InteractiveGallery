@@ -54,8 +54,12 @@ glm::mat4 Camera::createProjectionMatrix() const
 {
     const float aspect = attributes.extent.width / float(attributes.extent.height);
 
+    const float fovY = aspect < 1.0f ? attributes.fov : attributes.fov / aspect;
+
+    LOGD("Camera fov x: %f, y: %f", fovY * aspect, fovY);
+
     glm::mat4 projection = glm::perspective(
-        glm::radians(attributes.fov) / aspect,
+        glm::radians(fovY),
         aspect,
         attributes.nearPlane,
         attributes.farPlane);
