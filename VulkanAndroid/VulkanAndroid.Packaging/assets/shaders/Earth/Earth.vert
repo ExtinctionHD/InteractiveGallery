@@ -1,10 +1,15 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(binding = 0) uniform Space
+layout(set = 0, binding = 0) uniform Space
 {
     mat4 view;
     mat4 proj;
+};
+
+layout(set = 1, binding = 0) uniform Tranformation
+{
+    mat4 tranformation;
 };
 
 layout(location = 0) in vec3 inPos;
@@ -29,5 +34,5 @@ void main()
     outNormal = inNormal;
     outTangent = inTangent;
 
-	gl_Position = proj * view * vec4(inPos, 1.0f);
+	gl_Position = proj * view * tranformation * vec4(inPos, 1.0f);
 }

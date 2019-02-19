@@ -65,7 +65,7 @@ uint32_t Device::findMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags 
 		}
 	}
 
-	ERROR("Failed to find suitable memory type");
+	FATAL("Failed to find suitable memory type");
 	return uint32_t{};
 }
 
@@ -87,7 +87,7 @@ VkFormat Device::findSupportedFormat(std::vector<VkFormat> requestedFormats, VkI
 		}
 	}
 
-	ERROR("Failed to find suitable image format");
+	FATAL("Failed to find suitable image format");
 	return VkFormat{};
 }
 
@@ -175,7 +175,7 @@ void Device::pickPhysicalDevice(VkInstance instance, const std::vector<const cha
 	uint32_t deviceCount = 0;
 	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);  // get count
 
-    LOGA(deviceCount, "No physical device that supports vulkan.");
+    LOGA(deviceCount);
 
 	std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
 	vkEnumeratePhysicalDevices(instance, &deviceCount, physicalDevices.data());  // get devices
@@ -188,7 +188,7 @@ void Device::pickPhysicalDevice(VkInstance instance, const std::vector<const cha
 		}
 	}
 
-    LOGA(physicalDevice, "Failed to find suitable physical device.");
+    LOGA(physicalDevice);
 }
 
 bool Device::physicalDeviceSuitable(

@@ -1,9 +1,5 @@
 #pragma once
 #include "Device.h"
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include "Buffer.h"
 
@@ -14,7 +10,7 @@ public:
     {
         VkExtent2D extent;
         glm::vec3 position;
-        glm::vec3 forward;
+        glm::vec3 target;
         glm::vec3 up;
         float fov;
         float nearPlane;
@@ -35,7 +31,7 @@ public:
 
     void update() const;
 
-    void resize() const;
+    void resize(VkExtent2D newExtent);
 
 private:
     Attributes attributes;

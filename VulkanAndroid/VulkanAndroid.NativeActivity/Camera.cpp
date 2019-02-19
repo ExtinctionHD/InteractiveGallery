@@ -20,7 +20,7 @@ glm::vec3 Camera::getPos() const
 
 glm::vec3 Camera::getTarget() const
 {
-    return attributes.position + attributes.forward;
+    return attributes.target;
 }
 
 glm::vec3 Camera::getUp() const
@@ -39,15 +39,16 @@ void Camera::update() const
     buffer->updateData(&view, 0, sizeof(glm::mat4));
 }
 
-void Camera::resize() const
+void Camera::resize(VkExtent2D newExtent)
 {
+    attributes.extent = newExtent;
     glm::mat4 projection = createProjectionMatrix();
     buffer->updateData(&projection, sizeof(glm::mat4), sizeof(glm::mat4));
 }
 
 glm::mat4 Camera::createViewMatrix() const
 {
-    return lookAt(getPos(), getTarget(), getUp());
+    return lookAt(attributes.position, attributes.target, attributes.up);
 }
 
 glm::mat4 Camera::createProjectionMatrix() const

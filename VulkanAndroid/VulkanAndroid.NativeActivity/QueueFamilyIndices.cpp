@@ -31,14 +31,14 @@ QueueFamilyIndices::QueueFamilyIndices(VkPhysicalDevice device, VkSurfaceKHR sur
 
 uint32_t QueueFamilyIndices::getGraphics() const
 {
-    LOGA(graphics >= 0, "No queue family suitable for drawing graphics.");
+    LOGA(graphics >= 0);
 
 	return uint32_t(graphics);
 }
 
 uint32_t QueueFamilyIndices::getPresentation() const
 {
-    LOGA(presentation >= 0, "No queue family suitable for presentation.");
+    LOGA(presentation >= 0);
 
 	return uint32_t(presentation);
 }

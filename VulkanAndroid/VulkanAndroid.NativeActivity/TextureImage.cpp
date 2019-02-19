@@ -9,7 +9,7 @@ TextureImage::TextureImage(
 	VkFilter filter,
 	VkSamplerAddressMode samplerAddressMode)
 {
-    extent = VkExtent3D{};
+    extent = VkExtent3D{0, 0, 1};
 
 	std::vector<const void*> pixels(paths.size());
 	for (uint32_t i = 0; i < paths.size(); i++)
@@ -96,12 +96,14 @@ stbi_uc* TextureImage::loadPixels(const std::string &path)
         nullptr,
         STBI_rgb_alpha);
 
-    LOGA(pixels, "Failed to load image: [%s]", path.c_str());
+    LOGA(pixels);
+
+    LOGI("Texture [%s] loaded, width: %d, height %d.", path.c_str(), width, height);
 
     if (extent.width && extent.height)
     {
         const bool sameExtent = extent.width == uint32_t(width) && extent.height == uint32_t(height);
-        LOGA(sameExtent, "Images in the array must have the same extent.");
+        LOGA(sameExtent);
     }
     else
     {
@@ -115,7 +117,7 @@ stbi_uc* TextureImage::loadPixels(const std::string &path)
 void TextureImage::generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filter) const
 {
 	const auto featureFlags = device->getFormatProperties(format).optimalTilingFeatures;
-	LOGA(featureFlags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT, "Image doesn't support mipmapping.");
+	LOGA(featureFlags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
 
 	VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
 

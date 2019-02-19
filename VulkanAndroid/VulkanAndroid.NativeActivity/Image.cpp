@@ -126,7 +126,7 @@ void Image::transitLayout(
 	}
 	else
 	{
-		ERROR("Unsupported image layout transition");
+		FATAL("Unsupported image layout transition");
 	}
 
 	vkCmdPipelineBarrier(
@@ -142,9 +142,9 @@ void Image::transitLayout(
 
 void Image::updateData(std::vector<const void*> data, uint32_t layersOffset, uint32_t pixelSize) const
 {
-	const uint32_t updatedLayers = arrayLayers < layersOffset + uint32_t(data.size())
-                                       ? arrayLayers - layersOffset
-                                       : uint32_t(data.size());
+	const auto updatedLayers = uint32_t(data.size());
+
+    LOGA(layersOffset + updatedLayers <= arrayLayers);
 
 	const VkImageSubresourceRange subresourceRange{
 		VK_IMAGE_ASPECT_COLOR_BIT,
@@ -158,7 +158,7 @@ void Image::updateData(std::vector<const void*> data, uint32_t layersOffset, uin
 	StagingBuffer stagingBuffer(device, layerSize * updatedLayers);
 	for (uint32_t i = 0; i < updatedLayers; i++)
 	{
-		stagingBuffer.updateData(data[i], layerSize, i * layerSize);
+		stagingBuffer.updateData(data[i], i * layerSize,layerSize);
 	}
 
 	std::vector<VkBufferImageCopy> regions(updatedLayers);
@@ -240,7 +240,7 @@ void Image::createThisImage(
 
 		if (cubeMap)
 		{
-			LOGA(arrayLayers >= 6, "For cubemaps number of array layers must be greater than or equal to 6.");
+			LOGA(arrayLayers >= 6);
 
 			flags = flags | VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 			viewType = VK_IMAGE_VIEW_TYPE_CUBE;

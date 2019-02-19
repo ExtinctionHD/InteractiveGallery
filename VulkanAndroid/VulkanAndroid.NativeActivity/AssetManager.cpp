@@ -7,11 +7,11 @@ void AssetManager::setManager(AAssetManager *manager)
 
 std::vector<uint8_t> AssetManager::getBytes(const std::string &path)
 {
-    LOGA(manager, "Asset manager undefined.");
+    LOGA(manager);
 
     AAsset *asset = AAssetManager_open(manager, path.c_str(), AASSET_MODE_UNKNOWN);
 
-    LOGA(manager, "Asset [%s] not found.", path.c_str());
+    LOGA(asset);
 
     const auto size = AAsset_getLength(asset);
     std::vector<uint8_t> buffer(size);

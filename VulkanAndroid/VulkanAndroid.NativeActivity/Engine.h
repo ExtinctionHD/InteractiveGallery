@@ -6,7 +6,8 @@
 #include "MainRenderPass.h"
 #include "DescriptorPool.h"
 #include "GraphicsPipeline.h"
-#include "Camera.h"
+#include "Scene.h"
+#include "DescriptorSets.h"
 
 class Engine
 {
@@ -30,6 +31,13 @@ public:
     bool destroy();
 
 private:
+    enum DescriptorType
+    {
+        SCENE,
+        MODEL,
+        COUNT
+    };
+
     bool created;
 
     bool outdated;
@@ -44,21 +52,15 @@ private:
 
     SwapChain *swapChain;
 
+    Scene *scene;
+
     MainRenderPass *mainRenderPass;
 
     DescriptorPool *descriptorPool;
 
-    GraphicsPipeline *graphicsPipeline;
+    std::vector<DescriptorSets*> descriptors;
 
-    Buffer *vertexBuffer;
-
-    Buffer *indexBuffer;
-
-    uint32_t indexCount;
-
-    Camera *camera;
-
-    DescriptorStruct descriptor;
+    GraphicsPipeline *earthPipeline;
 
     VkSemaphore imageAvailableSemaphore;
 
@@ -66,7 +68,9 @@ private:
 
     std::vector<VkCommandBuffer> graphicsCommands;
 
-    void createMesh();
+    void initDescriptorSets();
+
+    void createEarthPipeline();
 
     VkSemaphore createSemaphore() const;
 

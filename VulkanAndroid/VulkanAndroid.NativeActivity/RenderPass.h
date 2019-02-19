@@ -9,7 +9,7 @@ public:
     enum Type
     {
         MAIN,
-        LAST = MAIN
+        COUNT
     };
 
     virtual ~RenderPass();

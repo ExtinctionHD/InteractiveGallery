@@ -37,14 +37,14 @@ void Application::mainLoop()
 
 void Application::handleAppCommand(android_app *app, int32_t cmd)
 {
-    LOGA(app->userData, "User data undefined.");
+    LOGA(app->userData);
     auto engine = reinterpret_cast<Engine*>(app->userData);
 
     switch (cmd)
     {
     case APP_CMD_INIT_WINDOW:
         LOGD("APP_CMD_INIT_WINDOW");
-        LOGA(app->window, "Window undefined.");
+        LOGA(app->window);
         if (!engine->recreate(app->window))
         {
             engine->create(app->window);

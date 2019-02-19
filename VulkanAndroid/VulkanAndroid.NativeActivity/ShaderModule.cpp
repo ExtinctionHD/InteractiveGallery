@@ -27,7 +27,7 @@ ShaderModule::ShaderModule(
 {
     if (!entries.empty())
     {
-        LOGA(entries.size() == data.size(), "Invalid shader specialization map.");
+        LOGA(entries.size() == data.size());
 
 		const size_t size = entries.back().offset + entries.back().size;
 

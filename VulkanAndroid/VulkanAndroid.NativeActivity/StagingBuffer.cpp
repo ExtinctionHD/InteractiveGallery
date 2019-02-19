@@ -34,7 +34,7 @@ void StagingBuffer::updateData(const void *data, VkDeviceSize offset, VkDeviceSi
         dataSize = size - offset;
     }
 
-	LOGA(offset + dataSize <= size, "Size of updated data can't be bigger than buffer size");
+	LOGA(offset + dataSize <= size);
 
 	void *bufferData;
 	vkMapMemory(device->get(), stagingMemory, offset, dataSize, 0, &bufferData);

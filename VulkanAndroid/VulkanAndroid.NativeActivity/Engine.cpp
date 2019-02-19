@@ -1,7 +1,6 @@
 #include "Engine.h"
 #include "Vertex.h"
 #include "utils.h"
-#include "sphere.h"
 
 Engine::Engine() : created(false), outdated(false)
 {
@@ -21,50 +20,19 @@ bool Engine::create(ANativeWindow *window)
 {
     if (created) return true;
 
-    const auto extent = window::getExtent(window);
-    LOGD("Window extent: %d x %d.", extent.width, extent.height);
-
     surface = new Surface(instance->get(), window);
     device = new Device(instance->get(), surface->get(), instance->getLayers());
-    swapChain = new SwapChain(device, surface->get(), extent);
-    descriptorPool = new DescriptorPool(device, 1, 0, 1);
+    swapChain = new SwapChain(device, surface->get(), window::getExtent(window));
+    scene = new Scene(device, swapChain->getExtent());
+    descriptorPool = new DescriptorPool(device, Scene::BUFFER_COUNT, Scene::TEXTURE_COUNT, COUNT);
     mainRenderPass = new MainRenderPass(device, swapChain);
     mainRenderPass->create();
 
-    const Camera::Attributes attributes{
-        extent,
-        glm::vec3(0.0f, 0.0f, -500.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f),
-        glm::vec3(0.0f, -1.0f, 0.0f),
-        90.0f,
-        1.0f,
-        800.0f
-    };
-    camera = new Camera(device, attributes);
-
-    descriptor.layout = descriptorPool->createDescriptorSetLayout({ VK_SHADER_STAGE_VERTEX_BIT }, {});
-    descriptor.sets = { descriptorPool->getDescriptorSet(descriptor.layout) };
-    descriptorPool->updateDescriptorSet(descriptor.sets[0], { camera->getBuffer() }, {});
-
-    const std::string shadersPath = "shaders/Main/";
-    const std::vector<std::shared_ptr<ShaderModule>> shaders{
-        std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-        std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-    };
-    graphicsPipeline = new GraphicsPipeline(
-        device,
-        mainRenderPass,
-        { descriptor.layout },
-        {},
-        shaders,
-        { Vertex::getBindingDescription(0) },
-        Vertex::getAttributeDescriptions(0, 0),
-        true);
-
-    createMesh();
+    initDescriptorSets();
+    createEarthPipeline();
 
     imageAvailableSemaphore = createSemaphore();
-    passFinishedSemaphores.resize(RenderPass::LAST + 1, createSemaphore());
+    passFinishedSemaphores.resize(RenderPass::COUNT, createSemaphore());
     initGraphicsCommands();
 
     created = true;
@@ -89,8 +57,8 @@ bool Engine::recreate(ANativeWindow *window)
         device->updateSurface(surface->get());
         swapChain->recreate(surface->get(), extent);
         mainRenderPass->recreate(extent);
-        graphicsPipeline->recreate();
-        camera->resize();
+        earthPipeline->recreate();
+        scene->resize(extent);
 
         initGraphicsCommands();
 
@@ -190,14 +158,15 @@ bool Engine::destroy()
     }
     vkDestroySemaphore(device->get(), imageAvailableSemaphore, nullptr);
 
-    vkDestroyDescriptorSetLayout(device->get(), descriptor.layout, nullptr);
+    delete earthPipeline;    
+    for (auto descriptor : descriptors)
+    {
+        delete descriptor;
+    }
 
-    delete indexBuffer;
-    delete vertexBuffer;
-    delete graphicsPipeline;
-    delete camera;
     delete mainRenderPass;
     delete descriptorPool;
+    delete scene;
     delete swapChain;
     delete device;
     delete surface;
@@ -209,17 +178,42 @@ bool Engine::destroy()
     return true;
 }
 
-void Engine::createMesh()
+void Engine::initDescriptorSets()
 {
-    vertexBuffer = new Buffer(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, sphere::VERTICES.size() * sizeof(Vertex));
-    vertexBuffer->updateData(sphere::VERTICES.data());
+    std::vector<TextureImage*> earthTextures = scene->getEarthTextures();
+    const std::vector<VkShaderStageFlags> earthTextureShaderStages(earthTextures.size(), VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    indexBuffer = new Buffer(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, sphere::INDICES.size() * sizeof(uint32_t));
-    indexBuffer->updateData(sphere::INDICES.data());
+    descriptors.resize(COUNT);
 
-    indexCount = sphere::INDICES.size();
+    descriptors[SCENE] = new DescriptorSets(
+        descriptorPool,
+        { VK_SHADER_STAGE_VERTEX_BIT },
+        {});
+    descriptors[MODEL] = new DescriptorSets(
+        descriptorPool,
+        { VK_SHADER_STAGE_VERTEX_BIT },
+        earthTextureShaderStages);
 
-    LOGI("Mesh created.");
+    descriptors[SCENE]->pushDescriptorSet({ scene->getCameraBuffer() }, {});
+    descriptors[MODEL]->pushDescriptorSet({ scene->getEarthTransformationBuffer() }, earthTextures );
+}
+
+void Engine::createEarthPipeline()
+{
+    const std::string shadersPath = "shaders/Earth/";
+    const std::vector<std::shared_ptr<ShaderModule>> shaders{
+        std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+        std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+    };
+    earthPipeline = new GraphicsPipeline(
+        device,
+        mainRenderPass,
+        { descriptors[SCENE]->getLayout(), descriptors[MODEL]->getLayout() },
+        {},
+        shaders,
+        { Vertex::getBindingDescription(0) },
+        Vertex::getAttributeDescriptions(0, 0),
+        true);
 }
 
 VkSemaphore Engine::createSemaphore() const
@@ -289,26 +283,23 @@ void Engine::initGraphicsCommands()
 
         vkCmdBeginRenderPass(graphicsCommands[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->get());
+        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, earthPipeline->get());
 
+        std::vector<VkDescriptorSet> descriptorSets{
+            descriptors[SCENE]->getDescriptorSet(0),
+            descriptors[MODEL]->getDescriptorSet(0)
+        };
         vkCmdBindDescriptorSets(
             graphicsCommands[i],
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            graphicsPipeline->getLayout(),
+            earthPipeline->getLayout(),
             0,
-            descriptor.sets.size(),
-            descriptor.sets.data(),
+            descriptorSets.size(),
+            descriptorSets.data(),
             0,
             nullptr);
 
-        VkBuffer buffer = vertexBuffer->get();
-        VkDeviceSize offset = 0;
-        vkCmdBindVertexBuffers(graphicsCommands[i], 0, 1, &buffer, &offset);
-
-        buffer = indexBuffer->get();
-        vkCmdBindIndexBuffer(graphicsCommands[i], buffer, 0, VK_INDEX_TYPE_UINT32);
-
-        vkCmdDrawIndexed(graphicsCommands[i], indexCount, 1, 0, 0, 0);
+        scene->drawSphere(graphicsCommands[i]);
 
         vkCmdEndRenderPass(graphicsCommands[i]);
 

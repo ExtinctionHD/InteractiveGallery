@@ -11,8 +11,10 @@ public:
 	~DescriptorPool();
 
 	VkDescriptorSetLayout createDescriptorSetLayout(
-		std::vector<VkShaderStageFlags> buffersShaderStages,
-		std::vector<VkShaderStageFlags> texturesShaderStages) const;
+		std::vector<VkShaderStageFlags> bufferShaderStages,
+		std::vector<VkShaderStageFlags> textureShaderStages) const;
+
+    void destroyDescriptorSetLayout(VkDescriptorSetLayout layout) const;
 
 	VkDescriptorSet getDescriptorSet(VkDescriptorSetLayout layout) const;
 
@@ -21,15 +23,11 @@ public:
 		std::vector<Buffer*> buffers,
 		std::vector<TextureImage*> textures) const;
 
+    void freeDescriptorSets(std::vector<VkDescriptorSet> sets);
+
 private:
 	Device *device;
 
 	VkDescriptorPool pool;
-};
-
-struct DescriptorStruct
-{
-	VkDescriptorSetLayout layout;
-	std::vector<VkDescriptorSet> sets;
 };
 

@@ -24,13 +24,13 @@
         assert(false);                                                      \
     }
 
-#define ERROR(...)      \
+#define FATAL(...)      \
 	LOGF(__VA_ARGS__);  \
 	assert(false)
 
-#define LOGA(e, ...)        \
-    if (!(e))               \
-    {                       \
-        LOGF(__VA_ARGS__);  \
-    }                       \
+#define LOGA(e)                                                             \
+    if (!(e))                                                               \
+    {                                                                       \
+        LOGF("Assertion failed. File [%s], line %d", __FILE__, __LINE__);   \
+    }                                                                       \
     assert(e)
