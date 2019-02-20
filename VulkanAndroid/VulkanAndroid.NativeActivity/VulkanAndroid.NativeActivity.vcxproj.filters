@@ -94,6 +94,9 @@
     <ClInclude Include="DescriptorSets.h">
       <Filter>Engine\Descriptors</Filter>
     </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>Utils\Timer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -183,6 +186,9 @@
     <ClCompile Include="DescriptorSets.cpp">
       <Filter>Engine\Descriptors</Filter>
     </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Utils\Timer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Main">
@@ -250,6 +256,12 @@
     </Filter>
     <Filter Include="Engine\Descriptors">
       <UniqueIdentifier>{c859c8b5-fd46-4f15-930b-7279d1550579}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\Timer">
+      <UniqueIdentifier>{513f93d8-6235-416c-a222-b67acb11afb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\Lighting">
+      <UniqueIdentifier>{9cda8118-ef80-43ad-b36b-cec7bb1d523c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

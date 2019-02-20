@@ -26,7 +26,7 @@ void Application::mainLoop()
 
             if (app->destroyRequested)
             {
-                LOGI("Applicatoin destroyed.");
+                LOGI("Applicatoin destroy requested.");
                 return;
             }
         }

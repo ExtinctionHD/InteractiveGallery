@@ -279,6 +279,7 @@
     <ClInclude Include="Macro.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="Timer.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="android_native_app_glue.h" />
@@ -313,6 +314,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="QueueFamilyIndices.cpp" />
     <ClCompile Include="RenderPass.cpp" />

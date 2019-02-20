@@ -1,4 +1,5 @@
 #include "Model.h"
+#include <glm/gtx/transform.hpp>
 
 Model::~Model()
 {
@@ -8,6 +9,12 @@ Model::~Model()
 Buffer* Model::getTransformationBuffer() const
 {
     return transformationBuffer;
+}
+
+void Model::rotate(float angle, glm::vec3 axis)
+{
+    transformation = glm::rotate(transformation, glm::radians(angle), axis);
+    transformationBuffer->updateData(&transformation);
 }
 
 Model::Model(Device *device) : transformation(glm::mat4(1.0f))

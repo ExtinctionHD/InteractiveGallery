@@ -1,6 +1,7 @@
 #pragma once
 #include "Camera.h"
 #include "Earth.h"
+#include "Timer.h"
 
 class Scene
 {
@@ -18,6 +19,8 @@ public:
 
     std::vector<TextureImage*> getEarthTextures() const;
 
+    void update();
+
     void resize(VkExtent2D newExtent);
 
     void drawSphere(VkCommandBuffer commandBuffer) const;
@@ -31,6 +34,10 @@ private:
 
     uint32_t indexCount;
 
+    Timer timer;
+
     Earth *earth;
+
+    static void logFps(float deltaSec);
 };
 

@@ -87,6 +87,8 @@ bool Engine::drawFrame()
 {
     if (!created || outdated || paused) return false;
 
+    scene->update();
+
     uint32_t imageIndex;
 
     VkResult result = vkAcquireNextImageKHR(

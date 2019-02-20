@@ -8,6 +8,8 @@ public:
 
     Buffer* getTransformationBuffer() const;
 
+    void rotate(float angle, glm::vec3 axis);
+
 protected:
     Model(Device *device);
 

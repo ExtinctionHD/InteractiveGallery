@@ -47,6 +47,15 @@ std::vector<TextureImage *> Scene::getEarthTextures() const
     return earth->getTextures();
 }
 
+void Scene::update()
+{
+    const float deltaSec = timer.getDeltaSec();
+
+    earth->rotate(20.0f * deltaSec, glm::vec3(0.0f, -1.0f, 0.0f));
+
+    logFps(deltaSec);
+}
+
 void Scene::resize(VkExtent2D newExtent)
 {
     camera->resize(newExtent);
@@ -62,4 +71,23 @@ void Scene::drawSphere(VkCommandBuffer commandBuffer) const
     vkCmdBindIndexBuffer(commandBuffer, buffer, 0, VK_INDEX_TYPE_UINT32);
     
     vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+}
+
+void Scene::logFps(float deltaSec)
+{
+    static int frameCount = 0;
+    static float deltaSum = 0.0f;
+
+    deltaSum += deltaSec;
+
+    if (deltaSum < 1.0f)
+    {
+        frameCount++;
+    }
+    else
+    {
+        LOGD("FPS: %d.", frameCount);
+        frameCount = 0;
+        deltaSum = 0.0f;
+    }
 }
