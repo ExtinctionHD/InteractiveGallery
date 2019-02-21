@@ -29,10 +29,11 @@ out gl_PerVertex
 
 void main() 
 {	
-    outPos = inPos;
+    outPos = vec3(tranformation * vec4(inPos, 1.0f));
     outUV = inUV;
-    outNormal = inNormal;
-    outTangent = inTangent;
+    
+    outNormal = vec3(tranformation * vec4(inNormal, 0.0f));
+    outTangent = vec3(tranformation * vec4(inTangent, 0.0f));
 
 	gl_Position = proj * view * tranformation * vec4(inPos, 1.0f);
 }

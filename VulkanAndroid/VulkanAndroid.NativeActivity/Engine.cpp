@@ -189,14 +189,14 @@ void Engine::initDescriptorSets()
 
     descriptors[SCENE] = new DescriptorSets(
         descriptorPool,
-        { VK_SHADER_STAGE_VERTEX_BIT },
+        { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT },
         {});
     descriptors[MODEL] = new DescriptorSets(
         descriptorPool,
         { VK_SHADER_STAGE_VERTEX_BIT },
         earthTextureShaderStages);
 
-    descriptors[SCENE]->pushDescriptorSet({ scene->getCameraBuffer() }, {});
+    descriptors[SCENE]->pushDescriptorSet({ scene->getCameraBuffer(), scene->getLightingBuffer()  }, {});
     descriptors[MODEL]->pushDescriptorSet({ scene->getEarthTransformationBuffer() }, earthTextures );
 }
 

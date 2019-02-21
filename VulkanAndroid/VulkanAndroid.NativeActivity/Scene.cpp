@@ -3,16 +3,26 @@
 
 Scene::Scene(Device *device, VkExtent2D extent) : indexCount(sphere::INDICES.size())
 {
-    const Camera::Attributes attributes{
+    const Camera::Attributes cameraAttributes{
         extent,
-        glm::vec3(500.0f, 0.0f, -500.0f),
+        glm::vec3(0.0f, 0.0f, -20.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(0.0f, -1.0f, 0.0f),
         90.0f,
         1.0f,
-        800.0f
+        50.0f
     };
-    camera = new Camera(device, attributes);
+    camera = new Camera(device, cameraAttributes);
+
+    const Lighting::Attributes lightingAttributes{
+        glm::vec3(1.0f),
+        0.02f,
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        0.9f,
+        cameraAttributes.position,
+        16.0f
+    };
+    lighting = new Lighting(device, lightingAttributes);
 
     sphereVertexBuffer = new Buffer(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, sphere::VERTICES.size() * sizeof(Vertex));
     sphereIndexBuffer = new Buffer(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, sphere::INDICES.size() * sizeof(uint32_t));
@@ -20,6 +30,7 @@ Scene::Scene(Device *device, VkExtent2D extent) : indexCount(sphere::INDICES.siz
     sphereIndexBuffer->updateData(sphere::INDICES.data());
 
     earth = new Earth(device, "textures/earth/2K/");
+    //earth->rotate(90.0f, glm::vec3(0.0f, -1.0f, 0.0f));
 
     LOGI("Scene created.");
 }
@@ -29,6 +40,7 @@ Scene::~Scene()
     delete earth;
     delete sphereIndexBuffer;
     delete sphereVertexBuffer;
+    delete lighting;
     delete camera;
 }
 
@@ -40,6 +52,11 @@ Buffer* Scene::getCameraBuffer() const
 Buffer* Scene::getEarthTransformationBuffer() const
 {
     return earth->getTransformationBuffer();
+}
+
+Buffer* Scene::getLightingBuffer() const
+{
+    return lighting->getBuffer();
 }
 
 std::vector<TextureImage *> Scene::getEarthTextures() const

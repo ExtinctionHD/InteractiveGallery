@@ -97,6 +97,9 @@
     <ClInclude Include="Timer.h">
       <Filter>Utils\Timer</Filter>
     </ClInclude>
+    <ClInclude Include="Lighting.h">
+      <Filter>Scene\Lighting</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -188,6 +191,9 @@
     </ClCompile>
     <ClCompile Include="Timer.cpp">
       <Filter>Utils\Timer</Filter>
+    </ClCompile>
+    <ClCompile Include="Lighting.cpp">
+      <Filter>Scene\Lighting</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

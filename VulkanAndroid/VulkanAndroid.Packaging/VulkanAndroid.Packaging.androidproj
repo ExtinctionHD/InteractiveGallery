@@ -127,10 +127,10 @@
     </AntPackage>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Content Include="assets\textures\earth\2K\Bump.jpg" />
     <Content Include="assets\textures\earth\2K\Clouds.jpg" />
     <Content Include="assets\textures\earth\2K\Day.jpg" />
     <Content Include="assets\textures\earth\2K\Night.jpg" />
+    <Content Include="assets\textures\earth\2K\Normal.jpg" />
     <Content Include="assets\textures\earth\2K\Specular.jpg" />
     <Content Include="libs\arm64-v8a\libVkLayer_core_validation.so" />
     <Content Include="assets\shaders\Earth\frag.spv" />

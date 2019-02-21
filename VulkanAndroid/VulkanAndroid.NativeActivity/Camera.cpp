@@ -28,7 +28,7 @@ glm::vec3 Camera::getUp() const
     return  attributes.up;
 }
 
-Buffer * Camera::getBuffer() const
+Buffer* Camera::getBuffer() const
 {
     return buffer;
 }
