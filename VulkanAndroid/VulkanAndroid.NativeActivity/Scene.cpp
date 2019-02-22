@@ -15,12 +15,9 @@ Scene::Scene(Device *device, VkExtent2D extent) : indexCount(sphere::INDICES.siz
     camera = new Camera(device, cameraAttributes);
 
     const Lighting::Attributes lightingAttributes{
-        glm::vec3(1.0f),
-        0.02f,
         glm::vec3(1.0f, 0.0f, 0.0f),
-        0.9f,
-        cameraAttributes.position,
-        16.0f
+        4.0f,
+        cameraAttributes.position
     };
     lighting = new Lighting(device, lightingAttributes);
 

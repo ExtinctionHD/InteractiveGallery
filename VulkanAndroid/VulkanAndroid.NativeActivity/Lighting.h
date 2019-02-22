@@ -7,12 +7,9 @@ class Lighting
 public:
     struct Attributes
     {
-        glm::vec3 color;
-        float ambientStrength;
         glm::vec3 direction;
-        float directedStrength;
+        float transitionFactor;
         glm::vec3 cameraPos;
-        float specularPower;
     };
 
     Lighting(Device *device, Attributes attributes);

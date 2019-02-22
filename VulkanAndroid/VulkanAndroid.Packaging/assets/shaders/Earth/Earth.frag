@@ -3,13 +3,10 @@
 
 layout(set = 0, binding = 1) uniform Lighting
 {
-    vec3 color;
-    float ambientStrength;
     vec3 direction;
-    float directedStrength;
+	float transitionPower;
     vec3 cameraPos;
-    float specularPower;
-} lighting;
+};
 
 layout(set = 1, binding = 1) uniform sampler2D dayTexture;
 layout(set = 1, binding = 2) uniform sampler2D nightTexture;
@@ -23,24 +20,24 @@ layout(location = 3) in vec3 inTangent;
 
 layout(location = 0) out vec4 outColor;
 
-vec3 getBumpedNormal(vec3 normal, vec3 tangent, vec2 uv)
+vec3 getBumpedNormal(vec3 N, vec3 T, vec2 uv)
 {
-	normal = normalize(normal);
+	N = normalize(N);
 
 	// texture u vector in world space
-	tangent = normalize(tangent);
-	tangent = normalize(tangent - dot(tangent, normal) * normal);
+	T = normalize(T);
+	T = normalize(T - dot(T, N) * N);
 
 	// texture v vector in world space
-	vec3 bitangent = cross(tangent, normal);
+	vec3 B = cross(T, N);
 
-	// normal from texture
+	// N from texture
 	vec3 bumMapNormal = texture(normalTexture, uv).xyz;
 	bumMapNormal = 2.0f * bumMapNormal - vec3(1.0f, 1.0f, 1.0f);
 
-	// normal from texture in world space
+	// N from texture in world space
 	vec3 resultNormal;
-	mat3 tbn = mat3(tangent, bitangent, normal);
+	mat3 tbn = mat3(T, B, N);
 	resultNormal = tbn * bumMapNormal;
 	resultNormal = normalize(resultNormal);
 
@@ -49,12 +46,16 @@ vec3 getBumpedNormal(vec3 normal, vec3 tangent, vec2 uv)
 
 void main() 
 {
-	vec3 L = normalize(-lighting.direction);
-	vec3 V = normalize(lighting.cameraPos - inPos);
+
+	vec3 L = normalize(-direction);
+	vec3 V = normalize(cameraPos - inPos);
 	vec3 N = getBumpedNormal(inNormal, inTangent, inUV);
 
-	vec3 diffuse = max(dot(N, L), 0.0) * lighting.color * lighting.directedStrength;
-	vec3 result = (lighting.ambientStrength + diffuse) * texture(dayTexture, inUV).rgb;
+	float diffuseFactor = max(dot(N, L), 0.0f);
+
+	vec3 result = texture(nightTexture, inUV).rgb;
+	result *= pow(1.0f - diffuseFactor, transitionPower);
+	result += diffuseFactor * texture(dayTexture, inUV).rgb;
 
     outColor = vec4(result, 1.0f);
 }
