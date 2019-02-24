@@ -11,7 +11,6 @@ layout(set = 0, binding = 1) uniform Lighting
 layout(set = 1, binding = 1) uniform sampler2D dayTexture;
 layout(set = 1, binding = 2) uniform sampler2D nightTexture;
 layout(set = 1, binding = 3) uniform sampler2D normalTexture;
-layout(set = 1, binding = 4) uniform sampler2D specularTexture;
 
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec2 inUV;

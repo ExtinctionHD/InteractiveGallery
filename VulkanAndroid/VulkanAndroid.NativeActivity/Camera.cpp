@@ -1,6 +1,6 @@
 #include "Camera.h"
 
-Camera::Camera(Device *device, Attributes attributes) : attributes(attributes)
+Camera::Camera(Device *device, Parameters parameters, Location location) : parameters(parameters)
 {
     glm::mat4 matrices[2] = { createViewMatrix(), createProjectionMatrix() };
 
@@ -15,17 +15,17 @@ Camera::~Camera()
 
 glm::vec3 Camera::getPos() const
 {
-    return attributes.position;
+    return location.position;
 }
 
 glm::vec3 Camera::getTarget() const
 {
-    return attributes.target;
+    return location.target;
 }
 
 glm::vec3 Camera::getUp() const
 {
-    return  attributes.up;
+    return location.up;
 }
 
 Buffer* Camera::getBuffer() const
@@ -33,37 +33,39 @@ Buffer* Camera::getBuffer() const
     return buffer;
 }
 
-void Camera::update() const
+void Camera::update(Location location)
 {
-    glm::mat4 view = createProjectionMatrix();
+    this->location = location;
+
+    glm::mat4 view = createViewMatrix();
     buffer->updateData(&view, 0, sizeof(glm::mat4));
 }
 
 void Camera::resize(VkExtent2D newExtent)
 {
-    attributes.extent = newExtent;
+    parameters.extent = newExtent;
     glm::mat4 projection = createProjectionMatrix();
     buffer->updateData(&projection, sizeof(glm::mat4), sizeof(glm::mat4));
 }
 
 glm::mat4 Camera::createViewMatrix() const
 {
-    return lookAt(attributes.position, attributes.target, attributes.up);
+    return lookAt(location.position, location.target, location.up);
 }
 
 glm::mat4 Camera::createProjectionMatrix() const
 {
-    const float aspect = attributes.extent.width / float(attributes.extent.height);
+    const float aspect = parameters.extent.width / float(parameters.extent.height);
 
-    const float fovY = aspect < 1.0f ? attributes.fov : attributes.fov / aspect;
+    const float fovY = aspect < 1.0f ? parameters.fov : parameters.fov / aspect;
 
     LOGD("Camera fov x: %f, y: %f", fovY * aspect, fovY);
 
     glm::mat4 projection = glm::perspective(
         glm::radians(fovY),
         aspect,
-        attributes.nearPlane,
-        attributes.farPlane);
+        parameters.nearPlane,
+        parameters.farPlane);
 
     projection[1][1] *= -1;
 

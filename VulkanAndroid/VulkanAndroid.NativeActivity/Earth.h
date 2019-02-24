@@ -11,7 +11,6 @@ public:
         DAY,
         NIGHT,
         NORMAL,
-        SPECULAR,
         COUNT
     };
 
@@ -23,7 +22,7 @@ public:
 
 private:
     const std::vector<std::string> TEXTURE_FILES{
-        "Day.jpg", "Night.jpg", "Normal.jpg", "Specular.jpg"
+        "Day.jpg", "Night.jpg", "Normal.jpg"
     };
 
     std::vector<TextureImage*> textures;

@@ -100,6 +100,9 @@
     <ClInclude Include="Lighting.h">
       <Filter>Scene\Lighting</Filter>
     </ClInclude>
+    <ClInclude Include="Controller.h">
+      <Filter>Scene\Camera</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -194,6 +197,9 @@
     </ClCompile>
     <ClCompile Include="Lighting.cpp">
       <Filter>Scene\Lighting</Filter>
+    </ClCompile>
+    <ClCompile Include="Controller.cpp">
+      <Filter>Scene\Camera</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

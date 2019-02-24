@@ -267,6 +267,7 @@
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Controller.h" />
     <ClInclude Include="DescriptorPool.h" />
     <ClInclude Include="DescriptorSets.h" />
     <ClInclude Include="Device.h" />
@@ -303,6 +304,7 @@
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Controller.cpp" />
     <ClCompile Include="DescriptorPool.cpp" />
     <ClCompile Include="DescriptorSets.cpp" />
     <ClCompile Include="Device.cpp" />

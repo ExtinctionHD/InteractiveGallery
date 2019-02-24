@@ -8,6 +8,7 @@ Application::Application(android_app *app) : app(app)
 
     app->userData = &engine;
     app->onAppCmd = handleAppCommand;
+    app->onInputEvent = handleAppInput;
 }
 
 void Application::mainLoop()
@@ -64,4 +65,42 @@ void Application::handleAppCommand(android_app *app, int32_t cmd)
         break;
     default: ;
     }
+}
+
+int32_t Application::handleAppInput(android_app *app, AInputEvent *event)
+{
+    LOGA(app->userData);
+    auto engine = reinterpret_cast<Engine*>(app->userData);
+
+    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION)
+    {
+        static glm::vec2 last;
+
+        const int32_t action = AMotionEvent_getAction(event);
+
+        switch (action)
+        {
+        case AMOTION_EVENT_ACTION_DOWN:
+            LOGD("DOWN");
+            last.x = AMotionEvent_getX(event, 0);
+            last.y = AMotionEvent_getY(event, 0);
+            break;
+        case AMOTION_EVENT_ACTION_MOVE:
+            glm::vec2 current;
+            current.x = AMotionEvent_getX(event, 0);
+            current.y = AMotionEvent_getY(event, 0);
+            engine->handleMotion(current - last);
+            last = current;
+            break;
+        case AMOTION_EVENT_ACTION_UP:
+            LOGD("UP");
+            engine->handleMotion(glm::vec2(0.0f));
+            break;
+        default:
+            LOGD("DEFAULT %d", action);
+            break;;
+        }
+    }
+
+    return 0;
 }

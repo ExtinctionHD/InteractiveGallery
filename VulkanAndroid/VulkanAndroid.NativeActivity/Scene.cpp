@@ -3,21 +3,25 @@
 
 Scene::Scene(Device *device, VkExtent2D extent) : indexCount(sphere::INDICES.size())
 {
-    const Camera::Attributes cameraAttributes{
+    const Camera::Parameters cameraParameters{
         extent,
-        glm::vec3(0.0f, 0.0f, -20.0f),
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, -1.0f, 0.0f),
         90.0f,
         1.0f,
         50.0f
     };
-    camera = new Camera(device, cameraAttributes);
+    const Camera::Location cameraLocation{
+        glm::vec3(0.0f, 0.0f, -20.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, -1.0f, 0.0f)
+    };
+    camera = new Camera(device, cameraParameters, cameraLocation);
+
+    controller = new Controller(cameraLocation.target, cameraLocation.position);
 
     const Lighting::Attributes lightingAttributes{
         glm::vec3(1.0f, 0.0f, 0.0f),
-        4.0f,
-        cameraAttributes.position
+        8.0f,
+        cameraLocation.position
     };
     lighting = new Lighting(device, lightingAttributes);
 
@@ -27,7 +31,6 @@ Scene::Scene(Device *device, VkExtent2D extent) : indexCount(sphere::INDICES.siz
     sphereIndexBuffer->updateData(sphere::INDICES.data());
 
     earth = new Earth(device, "textures/earth/2K/");
-    //earth->rotate(90.0f, glm::vec3(0.0f, -1.0f, 0.0f));
 
     LOGI("Scene created.");
 }
@@ -38,6 +41,7 @@ Scene::~Scene()
     delete sphereIndexBuffer;
     delete sphereVertexBuffer;
     delete lighting;
+    delete controller;
     delete camera;
 }
 
@@ -61,11 +65,19 @@ std::vector<TextureImage *> Scene::getEarthTextures() const
     return earth->getTextures();
 }
 
+void Scene::handleMotion(glm::vec2 delta)
+{
+    controller->setDelta(delta);
+}
+
 void Scene::update()
 {
     const float deltaSec = timer.getDeltaSec();
 
-    earth->rotate(20.0f * deltaSec, glm::vec3(0.0f, -1.0f, 0.0f));
+    controller->update(deltaSec);
+    camera->update(controller->getLocation());
+
+    earth->rotate(5.0f * deltaSec, glm::vec3(0.0f, -1.0f, 0.0f));
 
     logFps(deltaSec);
 }
@@ -89,18 +101,19 @@ void Scene::drawSphere(VkCommandBuffer commandBuffer) const
 
 void Scene::logFps(float deltaSec)
 {
+    const float step = 1.0f;
     static int frameCount = 0;
     static float deltaSum = 0.0f;
 
     deltaSum += deltaSec;
 
-    if (deltaSum < 1.0f)
+    if (deltaSum < step)
     {
         frameCount++;
     }
     else
     {
-        LOGD("FPS: %d.", frameCount);
+        LOGD("FPS: %f.", frameCount / step);
         frameCount = 0;
         deltaSum = 0.0f;
     }

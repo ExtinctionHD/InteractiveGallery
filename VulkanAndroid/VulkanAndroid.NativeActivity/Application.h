@@ -17,5 +17,7 @@ private:
     Engine engine;
 
     static void handleAppCommand(android_app *app, int32_t cmd);
+
+    static int32_t handleAppInput(android_app *app, AInputEvent *event);
 };
 

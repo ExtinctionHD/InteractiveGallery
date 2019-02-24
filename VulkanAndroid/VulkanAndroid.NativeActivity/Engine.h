@@ -26,6 +26,8 @@ public:
 
     void unpause();
 
+    void handleMotion(glm::vec2 delta);
+
     bool drawFrame();
 
     bool destroy();

@@ -83,6 +83,11 @@ void Engine::unpause()
     paused = false;
 }
 
+void Engine::handleMotion(glm::vec2 delta)
+{
+    scene->handleMotion(delta);
+}
+
 bool Engine::drawFrame()
 {
     if (!created || outdated || paused) return false;

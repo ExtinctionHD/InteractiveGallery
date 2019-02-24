@@ -3,6 +3,7 @@
 #include "Earth.h"
 #include "Timer.h"
 #include "Lighting.h"
+#include "Controller.h"
 
 class Scene
 {
@@ -22,6 +23,8 @@ public:
 
     std::vector<TextureImage*> getEarthTextures() const;
 
+    void handleMotion(glm::vec2 delta);
+
     void update();
 
     void resize(VkExtent2D newExtent);
@@ -30,6 +33,8 @@ public:
 
 private:
     Camera *camera;
+
+    Controller *controller;
 
     Lighting *lighting;
 

@@ -6,18 +6,22 @@
 class Camera
 {
 public:
-    struct Attributes
+    struct Parameters
     {
         VkExtent2D extent;
-        glm::vec3 position;
-        glm::vec3 target;
-        glm::vec3 up;
         float fov;
         float nearPlane;
         float farPlane;
     };
 
-    Camera(Device *device, Attributes attributes);
+    struct Location
+    {
+        glm::vec3 position;
+        glm::vec3 target;
+        glm::vec3 up;
+    };
+
+    Camera(Device *device, Parameters parameters, Location location);
 
     ~Camera();
 
@@ -29,12 +33,14 @@ public:
 
     Buffer* getBuffer() const;
 
-    void update() const;
+    void update(Location location);
 
     void resize(VkExtent2D newExtent);
 
 private:
-    Attributes attributes;
+    Parameters parameters;
+
+    Location location;
 
     Buffer *buffer;
 
