@@ -15,6 +15,8 @@ public:
 private:
     const float SENSITIVITY = 5.0f;
 
+    const float FADING = 2.0f;
+
     glm::vec3 target;
 
     float radius;

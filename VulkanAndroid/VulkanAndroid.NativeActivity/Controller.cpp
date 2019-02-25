@@ -57,7 +57,7 @@ Camera::Location Controller::getLocation() const
 void Controller::setDelta(glm::vec2 delta)
 {
     delta.x = -delta.x;
-    this->delta = delta;
+    this->delta = (this->delta + delta) / 2.0f;
 
     LOGD("Delta x: %f, y: %f.", delta.x, delta.y);
 }
@@ -65,6 +65,11 @@ void Controller::setDelta(glm::vec2 delta)
 void Controller::update(float deltaSec)
 {
     angle += SENSITIVITY * delta * deltaSec;
+
+    const glm::vec2 fading = FADING * delta * deltaSec;
+    
+    delta.x = glm::abs(delta.x) > glm::abs(fading.x) ? delta.x - fading.x : 0.0f;
+    delta.y = glm::abs(delta.y) > glm::abs(fading.y) ? delta.y - fading.y : 0.0f;
 
     const float maxY = 85.0f;
     const float absY = glm::abs(angle.y);

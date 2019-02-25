@@ -94,7 +94,6 @@ int32_t Application::handleAppInput(android_app *app, AInputEvent *event)
             break;
         case AMOTION_EVENT_ACTION_UP:
             LOGD("UP");
-            engine->handleMotion(glm::vec2(0.0f));
             break;
         default:
             LOGD("DEFAULT %d", action);
