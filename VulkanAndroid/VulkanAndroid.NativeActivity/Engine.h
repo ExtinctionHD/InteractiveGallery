@@ -37,6 +37,7 @@ private:
     {
         DESCRIPTOR_TYPE_SCENE,
         DESCRIPTOR_TYPE_EARTH,
+        DESCRIPTOR_TYPE_CLOUDS,
         DESCRIPTOR_TYPE_SKYBOX,
         DESCRIPTOR_TYPE_COUNT
     };
@@ -65,6 +66,8 @@ private:
 
     GraphicsPipeline *earthPipeline;
 
+    GraphicsPipeline *cloudsPipeline;
+
     GraphicsPipeline *skyboxPipeline;
 
     VkSemaphore imageAvailableSemaphore;
@@ -76,6 +79,8 @@ private:
     void initDescriptorSets();
 
     void createEarthPipeline();
+
+    void createCloudsPipeline();
 
     void createSkyboxPipeline();
 

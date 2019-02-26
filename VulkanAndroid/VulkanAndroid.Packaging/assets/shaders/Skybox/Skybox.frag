@@ -4,8 +4,9 @@
 layout(set = 0, binding = 1) uniform Lighting
 {
     vec3 direction;
-	float transitionPower;
+	float directedIntensity;
     vec3 cameraPos;
+	float transitionPower;
 };
 
 layout(set = 1, binding = 1) uniform samplerCube cubeTexture;

@@ -7,7 +7,7 @@ class Skybox : public Model
 public:
     Skybox(Device *device, const std::string &texturePath);
 
-    ~Skybox();
+    virtual ~Skybox();
 
     TextureImage* getCubeTexture() const;
 

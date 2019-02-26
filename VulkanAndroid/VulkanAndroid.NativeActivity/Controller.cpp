@@ -39,9 +39,9 @@ Controller::Controller(glm::vec3 target, glm::vec3 position) : target(target), r
 
 Camera::Location Controller::getLocation() const
 {
-    const glm::vec3 vAxis = -vector::Y;
+    const glm::vec3 vAxis = -axis::Y;
 
-    glm::vec3 view = rotate(-vector::Z, glm::radians(angle.x), vAxis);
+    glm::vec3 view = rotate(-axis::Z, glm::radians(angle.x), vAxis);
     view = normalize(view);
 
     glm::vec3 hAxis = cross(view, vAxis);

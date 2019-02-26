@@ -8,8 +8,9 @@ public:
     struct Attributes
     {
         glm::vec3 direction;
-        float transitionFactor;
+        float directedIntensity;
         glm::vec3 cameraPos;
+        float transitionFactor;
     };
 
     Lighting(Device *device, Attributes attributes);

@@ -31,6 +31,7 @@ bool Engine::create(ANativeWindow *window)
 
     initDescriptorSets();
     createEarthPipeline();
+    createCloudsPipeline();
     createSkyboxPipeline();
 
     imageAvailableSemaphore = createSemaphore();
@@ -168,6 +169,7 @@ bool Engine::destroy()
     vkDestroySemaphore(device->get(), imageAvailableSemaphore, nullptr);
 
     delete skyboxPipeline;
+    delete cloudsPipeline;
     delete earthPipeline;    
     for (auto descriptor : descriptors)
     {
@@ -211,6 +213,16 @@ void Engine::initDescriptorSets()
         { scene->getEarthTransformationBuffer() }, 
         earthTextures);
 
+    // TODO: combine clouds and skybox descriptors 
+
+    descriptors[DESCRIPTOR_TYPE_CLOUDS] = new DescriptorSets(
+        descriptorPool,
+        { VK_SHADER_STAGE_VERTEX_BIT },
+        { VK_SHADER_STAGE_FRAGMENT_BIT });
+    descriptors[DESCRIPTOR_TYPE_CLOUDS]->pushDescriptorSet(
+        { scene->getCloudsTransformationBuffer() },
+        { scene->getCloudsTexture() });
+
     descriptors[DESCRIPTOR_TYPE_SKYBOX] = new DescriptorSets(
         descriptorPool,
         { VK_SHADER_STAGE_VERTEX_BIT },
@@ -233,6 +245,27 @@ void Engine::createEarthPipeline()
         { 
             descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(), 
             descriptors[DESCRIPTOR_TYPE_EARTH]->getLayout() 
+        },
+        {},
+        shaders,
+        { Vertex::getBindingDescription(0) },
+        Vertex::getAttributeDescriptions(0, 0),
+        true);
+}
+
+void Engine::createCloudsPipeline()
+{
+    const std::string shadersPath = "shaders/Clouds/";
+    const std::vector<std::shared_ptr<ShaderModule>> shaders{
+        std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+        std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+    };
+    cloudsPipeline = new GraphicsPipeline(
+        device,
+        mainRenderPass,
+        {
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(),
+            descriptors[DESCRIPTOR_TYPE_CLOUDS]->getLayout()
         },
         {},
         shaders,
@@ -358,6 +391,24 @@ void Engine::initGraphicsCommands()
             graphicsCommands[i],
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             earthPipeline->getLayout(),
+            0,
+            descriptorSets.size(),
+            descriptorSets.data(),
+            0,
+            nullptr);
+        scene->drawSphere(graphicsCommands[i]);
+
+        // Clouds:
+
+        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, cloudsPipeline->get());
+        descriptorSets = {
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
+            descriptors[DESCRIPTOR_TYPE_CLOUDS]->getDescriptorSet(0)
+        };
+        vkCmdBindDescriptorSets(
+            graphicsCommands[i],
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            cloudsPipeline->getLayout(),
             0,
             descriptorSets.size(),
             descriptorSets.data(),

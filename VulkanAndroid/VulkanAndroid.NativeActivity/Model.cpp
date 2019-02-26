@@ -6,6 +6,11 @@ Model::~Model()
     delete transformationBuffer;
 }
 
+glm::mat4 Model::getTransformation() const
+{
+    return transformation;
+}
+
 Buffer* Model::getTransformationBuffer() const
 {
     return transformationBuffer;
@@ -26,5 +31,11 @@ void Model::setPosition(glm::vec3 position)
 Model::Model(Device *device) : transformation(glm::mat4(1.0f))
 {
     transformationBuffer = new Buffer(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4));
+    transformationBuffer->updateData(&transformation);
+}
+
+void Model::setTransformation(glm::mat4 transformation)
+{
+    this->transformation = transformation;
     transformationBuffer->updateData(&transformation);
 }

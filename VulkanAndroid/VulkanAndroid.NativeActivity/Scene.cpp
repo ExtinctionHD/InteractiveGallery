@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include "sphere.h"
 #include "cube.h"
+#include "utils.h"
 
 Scene::Scene(Device *device, VkExtent2D extent)
 {
@@ -21,12 +22,14 @@ Scene::Scene(Device *device, VkExtent2D extent)
 
     const Lighting::Attributes lightingAttributes{
         glm::vec3(1.0f, 0.0f, 0.0f),
-        8.0f,
-        cameraLocation.position
+        1.0f,
+        cameraLocation.position,
+        8.0f
     };
     lighting = new Lighting(device, lightingAttributes);
 
     earth = new Earth(device, "textures/earth/2K/");
+    clouds = new Clouds(device, "textures/earth/2K/");
     skybox = new Skybox(device, "textures/Stars/");
 
     initMeshes(device);
@@ -42,6 +45,7 @@ Scene::~Scene()
     }
 
     delete skybox;
+    delete clouds;
     delete earth;
     delete lighting;
     delete controller;
@@ -58,6 +62,11 @@ Buffer* Scene::getEarthTransformationBuffer() const
     return earth->getTransformationBuffer();
 }
 
+Buffer* Scene::getCloudsTransformationBuffer() const
+{
+    return  clouds->getTransformationBuffer();
+}
+
 Buffer* Scene::getSkyboxTransformationBuffer() const
 {
     return skybox->getTransformationBuffer();
@@ -68,9 +77,14 @@ Buffer* Scene::getLightingBuffer() const
     return lighting->getBuffer();
 }
 
-std::vector<TextureImage *> Scene::getEarthTextures() const
+std::vector<TextureImage*> Scene::getEarthTextures() const
 {
     return earth->getTextures();
+}
+
+TextureImage* Scene::getCloudsTexture() const
+{
+    return clouds->getTexture();
 }
 
 TextureImage* Scene::getSkyboxTexture() const
@@ -91,7 +105,8 @@ void Scene::update()
     camera->update(controller->getLocation());
 
     skybox->setPosition(camera->getPosition());
-    earth->rotate(5.0f * deltaSec, glm::vec3(0.0f, -1.0f, 0.0f));
+    earth->rotate(5.0f * deltaSec, -axis::Y);
+    clouds->setEarthTransformation(earth->getTransformation());
 
 #ifndef NDEBUG
     logFps(deltaSec);

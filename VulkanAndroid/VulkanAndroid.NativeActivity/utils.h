@@ -10,7 +10,7 @@ namespace window
     VkExtent2D getExtent(ANativeWindow *window);
 }
 
-namespace vector
+namespace axis
 {
     const glm::vec3 X = glm::vec3(1.0f, 0.0f, 0.0f);
     const glm::vec3 Y = glm::vec3(0.0f, 1.0f, 0.0f);

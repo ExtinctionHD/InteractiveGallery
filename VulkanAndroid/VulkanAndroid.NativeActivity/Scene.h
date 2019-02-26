@@ -5,12 +5,13 @@
 #include "Lighting.h"
 #include "Controller.h"
 #include "Skybox.h"
+#include "Clouds.h"
 
 class Scene
 {
 public:
-    static const uint32_t BUFFER_COUNT = 4;
-    static const uint32_t TEXTURE_COUNT = EARTH_TEXTURE_TYPE_COUNT + 1;
+    static const uint32_t BUFFER_COUNT = 5;
+    static const uint32_t TEXTURE_COUNT = EARTH_TEXTURE_TYPE_COUNT + 2;
 
     Scene(Device *device, VkExtent2D extent);
 
@@ -20,11 +21,15 @@ public:
 
     Buffer* getEarthTransformationBuffer() const;
 
+    Buffer* getCloudsTransformationBuffer() const;
+
     Buffer* getSkyboxTransformationBuffer() const;
 
     Buffer* getLightingBuffer() const;
 
     std::vector<TextureImage*> getEarthTextures() const;
+
+    TextureImage* getCloudsTexture() const;
 
     TextureImage* getSkyboxTexture() const;
 
@@ -59,6 +64,8 @@ private:
     Timer timer;
 
     Earth *earth;
+
+    Clouds *clouds;
 
     Skybox *skybox;
 

@@ -112,6 +112,9 @@
     <ClInclude Include="sphere.h">
       <Filter>Scene\Models</Filter>
     </ClInclude>
+    <ClInclude Include="Clouds.h">
+      <Filter>Scene\Models</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -214,6 +217,9 @@
       <Filter>Engine\Vertex</Filter>
     </ClCompile>
     <ClCompile Include="Skybox.cpp">
+      <Filter>Scene\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="Clouds.cpp">
       <Filter>Scene\Models</Filter>
     </ClCompile>
   </ItemGroup>
