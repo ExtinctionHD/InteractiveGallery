@@ -2,18 +2,18 @@
 #include "Model.h"
 #include "TextureImage.h"
 
+enum EarthTextureType
+{
+    EARTH_TEXTURE_TYPE_DAY,
+    EARTH_TEXTURE_TYPE_NIGHT,
+    EARTH_TEXTURE_TYPE_NORMAL,
+    EARTH_TEXTURE_TYPE_COUNT
+};
+
 class Earth :
     public Model
 {
 public:
-    enum TextureType
-    {
-        DAY,
-        NIGHT,
-        NORMAL,
-        COUNT
-    };
-
     Earth(Device *device, const std::string &texturePath);
 
     virtual ~Earth();

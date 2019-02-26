@@ -35,10 +35,10 @@ public:
 private:
     enum DescriptorType
     {
-        SCENE,
-        EARTH,
-        SKYBOX,
-        COUNT
+        DESCRIPTOR_TYPE_SCENE,
+        DESCRIPTOR_TYPE_EARTH,
+        DESCRIPTOR_TYPE_SKYBOX,
+        DESCRIPTOR_TYPE_COUNT
     };
 
     bool created;

@@ -25,7 +25,7 @@ bool Engine::create(ANativeWindow *window)
     device = new Device(instance->get(), surface->get(), instance->getLayers());
     swapChain = new SwapChain(device, surface->get(), window::getExtent(window));
     scene = new Scene(device, swapChain->getExtent());
-    descriptorPool = new DescriptorPool(device, Scene::BUFFER_COUNT, Scene::TEXTURE_COUNT, COUNT);
+    descriptorPool = new DescriptorPool(device, Scene::BUFFER_COUNT, Scene::TEXTURE_COUNT, DESCRIPTOR_TYPE_COUNT);
     mainRenderPass = new MainRenderPass(device, swapChain);
     mainRenderPass->create();
 
@@ -34,7 +34,7 @@ bool Engine::create(ANativeWindow *window)
     createSkyboxPipeline();
 
     imageAvailableSemaphore = createSemaphore();
-    passFinishedSemaphores.resize(RenderPass::COUNT, createSemaphore());
+    passFinishedSemaphores.resize(RENDER_PASS_TYPE_COUNT, createSemaphore());
     initGraphicsCommands();
 
     created = true;
@@ -118,7 +118,7 @@ bool Engine::drawFrame()
 
     std::vector<VkSemaphore> waitSemaphores = {  imageAvailableSemaphore };
     std::vector<VkPipelineStageFlags> waitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    std::vector<VkSemaphore> signalSemaphores = { passFinishedSemaphores[RenderPass::MAIN] };
+    std::vector<VkSemaphore> signalSemaphores = { passFinishedSemaphores[RENDER_PASS_TYPE_MAIN] };
     VkSubmitInfo submitInfo{
         VK_STRUCTURE_TYPE_SUBMIT_INFO,
         nullptr,
@@ -193,25 +193,31 @@ void Engine::initDescriptorSets()
     std::vector<TextureImage*> earthTextures = scene->getEarthTextures();
     const std::vector<VkShaderStageFlags> earthTextureShaderStages(earthTextures.size(), VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    descriptors.resize(COUNT);
+    descriptors.resize(DESCRIPTOR_TYPE_COUNT);
 
-    descriptors[SCENE] = new DescriptorSets(
+    descriptors[DESCRIPTOR_TYPE_SCENE] = new DescriptorSets(
         descriptorPool,
         { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT },
         {});
-    descriptors[SCENE]->pushDescriptorSet({ scene->getCameraBuffer(), scene->getLightingBuffer() }, {});
+    descriptors[DESCRIPTOR_TYPE_SCENE]->pushDescriptorSet(
+        { scene->getCameraBuffer(), scene->getLightingBuffer() },
+        {});
 
-    descriptors[EARTH] = new DescriptorSets(
+    descriptors[DESCRIPTOR_TYPE_EARTH] = new DescriptorSets(
         descriptorPool,
         { VK_SHADER_STAGE_VERTEX_BIT },
         earthTextureShaderStages);
-    descriptors[EARTH]->pushDescriptorSet({ scene->getEarthTransformationBuffer() }, earthTextures);
+    descriptors[DESCRIPTOR_TYPE_EARTH]->pushDescriptorSet(
+        { scene->getEarthTransformationBuffer() }, 
+        earthTextures);
 
-    descriptors[SKYBOX] = new DescriptorSets(
+    descriptors[DESCRIPTOR_TYPE_SKYBOX] = new DescriptorSets(
         descriptorPool,
         { VK_SHADER_STAGE_VERTEX_BIT },
         { VK_SHADER_STAGE_FRAGMENT_BIT });
-    descriptors[SKYBOX]->pushDescriptorSet({ scene->getSkyboxTransformationBuffer() }, { scene->getSkyboxTexture() });
+    descriptors[DESCRIPTOR_TYPE_SKYBOX]->pushDescriptorSet(
+        { scene->getSkyboxTransformationBuffer() },
+        { scene->getSkyboxTexture() });
 }
 
 void Engine::createEarthPipeline()
@@ -224,7 +230,10 @@ void Engine::createEarthPipeline()
     earthPipeline = new GraphicsPipeline(
         device,
         mainRenderPass,
-        { descriptors[SCENE]->getLayout(), descriptors[EARTH]->getLayout() },
+        { 
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(), 
+            descriptors[DESCRIPTOR_TYPE_EARTH]->getLayout() 
+        },
         {},
         shaders,
         { Vertex::getBindingDescription(0) },
@@ -242,7 +251,10 @@ void Engine::createSkyboxPipeline()
     skyboxPipeline = new GraphicsPipeline(
         device,
         mainRenderPass,
-        { descriptors[SCENE]->getLayout(), descriptors[SKYBOX]->getLayout() },
+        { 
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(), 
+            descriptors[DESCRIPTOR_TYPE_SKYBOX]->getLayout() 
+        },
         {},
         shaders,
         { Position::getBindingDescription(0) },
@@ -321,8 +333,8 @@ void Engine::initGraphicsCommands()
 
         vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline->get());
         std::vector<VkDescriptorSet> descriptorSets{
-            descriptors[SCENE]->getDescriptorSet(0),
-            descriptors[SKYBOX]->getDescriptorSet(0)
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
+            descriptors[DESCRIPTOR_TYPE_SKYBOX]->getDescriptorSet(0)
         };
         vkCmdBindDescriptorSets(
             graphicsCommands[i],
@@ -339,8 +351,8 @@ void Engine::initGraphicsCommands()
 
         vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, earthPipeline->get());
         descriptorSets = {
-            descriptors[SCENE]->getDescriptorSet(0),
-            descriptors[EARTH]->getDescriptorSet(0)
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
+            descriptors[DESCRIPTOR_TYPE_EARTH]->getDescriptorSet(0)
         };
         vkCmdBindDescriptorSets(
             graphicsCommands[i],

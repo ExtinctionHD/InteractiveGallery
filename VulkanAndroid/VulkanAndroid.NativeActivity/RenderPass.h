@@ -3,15 +3,15 @@
 #include "Image.h"
 #include <memory>
 
+enum RenderPassType
+{
+    RENDER_PASS_TYPE_MAIN,
+    RENDER_PASS_TYPE_COUNT
+};
+
 class RenderPass
 {
 public:
-    enum Type
-    {
-        MAIN,
-        COUNT
-    };
-
     virtual ~RenderPass();
 
 	VkRenderPass get() const;
