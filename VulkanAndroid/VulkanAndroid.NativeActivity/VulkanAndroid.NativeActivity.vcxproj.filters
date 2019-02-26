@@ -82,9 +82,6 @@
     <ClInclude Include="Earth.h">
       <Filter>Scene\Models</Filter>
     </ClInclude>
-    <ClInclude Include="sphere.h">
-      <Filter>Scene\Models</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Scene\Camera</Filter>
     </ClInclude>
@@ -102,6 +99,18 @@
     </ClInclude>
     <ClInclude Include="Controller.h">
       <Filter>Scene\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Position.h">
+      <Filter>Engine\Vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="Skybox.h">
+      <Filter>Scene\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="cube.h">
+      <Filter>Scene\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="sphere.h">
+      <Filter>Scene\Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -200,6 +209,12 @@
     </ClCompile>
     <ClCompile Include="Controller.cpp">
       <Filter>Scene\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Position.cpp">
+      <Filter>Engine\Vertex</Filter>
+    </ClCompile>
+    <ClCompile Include="Skybox.cpp">
+      <Filter>Scene\Models</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -36,7 +36,8 @@ private:
     enum DescriptorType
     {
         SCENE,
-        MODEL,
+        EARTH,
+        SKYBOX,
         COUNT
     };
 
@@ -64,6 +65,8 @@ private:
 
     GraphicsPipeline *earthPipeline;
 
+    GraphicsPipeline *skyboxPipeline;
+
     VkSemaphore imageAvailableSemaphore;
 
     std::vector<VkSemaphore> passFinishedSemaphores;
@@ -73,6 +76,8 @@ private:
     void initDescriptorSets();
 
     void createEarthPipeline();
+
+    void createSkyboxPipeline();
 
     VkSemaphore createSemaphore() const;
 

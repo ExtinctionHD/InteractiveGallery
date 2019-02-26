@@ -1,6 +1,7 @@
 #include "Engine.h"
 #include "Vertex.h"
 #include "utils.h"
+#include "Position.h"
 
 Engine::Engine() : created(false), outdated(false)
 {
@@ -30,6 +31,7 @@ bool Engine::create(ANativeWindow *window)
 
     initDescriptorSets();
     createEarthPipeline();
+    createSkyboxPipeline();
 
     imageAvailableSemaphore = createSemaphore();
     passFinishedSemaphores.resize(RenderPass::COUNT, createSemaphore());
@@ -165,6 +167,7 @@ bool Engine::destroy()
     }
     vkDestroySemaphore(device->get(), imageAvailableSemaphore, nullptr);
 
+    delete skyboxPipeline;
     delete earthPipeline;    
     for (auto descriptor : descriptors)
     {
@@ -196,13 +199,19 @@ void Engine::initDescriptorSets()
         descriptorPool,
         { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT },
         {});
-    descriptors[MODEL] = new DescriptorSets(
+    descriptors[SCENE]->pushDescriptorSet({ scene->getCameraBuffer(), scene->getLightingBuffer() }, {});
+
+    descriptors[EARTH] = new DescriptorSets(
         descriptorPool,
         { VK_SHADER_STAGE_VERTEX_BIT },
         earthTextureShaderStages);
+    descriptors[EARTH]->pushDescriptorSet({ scene->getEarthTransformationBuffer() }, earthTextures);
 
-    descriptors[SCENE]->pushDescriptorSet({ scene->getCameraBuffer(), scene->getLightingBuffer()  }, {});
-    descriptors[MODEL]->pushDescriptorSet({ scene->getEarthTransformationBuffer() }, earthTextures );
+    descriptors[SKYBOX] = new DescriptorSets(
+        descriptorPool,
+        { VK_SHADER_STAGE_VERTEX_BIT },
+        { VK_SHADER_STAGE_FRAGMENT_BIT });
+    descriptors[SKYBOX]->pushDescriptorSet({ scene->getSkyboxTransformationBuffer() }, { scene->getSkyboxTexture() });
 }
 
 void Engine::createEarthPipeline()
@@ -215,11 +224,29 @@ void Engine::createEarthPipeline()
     earthPipeline = new GraphicsPipeline(
         device,
         mainRenderPass,
-        { descriptors[SCENE]->getLayout(), descriptors[MODEL]->getLayout() },
+        { descriptors[SCENE]->getLayout(), descriptors[EARTH]->getLayout() },
         {},
         shaders,
         { Vertex::getBindingDescription(0) },
         Vertex::getAttributeDescriptions(0, 0),
+        true);
+}
+
+void Engine::createSkyboxPipeline()
+{
+    const std::string shadersPath = "shaders/Skybox/";
+    const std::vector<std::shared_ptr<ShaderModule>> shaders{
+        std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+        std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+    };
+    skyboxPipeline = new GraphicsPipeline(
+        device,
+        mainRenderPass,
+        { descriptors[SCENE]->getLayout(), descriptors[SKYBOX]->getLayout() },
+        {},
+        shaders,
+        { Position::getBindingDescription(0) },
+        Position::getAttributeDescriptions(0, 0),
         true);
 }
 
@@ -290,11 +317,30 @@ void Engine::initGraphicsCommands()
 
         vkCmdBeginRenderPass(graphicsCommands[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, earthPipeline->get());
+        // Skybox:
 
+        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline->get());
         std::vector<VkDescriptorSet> descriptorSets{
             descriptors[SCENE]->getDescriptorSet(0),
-            descriptors[MODEL]->getDescriptorSet(0)
+            descriptors[SKYBOX]->getDescriptorSet(0)
+        };
+        vkCmdBindDescriptorSets(
+            graphicsCommands[i],
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            skyboxPipeline->getLayout(),
+            0,
+            descriptorSets.size(),
+            descriptorSets.data(),
+            0,
+            nullptr);
+        scene->drawCube(graphicsCommands[i]);
+
+        // Earth:
+
+        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, earthPipeline->get());
+        descriptorSets = {
+            descriptors[SCENE]->getDescriptorSet(0),
+            descriptors[EARTH]->getDescriptorSet(0)
         };
         vkCmdBindDescriptorSets(
             graphicsCommands[i],
@@ -305,7 +351,6 @@ void Engine::initGraphicsCommands()
             descriptorSets.data(),
             0,
             nullptr);
-
         scene->drawSphere(graphicsCommands[i]);
 
         vkCmdEndRenderPass(graphicsCommands[i]);

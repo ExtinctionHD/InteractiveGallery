@@ -13,7 +13,7 @@ Camera::~Camera()
     delete buffer;
 }
 
-glm::vec3 Camera::getPos() const
+glm::vec3 Camera::getPosition() const
 {
     return location.position;
 }

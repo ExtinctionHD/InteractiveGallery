@@ -17,6 +17,12 @@ void Model::rotate(float angle, glm::vec3 axis)
     transformationBuffer->updateData(&transformation);
 }
 
+void Model::setPosition(glm::vec3 position)
+{
+    transformation = translate(glm::mat4(1.0f), position);
+    transformationBuffer->updateData(&transformation);
+}
+
 Model::Model(Device *device) : transformation(glm::mat4(1.0f))
 {
     transformationBuffer = new Buffer(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4));

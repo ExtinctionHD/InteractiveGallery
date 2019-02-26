@@ -10,6 +10,8 @@ public:
 
     void rotate(float angle, glm::vec3 axis);
 
+    void setPosition(glm::vec3 position);
+
 protected:
     Model(Device *device);
 

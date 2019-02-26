@@ -9,7 +9,7 @@ layout(set = 0, binding = 0) uniform Space
 
 layout(set = 1, binding = 0) uniform Tranformation
 {
-    mat4 tranformation;
+    mat4 transformation;
 };
 
 layout(location = 0) in vec3 inPos;
@@ -29,11 +29,11 @@ out gl_PerVertex
 
 void main() 
 {	
-    outPos = vec3(tranformation * vec4(inPos, 1.0f));
+    outPos = vec3(transformation * vec4(inPos, 1.0f));
     outUV = inUV;
     
-    outNormal = vec3(tranformation * vec4(inNormal, 0.0f));
-    outTangent = vec3(tranformation * vec4(inTangent, 0.0f));
+    outNormal = vec3(transformation * vec4(inNormal, 0.0f));
+    outTangent = vec3(transformation * vec4(inTangent, 0.0f));
 
-	gl_Position = proj * view * tranformation * vec4(inPos, 1.0f);
+	gl_Position = proj * view * transformation * vec4(inPos, 1.0f);
 }
