@@ -1,11 +1,30 @@
 #include "MainRenderPass.h"
 
-MainRenderPass::MainRenderPass(Device *device, SwapChain *swapChain)
-    : RenderPass(device, swapChain->getExtent(), device->getMaxSampleCount()), swapChain(swapChain) {}
+MainRenderPass::MainRenderPass(Device *device, VkExtent2D attachmentExtent, VkSampleCountFlagBits sampleCount)
+    : RenderPass(device, attachmentExtent, sampleCount)
+{
+    
+}
 
 uint32_t MainRenderPass::getColorAttachmentCount() const
 {
     return 1;
+}
+
+std::vector<VkClearValue> MainRenderPass::getClearValues() const
+{
+    VkClearValue colorClearValue;
+    colorClearValue.color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+
+    VkClearValue depthClearValue;
+    depthClearValue.depthStencil = { 1.0f, 0 };
+
+    return { colorClearValue, depthClearValue };
+}
+
+TextureImage* MainRenderPass::getTexture() const
+{
+    return colorTexture.get();
 }
 
 void MainRenderPass::createAttachments()
@@ -24,24 +43,26 @@ void MainRenderPass::createAttachments()
         1,
     };
 
-    colorImage = std::make_shared<Image>(
+    colorTexture = std::make_shared<TextureImage>(
         device,
         0,
-        swapChain->getImageFormat(),
+        VK_FORMAT_R16G16B16A16_SFLOAT,
         attachmentExtent,
         subresourceRange.levelCount,
         subresourceRange.layerCount,
         sampleCount,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         subresourceRange.aspectMask,
-        false);
-    colorImage->transitLayout(
+        false,
+        VK_FILTER_NEAREST,
+        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+
+    colorTexture->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         subresourceRange);
 
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-
     depthImage = std::make_shared<Image>(
         device,
         0,
@@ -58,7 +79,7 @@ void MainRenderPass::createAttachments()
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         subresourceRange);
 
-	attachments = { colorImage, depthImage };
+	attachments = { colorTexture, depthImage };
 }
 
 void MainRenderPass::createRenderPass()
@@ -67,14 +88,14 @@ void MainRenderPass::createRenderPass()
 
     const VkAttachmentDescription colorAttachmentDesc{
 		0,								
-		colorImage->getFormat(),		                
-		colorImage->getSampleCount(),			 
+        colorTexture->getFormat(),
+        colorTexture->getSampleCount(),
 		VK_ATTACHMENT_LOAD_OP_CLEAR,		         
 		VK_ATTACHMENT_STORE_OP_STORE,		     
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE,	     
 		VK_ATTACHMENT_STORE_OP_DONT_CARE,	     
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 	};
 
     const VkAttachmentDescription depthAttachmentDesc{
@@ -89,22 +110,9 @@ void MainRenderPass::createRenderPass()
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 	};
 
-    const VkAttachmentDescription resolveAttachmentDesc{
-		0,                         
-		swapChain->getImageFormat(),    
-		VK_SAMPLE_COUNT_1_BIT,           
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, 
-		VK_ATTACHMENT_STORE_OP_STORE,	 
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, 
-		VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		VK_IMAGE_LAYOUT_UNDEFINED,		 
-		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 
-	};
-
 	std::vector<VkAttachmentDescription> attachmentDescriptions{
 		colorAttachmentDesc,
 		depthAttachmentDesc,
-		resolveAttachmentDesc
 	};
 
 	// references to attachments
@@ -119,11 +127,6 @@ void MainRenderPass::createRenderPass()
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 	};
 
-	VkAttachmentReference resolveAttachmentRef{
-		2,							
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-	};
-
 	// subpass and it dependencies (contain references)
 
 	VkSubpassDescription subpass{
@@ -133,7 +136,7 @@ void MainRenderPass::createRenderPass()
 		nullptr,						
 		1,								
 		&colorAttachmentRef,			
-		&resolveAttachmentRef,			
+		nullptr,			
 		&depthAttachmentRef,			
 		0,								
 		nullptr							
@@ -186,10 +189,5 @@ void MainRenderPass::createRenderPass()
 
 void MainRenderPass::createFramebuffers()
 {
-	std::vector<VkImageView> swapChainImageViews = swapChain->getImageViews();
-
-	for (auto swapChainImageView : swapChainImageViews)
-	{
-		addFramebuffer({ colorImage->getView(), depthImage->getView(), swapChainImageView });
-	}
+    addFramebuffer({ colorTexture->getView(), depthImage->getView(), });
 }

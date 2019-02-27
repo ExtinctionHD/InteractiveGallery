@@ -22,7 +22,7 @@ public:
 
 	virtual uint32_t getColorAttachmentCount() const = 0;
 
-	virtual std::vector<VkClearValue> getClearValues() const;
+	virtual std::vector<VkClearValue> getClearValues() const = 0;;
 
 	VkSampleCountFlagBits getSampleCount() const;
 

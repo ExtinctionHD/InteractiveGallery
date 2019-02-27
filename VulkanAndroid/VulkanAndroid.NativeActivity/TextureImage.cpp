@@ -65,7 +65,7 @@ TextureImage::TextureImage(
         mipLevels,
         arrayLayers,
         sampleCount,
-        usage,
+        usage | VK_IMAGE_USAGE_SAMPLED_BIT,
         aspectFlags,
         cubeMap)
 {

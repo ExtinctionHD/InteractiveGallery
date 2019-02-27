@@ -115,6 +115,9 @@
     <ClInclude Include="Clouds.h">
       <Filter>Scene\Models</Filter>
     </ClInclude>
+    <ClInclude Include="ToneRenderPass.h">
+      <Filter>Engine\RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -221,6 +224,9 @@
     </ClCompile>
     <ClCompile Include="Clouds.cpp">
       <Filter>Scene\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="ToneRenderPass.cpp">
+      <Filter>Engine\RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
