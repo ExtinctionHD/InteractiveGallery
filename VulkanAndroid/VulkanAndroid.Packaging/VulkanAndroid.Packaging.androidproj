@@ -131,6 +131,8 @@
     <Content Include="assets\shaders\Clouds\vert.spv" />
     <Content Include="assets\shaders\Skybox\frag.spv" />
     <Content Include="assets\shaders\Skybox\vert.spv" />
+    <Content Include="assets\shaders\Tone\frag.spv" />
+    <Content Include="assets\shaders\Tone\vert.spv" />
     <Content Include="assets\textures\earth\2K\Clouds.jpg" />
     <Content Include="assets\textures\earth\2K\Day.jpg" />
     <Content Include="assets\textures\earth\2K\Night.jpg" />

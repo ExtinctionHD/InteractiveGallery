@@ -20,23 +20,6 @@ VkExtent2D RenderPass::getExtent() const
 	return extent;
 }
 
-std::vector<VkClearValue> RenderPass::getClearValues() const
-{
-	std::vector<VkClearValue> clearValues(getColorAttachmentCount());
-    for(auto &clearValue : clearValues)
-    {
-        clearValue.color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-    }
-    if (getColorAttachmentCount() < attachments.size())
-    {
-        VkClearValue clearValue{};
-        clearValue.depthStencil = { 1.0f, 0 };
-        clearValues.push_back(clearValue);
-    }
-
-	return clearValues;
-}
-
 VkSampleCountFlagBits RenderPass::getSampleCount() const
 {
     return sampleCount;

@@ -1,15 +1,36 @@
 #include "MainRenderPass.h"
 
-MainRenderPass::MainRenderPass(Device *device, SwapChain *swapChain)
-    : RenderPass(device, swapChain->getExtent(), device->getMaxSampleCount()), swapChain(swapChain) {}
+MainRenderPass::MainRenderPass(Device *device, VkExtent2D attachmentExtent)
+    : RenderPass(device, attachmentExtent, device->getMaxSampleCount())
+{
+    
+}
 
 uint32_t MainRenderPass::getColorAttachmentCount() const
 {
     return 1;
 }
 
+std::vector<VkClearValue> MainRenderPass::getClearValues() const
+{
+    VkClearValue colorClearValue;
+    colorClearValue.color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+
+    VkClearValue depthClearValue;
+    depthClearValue.depthStencil = { 1.0f, 0 };
+
+    return { colorClearValue, colorClearValue, depthClearValue };
+}
+
+TextureImage* MainRenderPass::getTexture() const
+{
+    return resolveTexture.get();
+}
+
 void MainRenderPass::createAttachments()
 {
+    const VkFormat format = VK_FORMAT_R16G16B16A16_SFLOAT;
+
     const VkExtent3D attachmentExtent{
         extent.width,
         extent.height,
@@ -27,7 +48,7 @@ void MainRenderPass::createAttachments()
     colorImage = std::make_shared<Image>(
         device,
         0,
-        swapChain->getImageFormat(),
+        format,
         attachmentExtent,
         subresourceRange.levelCount,
         subresourceRange.layerCount,
@@ -40,8 +61,25 @@ void MainRenderPass::createAttachments()
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         subresourceRange);
 
-    subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    resolveTexture = std::make_shared<TextureImage>(
+        device,
+        0,
+        format,
+        attachmentExtent,
+        1,
+        1,
+        VK_SAMPLE_COUNT_1_BIT,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        subresourceRange.aspectMask,
+        false,
+        VK_FILTER_NEAREST,
+        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+    resolveTexture->transitLayout(
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        subresourceRange);
 
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
     depthImage = std::make_shared<Image>(
         device,
         0,
@@ -58,7 +96,7 @@ void MainRenderPass::createAttachments()
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         subresourceRange);
 
-	attachments = { colorImage, depthImage };
+	attachments = { colorImage, resolveTexture, depthImage };
 }
 
 void MainRenderPass::createRenderPass()
@@ -77,6 +115,18 @@ void MainRenderPass::createRenderPass()
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 	};
 
+    const VkAttachmentDescription resolveAttachmentDesc{
+        0,
+        resolveTexture->getFormat(),
+        VK_SAMPLE_COUNT_1_BIT,
+        VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        VK_ATTACHMENT_STORE_OP_STORE,
+        VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
+
     const VkAttachmentDescription depthAttachmentDesc{
 		0,										
 		depthImage->getFormat(),						
@@ -89,22 +139,10 @@ void MainRenderPass::createRenderPass()
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 	};
 
-    const VkAttachmentDescription resolveAttachmentDesc{
-		0,                         
-		swapChain->getImageFormat(),    
-		VK_SAMPLE_COUNT_1_BIT,           
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, 
-		VK_ATTACHMENT_STORE_OP_STORE,	 
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, 
-		VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		VK_IMAGE_LAYOUT_UNDEFINED,		 
-		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 
-	};
-
 	std::vector<VkAttachmentDescription> attachmentDescriptions{
 		colorAttachmentDesc,
+        resolveAttachmentDesc,
 		depthAttachmentDesc,
-		resolveAttachmentDesc
 	};
 
 	// references to attachments
@@ -114,14 +152,14 @@ void MainRenderPass::createRenderPass()
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 	};
 
-	VkAttachmentReference depthAttachmentRef{
-		1,									
-		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-	};
+    VkAttachmentReference resolveAttachmentRef{
+        1,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    };
 
-	VkAttachmentReference resolveAttachmentRef{
-		2,							
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+	VkAttachmentReference depthAttachmentRef{
+		2,									
+		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 	};
 
 	// subpass and it dependencies (contain references)
@@ -186,10 +224,5 @@ void MainRenderPass::createRenderPass()
 
 void MainRenderPass::createFramebuffers()
 {
-	std::vector<VkImageView> swapChainImageViews = swapChain->getImageViews();
-
-	for (auto swapChainImageView : swapChainImageViews)
-	{
-		addFramebuffer({ colorImage->getView(), depthImage->getView(), swapChainImageView });
-	}
+    addFramebuffer({ colorImage->getView(), resolveTexture->getView(), depthImage->getView(), });
 }

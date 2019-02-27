@@ -8,6 +8,7 @@
 #include "GraphicsPipeline.h"
 #include "Scene.h"
 #include "DescriptorSets.h"
+#include "ToneRenderPass.h"
 
 class Engine
 {
@@ -39,6 +40,7 @@ private:
         DESCRIPTOR_TYPE_EARTH,
         DESCRIPTOR_TYPE_CLOUDS,
         DESCRIPTOR_TYPE_SKYBOX,
+        DESCRIPTOR_TYPE_TONE,
         DESCRIPTOR_TYPE_COUNT
     };
 
@@ -60,9 +62,13 @@ private:
 
     MainRenderPass *mainRenderPass;
 
+    ToneRenderPass *toneRenderPass;
+
     DescriptorPool *descriptorPool;
 
     std::vector<DescriptorSets*> descriptors;
+
+    // TODO combine pipelines in vector
 
     GraphicsPipeline *earthPipeline;
 
@@ -70,9 +76,11 @@ private:
 
     GraphicsPipeline *skyboxPipeline;
 
-    VkSemaphore imageAvailableSemaphore;
+    GraphicsPipeline *tonePipeline;
 
-    std::vector<VkSemaphore> passFinishedSemaphores;
+    VkSemaphore imageAvailable;
+
+    VkSemaphore renderingFinished;
 
     std::vector<VkCommandBuffer> graphicsCommands;
 
@@ -83,6 +91,8 @@ private:
     void createCloudsPipeline();
 
     void createSkyboxPipeline();
+
+    void createTonePipeline();
 
     VkSemaphore createSemaphore() const;
 

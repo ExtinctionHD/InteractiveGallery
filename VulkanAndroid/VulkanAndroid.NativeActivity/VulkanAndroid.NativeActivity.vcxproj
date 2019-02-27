@@ -286,6 +286,7 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="ToneRenderPass.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="android_native_app_glue.h" />
@@ -326,6 +327,7 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="ToneRenderPass.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="QueueFamilyIndices.cpp" />
     <ClCompile Include="RenderPass.cpp" />

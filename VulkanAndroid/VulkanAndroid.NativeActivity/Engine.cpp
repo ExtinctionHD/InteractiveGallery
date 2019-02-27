@@ -25,17 +25,21 @@ bool Engine::create(ANativeWindow *window)
     device = new Device(instance->get(), surface->get(), instance->getLayers());
     swapChain = new SwapChain(device, surface->get(), window::getExtent(window));
     scene = new Scene(device, swapChain->getExtent());
-    descriptorPool = new DescriptorPool(device, Scene::BUFFER_COUNT, Scene::TEXTURE_COUNT, DESCRIPTOR_TYPE_COUNT);
-    mainRenderPass = new MainRenderPass(device, swapChain);
+    descriptorPool = new DescriptorPool(device, Scene::BUFFER_COUNT, Scene::TEXTURE_COUNT + 1, DESCRIPTOR_TYPE_COUNT);
+
+    mainRenderPass = new MainRenderPass(device, swapChain->getExtent());
+    toneRenderPass = new ToneRenderPass(device, swapChain);
     mainRenderPass->create();
+    toneRenderPass->create();
 
     initDescriptorSets();
     createEarthPipeline();
     createCloudsPipeline();
     createSkyboxPipeline();
+    createTonePipeline();
 
-    imageAvailableSemaphore = createSemaphore();
-    passFinishedSemaphores.resize(RENDER_PASS_TYPE_COUNT, createSemaphore());
+    imageAvailable = createSemaphore();
+    renderingFinished = createSemaphore();
     initGraphicsCommands();
 
     created = true;
@@ -103,7 +107,7 @@ bool Engine::drawFrame()
         device->get(), 
         swapChain->get(), 
         UINT64_MAX, 
-        imageAvailableSemaphore, 
+        imageAvailable, 
         nullptr, 
         &imageIndex);
 
@@ -117,9 +121,9 @@ bool Engine::drawFrame()
         CALL_VK(result);
     }
 
-    std::vector<VkSemaphore> waitSemaphores = {  imageAvailableSemaphore };
+    std::vector<VkSemaphore> waitSemaphores = {  imageAvailable };
     std::vector<VkPipelineStageFlags> waitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    std::vector<VkSemaphore> signalSemaphores = { passFinishedSemaphores[RENDER_PASS_TYPE_MAIN] };
+    std::vector<VkSemaphore> signalSemaphores = { renderingFinished };
     VkSubmitInfo submitInfo{
         VK_STRUCTURE_TYPE_SUBMIT_INFO,
         nullptr,
@@ -162,12 +166,10 @@ bool Engine::destroy()
 
     vkDeviceWaitIdle(device->get());
 
-    for (auto &semaphore : passFinishedSemaphores)
-    {
-        vkDestroySemaphore(device->get(), semaphore, nullptr);
-    }
-    vkDestroySemaphore(device->get(), imageAvailableSemaphore, nullptr);
+    vkDestroySemaphore(device->get(), renderingFinished, nullptr);
+    vkDestroySemaphore(device->get(), imageAvailable, nullptr);
 
+    delete tonePipeline;
     delete skyboxPipeline;
     delete cloudsPipeline;
     delete earthPipeline;    
@@ -175,7 +177,7 @@ bool Engine::destroy()
     {
         delete descriptor;
     }
-
+    delete toneRenderPass;
     delete mainRenderPass;
     delete descriptorPool;
     delete scene;
@@ -197,6 +199,8 @@ void Engine::initDescriptorSets()
 
     descriptors.resize(DESCRIPTOR_TYPE_COUNT);
 
+    // Scene:
+
     descriptors[DESCRIPTOR_TYPE_SCENE] = new DescriptorSets(
         descriptorPool,
         { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT },
@@ -204,6 +208,8 @@ void Engine::initDescriptorSets()
     descriptors[DESCRIPTOR_TYPE_SCENE]->pushDescriptorSet(
         { scene->getCameraBuffer(), scene->getLightingBuffer() },
         {});
+
+    // Earth:
 
     descriptors[DESCRIPTOR_TYPE_EARTH] = new DescriptorSets(
         descriptorPool,
@@ -213,7 +219,9 @@ void Engine::initDescriptorSets()
         { scene->getEarthTransformationBuffer() }, 
         earthTextures);
 
-    // TODO: combine clouds and skybox descriptors 
+    // TODO combine clouds and skybox descriptors 
+
+    // Clouds:
 
     descriptors[DESCRIPTOR_TYPE_CLOUDS] = new DescriptorSets(
         descriptorPool,
@@ -223,6 +231,8 @@ void Engine::initDescriptorSets()
         { scene->getCloudsTransformationBuffer() },
         { scene->getCloudsTexture() });
 
+    // Skybox:
+
     descriptors[DESCRIPTOR_TYPE_SKYBOX] = new DescriptorSets(
         descriptorPool,
         { VK_SHADER_STAGE_VERTEX_BIT },
@@ -230,6 +240,16 @@ void Engine::initDescriptorSets()
     descriptors[DESCRIPTOR_TYPE_SKYBOX]->pushDescriptorSet(
         { scene->getSkyboxTransformationBuffer() },
         { scene->getSkyboxTexture() });
+
+    // Tone:
+
+    descriptors[DESCRIPTOR_TYPE_TONE] = new DescriptorSets(
+        descriptorPool,
+        {},
+        { VK_SHADER_STAGE_FRAGMENT_BIT });
+    descriptors[DESCRIPTOR_TYPE_TONE]->pushDescriptorSet(
+        {},
+        { mainRenderPass->getTexture() });
 }
 
 void Engine::createEarthPipeline()
@@ -295,6 +315,24 @@ void Engine::createSkyboxPipeline()
         true);
 }
 
+void Engine::createTonePipeline()
+{
+    const std::string shadersPath = "shaders/Tone/";
+    const std::vector<std::shared_ptr<ShaderModule>> shaders{
+        std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+        std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+    };
+    tonePipeline = new GraphicsPipeline(
+        device,
+        toneRenderPass,
+        { descriptors[DESCRIPTOR_TYPE_TONE]->getLayout() },
+        {},
+        shaders,
+        {},
+        {},
+        true);
+}
+
 VkSemaphore Engine::createSemaphore() const
 {
     VkSemaphore semaphore;
@@ -347,20 +385,18 @@ void Engine::initGraphicsCommands()
             { 0, 0 },
             mainRenderPass->getExtent()
         };
-
         auto clearValues = mainRenderPass->getClearValues();
-
-        VkRenderPassBeginInfo renderPassBeginInfo{
+        VkRenderPassBeginInfo mainRenderPassBeginInfo{
             VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
             nullptr,
             mainRenderPass->get(),
-            mainRenderPass->getFramebuffers()[i],
+            mainRenderPass->getFramebuffers()[0],
             renderArea,
             uint32_t(clearValues.size()),
             clearValues.data()
         };
 
-        vkCmdBeginRenderPass(graphicsCommands[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(graphicsCommands[i], &mainRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         // Skybox:
 
@@ -415,6 +451,38 @@ void Engine::initGraphicsCommands()
             0,
             nullptr);
         scene->drawSphere(graphicsCommands[i]);
+
+        vkCmdEndRenderPass(graphicsCommands[i]);
+
+        // Tone:
+
+        clearValues = toneRenderPass->getClearValues();
+        VkRenderPassBeginInfo toneRenderPassBeginInfo{
+            VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            nullptr,
+            toneRenderPass->get(),
+            toneRenderPass->getFramebuffers()[i],
+            renderArea,
+            uint32_t(clearValues.size()),
+            clearValues.data()
+        };
+
+        vkCmdBeginRenderPass(graphicsCommands[i], &toneRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, tonePipeline->get());
+        descriptorSets = {
+            descriptors[DESCRIPTOR_TYPE_TONE]->getDescriptorSet(0)
+        };
+        vkCmdBindDescriptorSets(
+            graphicsCommands[i],
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            tonePipeline->getLayout(),
+            0,
+            descriptorSets.size(),
+            descriptorSets.data(),
+            0,
+            nullptr);
+        vkCmdDraw(graphicsCommands[i], 3, 1, 0, 0);
 
         vkCmdEndRenderPass(graphicsCommands[i]);
 
