@@ -72,7 +72,7 @@ int32_t Application::handleAppInput(android_app *app, AInputEvent *event)
     LOGA(app->userData);
     auto engine = reinterpret_cast<Engine*>(app->userData);
 
-    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION)
+    if (!engine->onPause() && AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION)
     {
         static glm::vec2 last;
 

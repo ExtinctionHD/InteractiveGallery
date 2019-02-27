@@ -35,6 +35,8 @@ public:
 
     void handleMotion(glm::vec2 delta);
 
+    void skipTime();
+
     void update();
 
     void resize(VkExtent2D newExtent);

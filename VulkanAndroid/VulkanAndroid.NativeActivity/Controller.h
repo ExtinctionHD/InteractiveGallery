@@ -8,7 +8,7 @@ public:
 
     Camera::Location getLocation() const;
 
-    void setDelta(glm::vec2 delta);
+    void setDelta(glm::vec2 newDelta);
 
     void update(float deltaSec);
 

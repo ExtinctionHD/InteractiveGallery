@@ -54,10 +54,15 @@ Camera::Location Controller::getLocation() const
     return Camera::Location{ target + view * radius, target, up };
 }
 
-void Controller::setDelta(glm::vec2 delta)
+void Controller::setDelta(glm::vec2 newDelta)
 {
-    delta.x = -delta.x;
-    this->delta = (this->delta + delta) / 2.0f;
+    newDelta.x = -newDelta.x;
+    delta = (delta + newDelta) / 2.0f;
+
+    const float maxDelta = 100.0f;
+    const glm::vec2 absDelta = abs(delta);
+    delta.x = absDelta.x > maxDelta ? maxDelta * delta.x / absDelta.x : delta.x;
+    delta.y = absDelta.y > maxDelta ? maxDelta * delta.y / absDelta.y : delta.y;
 
     LOGD("Delta x: %f, y: %f.", delta.x, delta.y);
 }

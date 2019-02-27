@@ -97,6 +97,11 @@ void Scene::handleMotion(glm::vec2 delta)
     controller->setDelta(delta);
 }
 
+void Scene::skipTime()
+{
+    timer.getDeltaSec();
+}
+
 void Scene::update()
 {
     const float deltaSec = timer.getDeltaSec();

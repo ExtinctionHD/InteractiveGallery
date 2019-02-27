@@ -33,13 +33,11 @@ bool Engine::create(ANativeWindow *window)
     toneRenderPass->create();
 
     initDescriptorSets();
-    createEarthPipeline();
-    createCloudsPipeline();
-    createSkyboxPipeline();
-    createTonePipeline();
+    initPipelines();
 
-    imageAvailable = createSemaphore();
     renderingFinished = createSemaphore();
+    imageAvailable = createSemaphore();
+
     initGraphicsCommands();
 
     created = true;
@@ -63,8 +61,17 @@ bool Engine::recreate(ANativeWindow *window)
         surface = new Surface(instance->get(), window);
         device->updateSurface(surface->get());
         swapChain->recreate(surface->get(), extent);
+
         mainRenderPass->recreate(extent);
-        earthPipeline->recreate();
+        toneRenderPass->recreate(extent);
+
+        descriptors[DESCRIPTOR_TYPE_TONE]->updateDescriptorSet(0, {}, { mainRenderPass->getTexture() });
+
+        for(auto pipeline: pipelines)
+        {
+            pipeline->recreate();
+        }
+
         scene->resize(extent);
 
         initGraphicsCommands();
@@ -88,6 +95,12 @@ void Engine::pause()
 void Engine::unpause()
 {
     paused = false;
+    scene->skipTime();
+}
+
+bool Engine::onPause()
+{
+    return paused;
 }
 
 void Engine::handleMotion(glm::vec2 delta)
@@ -169,14 +182,16 @@ bool Engine::destroy()
     vkDestroySemaphore(device->get(), renderingFinished, nullptr);
     vkDestroySemaphore(device->get(), imageAvailable, nullptr);
 
-    delete tonePipeline;
-    delete skyboxPipeline;
-    delete cloudsPipeline;
-    delete earthPipeline;    
+    for (auto pipeline : pipelines)
+    {
+        delete pipeline;
+    }
+
     for (auto descriptor : descriptors)
     {
         delete descriptor;
     }
+
     delete toneRenderPass;
     delete mainRenderPass;
     delete descriptorPool;
@@ -219,25 +234,16 @@ void Engine::initDescriptorSets()
         { scene->getEarthTransformationBuffer() }, 
         earthTextures);
 
-    // TODO combine clouds and skybox descriptors 
+    // Clouds and skybox:
 
-    // Clouds:
-
-    descriptors[DESCRIPTOR_TYPE_CLOUDS] = new DescriptorSets(
+    descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX] = new DescriptorSets(
         descriptorPool,
         { VK_SHADER_STAGE_VERTEX_BIT },
         { VK_SHADER_STAGE_FRAGMENT_BIT });
-    descriptors[DESCRIPTOR_TYPE_CLOUDS]->pushDescriptorSet(
+    descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
         { scene->getCloudsTransformationBuffer() },
         { scene->getCloudsTexture() });
-
-    // Skybox:
-
-    descriptors[DESCRIPTOR_TYPE_SKYBOX] = new DescriptorSets(
-        descriptorPool,
-        { VK_SHADER_STAGE_VERTEX_BIT },
-        { VK_SHADER_STAGE_FRAGMENT_BIT });
-    descriptors[DESCRIPTOR_TYPE_SKYBOX]->pushDescriptorSet(
+    descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
         { scene->getSkyboxTransformationBuffer() },
         { scene->getSkyboxTexture() });
 
@@ -252,77 +258,78 @@ void Engine::initDescriptorSets()
         { mainRenderPass->getTexture() });
 }
 
-void Engine::createEarthPipeline()
+void Engine::initPipelines()
 {
-    const std::string shadersPath = "shaders/Earth/";
-    const std::vector<std::shared_ptr<ShaderModule>> shaders{
-        std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-        std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-    };
-    earthPipeline = new GraphicsPipeline(
-        device,
-        mainRenderPass,
-        { 
-            descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(), 
-            descriptors[DESCRIPTOR_TYPE_EARTH]->getLayout() 
-        },
-        {},
-        shaders,
-        { Vertex::getBindingDescription(0) },
-        Vertex::getAttributeDescriptions(0, 0),
-        true);
-}
+    pipelines.resize(PIPELINE_TYPE_COUNT);
 
-void Engine::createCloudsPipeline()
-{
-    const std::string shadersPath = "shaders/Clouds/";
-    const std::vector<std::shared_ptr<ShaderModule>> shaders{
+    // Earth:
+
+    std::string shadersPath = "shaders/Earth/";
+    std::vector<std::shared_ptr<ShaderModule>> shaders{
         std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
         std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
     };
-    cloudsPipeline = new GraphicsPipeline(
+    pipelines[PIPELINE_TYPE_EARTH] = new GraphicsPipeline(
         device,
         mainRenderPass,
         {
             descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(),
-            descriptors[DESCRIPTOR_TYPE_CLOUDS]->getLayout()
+            descriptors[DESCRIPTOR_TYPE_EARTH]->getLayout()
         },
         {},
         shaders,
         { Vertex::getBindingDescription(0) },
         Vertex::getAttributeDescriptions(0, 0),
         true);
-}
 
-void Engine::createSkyboxPipeline()
-{
-    const std::string shadersPath = "shaders/Skybox/";
-    const std::vector<std::shared_ptr<ShaderModule>> shaders{
+    // Clouds:
+
+    shadersPath = "shaders/Clouds/";
+    shaders = {
         std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
         std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
     };
-    skyboxPipeline = new GraphicsPipeline(
+    pipelines[PIPELINE_TYPE_CLOUDS] = new GraphicsPipeline(
         device,
         mainRenderPass,
-        { 
-            descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(), 
-            descriptors[DESCRIPTOR_TYPE_SKYBOX]->getLayout() 
+        {
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(),
+            descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getLayout()
+        },
+        {},
+        shaders,
+        { Vertex::getBindingDescription(0) },
+        Vertex::getAttributeDescriptions(0, 0),
+        true);
+
+    // Skybox:
+
+    shadersPath = "shaders/Skybox/";
+    shaders = {
+        std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+        std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+    };
+    pipelines[PIPELINE_TYPE_SKYBOX] = new GraphicsPipeline(
+        device,
+        mainRenderPass,
+        {
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(),
+            descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getLayout()
         },
         {},
         shaders,
         { Position::getBindingDescription(0) },
         Position::getAttributeDescriptions(0, 0),
         true);
-}
 
-void Engine::createTonePipeline()
-{
-    const std::string shadersPath = "shaders/Tone/";
-    const std::vector<std::shared_ptr<ShaderModule>> shaders{
+    // Tone:
+
+    shadersPath = "shaders/Tone/";
+    shaders = {
         std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
         std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
     };
-    tonePipeline = new GraphicsPipeline(
+    pipelines[PIPELINE_TYPE_TONE] = new GraphicsPipeline(
         device,
         toneRenderPass,
         { descriptors[DESCRIPTOR_TYPE_TONE]->getLayout() },
@@ -400,15 +407,15 @@ void Engine::initGraphicsCommands()
 
         // Skybox:
 
-        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline->get());
+        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_SKYBOX]->get());
         std::vector<VkDescriptorSet> descriptorSets{
             descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
-            descriptors[DESCRIPTOR_TYPE_SKYBOX]->getDescriptorSet(0)
+            descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getDescriptorSet(1)
         };
         vkCmdBindDescriptorSets(
             graphicsCommands[i],
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            skyboxPipeline->getLayout(),
+            pipelines[PIPELINE_TYPE_SKYBOX]->getLayout(),
             0,
             descriptorSets.size(),
             descriptorSets.data(),
@@ -418,7 +425,7 @@ void Engine::initGraphicsCommands()
 
         // Earth:
 
-        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, earthPipeline->get());
+        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_EARTH]->get());
         descriptorSets = {
             descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
             descriptors[DESCRIPTOR_TYPE_EARTH]->getDescriptorSet(0)
@@ -426,7 +433,7 @@ void Engine::initGraphicsCommands()
         vkCmdBindDescriptorSets(
             graphicsCommands[i],
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            earthPipeline->getLayout(),
+            pipelines[PIPELINE_TYPE_EARTH]->getLayout(),
             0,
             descriptorSets.size(),
             descriptorSets.data(),
@@ -436,15 +443,15 @@ void Engine::initGraphicsCommands()
 
         // Clouds:
 
-        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, cloudsPipeline->get());
+        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_CLOUDS]->get());
         descriptorSets = {
             descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
-            descriptors[DESCRIPTOR_TYPE_CLOUDS]->getDescriptorSet(0)
+            descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getDescriptorSet(0)
         };
         vkCmdBindDescriptorSets(
             graphicsCommands[i],
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            cloudsPipeline->getLayout(),
+            pipelines[PIPELINE_TYPE_CLOUDS]->getLayout(),
             0,
             descriptorSets.size(),
             descriptorSets.data(),
@@ -469,14 +476,14 @@ void Engine::initGraphicsCommands()
 
         vkCmdBeginRenderPass(graphicsCommands[i], &toneRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, tonePipeline->get());
+        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_TONE]->get());
         descriptorSets = {
             descriptors[DESCRIPTOR_TYPE_TONE]->getDescriptorSet(0)
         };
         vkCmdBindDescriptorSets(
             graphicsCommands[i],
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            tonePipeline->getLayout(),
+            pipelines[PIPELINE_TYPE_TONE]->getLayout(),
             0,
             descriptorSets.size(),
             descriptorSets.data(),

@@ -27,6 +27,8 @@ public:
 
     void unpause();
 
+    bool onPause();
+
     void handleMotion(glm::vec2 delta);
 
     bool drawFrame();
@@ -38,10 +40,18 @@ private:
     {
         DESCRIPTOR_TYPE_SCENE,
         DESCRIPTOR_TYPE_EARTH,
-        DESCRIPTOR_TYPE_CLOUDS,
-        DESCRIPTOR_TYPE_SKYBOX,
+        DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX = 3,
         DESCRIPTOR_TYPE_TONE,
         DESCRIPTOR_TYPE_COUNT
+    };
+
+    enum PipelineType
+    {
+        PIPELINE_TYPE_EARTH,
+        PIPELINE_TYPE_CLOUDS,
+        PIPELINE_TYPE_SKYBOX,
+        PIPELINE_TYPE_TONE,
+        PIPELINE_TYPE_COUNT
     };
 
     bool created;
@@ -58,41 +68,27 @@ private:
 
     SwapChain *swapChain;
 
-    Scene *scene;
+    DescriptorPool *descriptorPool;
 
     MainRenderPass *mainRenderPass;
 
     ToneRenderPass *toneRenderPass;
 
-    DescriptorPool *descriptorPool;
-
     std::vector<DescriptorSets*> descriptors;
 
-    // TODO combine pipelines in vector
+    std::vector<GraphicsPipeline*> pipelines;
 
-    GraphicsPipeline *earthPipeline;
-
-    GraphicsPipeline *cloudsPipeline;
-
-    GraphicsPipeline *skyboxPipeline;
-
-    GraphicsPipeline *tonePipeline;
-
-    VkSemaphore imageAvailable;
+    Scene *scene;
 
     VkSemaphore renderingFinished;
+
+    VkSemaphore imageAvailable;
 
     std::vector<VkCommandBuffer> graphicsCommands;
 
     void initDescriptorSets();
 
-    void createEarthPipeline();
-
-    void createCloudsPipeline();
-
-    void createSkyboxPipeline();
-
-    void createTonePipeline();
+    void initPipelines();
 
     VkSemaphore createSemaphore() const;
 
