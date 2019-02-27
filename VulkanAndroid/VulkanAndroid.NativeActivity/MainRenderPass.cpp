@@ -1,7 +1,7 @@
 #include "MainRenderPass.h"
 
-MainRenderPass::MainRenderPass(Device *device, VkExtent2D attachmentExtent)
-    : RenderPass(device, attachmentExtent, device->getMaxSampleCount())
+MainRenderPass::MainRenderPass(Device *device, VkExtent2D attachmentExtent, VkSampleCountFlagBits sampleCount)
+    : RenderPass(device, attachmentExtent, sampleCount)
 {
     
 }
@@ -19,18 +19,16 @@ std::vector<VkClearValue> MainRenderPass::getClearValues() const
     VkClearValue depthClearValue;
     depthClearValue.depthStencil = { 1.0f, 0 };
 
-    return { colorClearValue, colorClearValue, depthClearValue };
+    return { colorClearValue, depthClearValue };
 }
 
 TextureImage* MainRenderPass::getTexture() const
 {
-    return resolveTexture.get();
+    return colorTexture.get();
 }
 
 void MainRenderPass::createAttachments()
 {
-    const VkFormat format = VK_FORMAT_R16G16B16A16_SFLOAT;
-
     const VkExtent3D attachmentExtent{
         extent.width,
         extent.height,
@@ -45,36 +43,21 @@ void MainRenderPass::createAttachments()
         1,
     };
 
-    colorImage = std::make_shared<Image>(
+    colorTexture = std::make_shared<TextureImage>(
         device,
         0,
-        format,
+        VK_FORMAT_R16G16B16A16_SFLOAT,
         attachmentExtent,
         subresourceRange.levelCount,
         subresourceRange.layerCount,
         sampleCount,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         subresourceRange.aspectMask,
-        false);
-    colorImage->transitLayout(
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        subresourceRange);
-
-    resolveTexture = std::make_shared<TextureImage>(
-        device,
-        0,
-        format,
-        attachmentExtent,
-        1,
-        1,
-        VK_SAMPLE_COUNT_1_BIT,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        subresourceRange.aspectMask,
         false,
         VK_FILTER_NEAREST,
         VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
-    resolveTexture->transitLayout(
+
+    colorTexture->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         subresourceRange);
@@ -96,7 +79,7 @@ void MainRenderPass::createAttachments()
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         subresourceRange);
 
-	attachments = { colorImage, resolveTexture, depthImage };
+	attachments = { colorTexture, depthImage };
 }
 
 void MainRenderPass::createRenderPass()
@@ -105,27 +88,15 @@ void MainRenderPass::createRenderPass()
 
     const VkAttachmentDescription colorAttachmentDesc{
 		0,								
-		colorImage->getFormat(),		                
-		colorImage->getSampleCount(),			 
+        colorTexture->getFormat(),
+        colorTexture->getSampleCount(),
 		VK_ATTACHMENT_LOAD_OP_CLEAR,		         
 		VK_ATTACHMENT_STORE_OP_STORE,		     
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE,	     
 		VK_ATTACHMENT_STORE_OP_DONT_CARE,	     
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 	};
-
-    const VkAttachmentDescription resolveAttachmentDesc{
-        0,
-        resolveTexture->getFormat(),
-        VK_SAMPLE_COUNT_1_BIT,
-        VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        VK_ATTACHMENT_STORE_OP_STORE,
-        VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    };
 
     const VkAttachmentDescription depthAttachmentDesc{
 		0,										
@@ -141,7 +112,6 @@ void MainRenderPass::createRenderPass()
 
 	std::vector<VkAttachmentDescription> attachmentDescriptions{
 		colorAttachmentDesc,
-        resolveAttachmentDesc,
 		depthAttachmentDesc,
 	};
 
@@ -152,13 +122,8 @@ void MainRenderPass::createRenderPass()
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 	};
 
-    VkAttachmentReference resolveAttachmentRef{
-        1,
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-    };
-
 	VkAttachmentReference depthAttachmentRef{
-		2,									
+		1,									
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 	};
 
@@ -171,7 +136,7 @@ void MainRenderPass::createRenderPass()
 		nullptr,						
 		1,								
 		&colorAttachmentRef,			
-		&resolveAttachmentRef,			
+		nullptr,			
 		&depthAttachmentRef,			
 		0,								
 		nullptr							
@@ -224,5 +189,5 @@ void MainRenderPass::createRenderPass()
 
 void MainRenderPass::createFramebuffers()
 {
-    addFramebuffer({ colorImage->getView(), resolveTexture->getView(), depthImage->getView(), });
+    addFramebuffer({ colorTexture->getView(), depthImage->getView(), });
 }

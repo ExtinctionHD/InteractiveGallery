@@ -59,13 +59,13 @@ TextureImage::TextureImage(
     VkSamplerAddressMode samplerAddressMode)
 	: Image(
         device,
-        flags | VK_IMAGE_USAGE_SAMPLED_BIT,
+        flags,
         format,
         extent,
         mipLevels,
         arrayLayers,
         sampleCount,
-        usage,
+        usage | VK_IMAGE_USAGE_SAMPLED_BIT,
         aspectFlags,
         cubeMap)
 {

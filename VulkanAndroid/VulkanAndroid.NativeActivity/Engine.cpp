@@ -27,7 +27,7 @@ bool Engine::create(ANativeWindow *window)
     scene = new Scene(device, swapChain->getExtent());
     descriptorPool = new DescriptorPool(device, Scene::BUFFER_COUNT, Scene::TEXTURE_COUNT + 1, DESCRIPTOR_TYPE_COUNT);
 
-    mainRenderPass = new MainRenderPass(device, swapChain->getExtent());
+    mainRenderPass = new MainRenderPass(device, swapChain->getExtent(), VK_SAMPLE_COUNT_1_BIT);
     toneRenderPass = new ToneRenderPass(device, swapChain);
     mainRenderPass->create();
     toneRenderPass->create();

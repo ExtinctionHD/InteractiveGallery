@@ -7,7 +7,7 @@
 class MainRenderPass : public RenderPass
 {
 public:
-	MainRenderPass(Device *device, VkExtent2D attachmentExtent);
+	MainRenderPass(Device *device, VkExtent2D attachmentExtent, VkSampleCountFlagBits sampleCount);
 
     uint32_t getColorAttachmentCount() const override;
 
@@ -23,10 +23,8 @@ protected:
 	void createFramebuffers() override;
 
 private:
-	std::shared_ptr<Image> colorImage;
+	std::shared_ptr<TextureImage> colorTexture;
 
 	std::shared_ptr<Image> depthImage;
-
-    std::shared_ptr<TextureImage> resolveTexture;
 };
 
