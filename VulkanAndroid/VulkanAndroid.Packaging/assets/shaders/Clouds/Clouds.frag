@@ -4,9 +4,10 @@
 layout(set = 0, binding = 1) uniform Lighting
 {
     vec3 direction;
-	float directedIntensity;
+    float directedIntensity;
     vec3 cameraPos;
-	float transitionPower;
+    float transitionFactor;
+    float ambientIntensity;
 };
 
 layout(set = 1, binding = 1) uniform sampler2D cloudsTexture;
@@ -29,7 +30,7 @@ void main()
 
 	float color = texture(cloudsTexture, inUV).r;
 
-	float result = diffuseFactor * directedIntensity * color;
+	float result = (directedIntensity * diffuseFactor + ambientIntensity) * color;
 
     outColor = vec4(result, result, result, color);
 }

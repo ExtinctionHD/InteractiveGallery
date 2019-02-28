@@ -4,9 +4,10 @@
 layout(set = 0, binding = 1) uniform Lighting
 {
     vec3 direction;
-	float directedIntensity;
+    float directedIntensity;
     vec3 cameraPos;
-	float transitionPower;
+    float transitionFactor;
+    float ambientIntensity;
 };
 
 layout(set = 1, binding = 1) uniform sampler2D dayTexture;
@@ -53,9 +54,8 @@ void main()
 
 	float diffuseFactor = max(dot(N, L), 0.0f);
 
-	vec3 result = texture(nightTexture, inUV).rgb;
-	result *= pow(1.0f - diffuseFactor, transitionPower);
-	result += diffuseFactor * directedIntensity * texture(dayTexture, inUV).rgb;
+	vec3 result = (directedIntensity * diffuseFactor + ambientIntensity) * texture(dayTexture, inUV).rgb;
+	result += pow(1.0f - diffuseFactor, transitionFactor) * texture(nightTexture, inUV).rgb;
 
     outColor = vec4(result, 1.0f);
 }

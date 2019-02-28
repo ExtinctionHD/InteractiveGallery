@@ -11,6 +11,7 @@ public:
         float directedIntensity;
         glm::vec3 cameraPos;
         float transitionFactor;
+        float ambientIntensity;
     };
 
     Lighting(Device *device, Attributes attributes);

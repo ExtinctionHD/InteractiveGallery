@@ -16,7 +16,7 @@ public:
 private:
     const std::string TEXTURE_FILE = "Clouds.jpg";
 
-    const float RADIUS_SCALE = 1.015f;
+    const float RADIUS_SCALE = 1.01f;
 
     TextureImage *texture;
 };

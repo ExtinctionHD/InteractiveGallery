@@ -24,7 +24,9 @@ Scene::Scene(Device *device, VkExtent2D extent)
         glm::vec3(1.0f, 0.0f, 0.0f),
         5.0f,
         cameraLocation.position,
-        8.0f
+        8.0f,
+        0.05f
+
     };
     lighting = new Lighting(device, lightingAttributes);
 
