@@ -4,59 +4,19 @@ GraphicsPipeline::GraphicsPipeline(
 	Device *device,
 	RenderPass *renderPass,
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
-    const std::vector<VkPushConstantRange> &pushConstantRanges,
+    std::vector<VkPushConstantRange> pushConstantRanges,
     std::vector<std::shared_ptr<ShaderModule>> shaderModules,
     std::vector<VkVertexInputBindingDescription> bindingDescriptions,
     std::vector<VkVertexInputAttributeDescription> attributeDescriptions,
     bool blendEnable)
-    : device(device),
+    : Pipeline(device, descriptorSetLayouts, pushConstantRanges),
       renderPass(renderPass),
       shaderModules(std::move(shaderModules)),
       bindingDescriptions(std::move(bindingDescriptions)),
       attributeDescriptions(std::move(attributeDescriptions)),
       blendEnable(blendEnable)
 {
-	createLayout(std::move(descriptorSetLayouts), pushConstantRanges);
-	createPipeline();
-}
-
-GraphicsPipeline::~GraphicsPipeline()
-{
-	vkDestroyPipeline(device->get(), pipeline, nullptr);
-	vkDestroyPipelineLayout(device->get(), layout, nullptr);
-}
-
-VkPipeline GraphicsPipeline::get() const
-{
-	return pipeline;
-}
-
-VkPipelineLayout GraphicsPipeline::getLayout() const
-{
-	return layout;
-}
-
-void GraphicsPipeline::recreate()
-{
-	vkDestroyPipeline(device->get(), pipeline, nullptr);
-	createPipeline();
-}
-
-void GraphicsPipeline::createLayout(
-	std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
-	const std::vector<VkPushConstantRange> &pushConstantRanges)
-{
-	VkPipelineLayoutCreateInfo createInfo{
-		VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-		nullptr,										
-		0,												
-		uint32_t(descriptorSetLayouts.size()),					
-		descriptorSetLayouts.data(),					
-		uint32_t(pushConstantRanges.size()),												
-		pushConstantRanges.data(),
-	};
-
-    CALL_VK(vkCreatePipelineLayout(device->get(), &createInfo, nullptr, &layout));
+    GraphicsPipeline::createPipeline();
 }
 
 void GraphicsPipeline::createPipeline()

@@ -268,6 +268,7 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Clouds.h" />
+    <ClInclude Include="ComputePipeline.h" />
     <ClInclude Include="Controller.h" />
     <ClInclude Include="cube.h" />
     <ClInclude Include="DescriptorPool.h" />
@@ -282,6 +283,7 @@
     <ClInclude Include="Instance.h" />
     <ClInclude Include="Macro.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="Pipeline.h" />
     <ClInclude Include="Position.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Skybox.h" />
@@ -310,6 +312,7 @@
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Clouds.cpp" />
+    <ClCompile Include="ComputePipeline.cpp" />
     <ClCompile Include="Controller.cpp" />
     <ClCompile Include="DescriptorPool.cpp" />
     <ClCompile Include="DescriptorSets.cpp" />
@@ -323,6 +326,7 @@
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="Position.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Skybox.cpp" />

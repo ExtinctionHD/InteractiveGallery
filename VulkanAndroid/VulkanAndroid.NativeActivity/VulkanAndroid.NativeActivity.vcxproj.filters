@@ -118,6 +118,12 @@
     <ClInclude Include="ToneRenderPass.h">
       <Filter>Engine\RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="ComputePipeline.h">
+      <Filter>Engine\Pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="Pipeline.h">
+      <Filter>Engine\Pipelines</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -227,6 +233,12 @@
     </ClCompile>
     <ClCompile Include="ToneRenderPass.cpp">
       <Filter>Engine\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputePipeline.cpp">
+      <Filter>Engine\Pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="Pipeline.cpp">
+      <Filter>Engine\Pipelines</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
