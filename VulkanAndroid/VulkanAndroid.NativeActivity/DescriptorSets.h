@@ -4,10 +4,7 @@
 class DescriptorSets
 {
 public:
-    DescriptorSets(
-        DescriptorPool *pool,
-        std::vector<VkShaderStageFlags> bufferShaderStages,
-        std::vector<VkShaderStageFlags> textureShaderStages);
+    DescriptorSets(DescriptorPool *pool, DescriptorShaderStages descriptorShaderStages);
 
     ~DescriptorSets();
 
@@ -15,9 +12,9 @@ public:
 
     VkDescriptorSet getDescriptorSet(uint32_t index) const;
 
-    void pushDescriptorSet(std::vector<Buffer*> buffers, std::vector<TextureImage*> textures);
+    void pushDescriptorSet(DescriptorSources descriptorSources);
 
-    void updateDescriptorSet(uint32_t index, std::vector<Buffer*> buffers, std::vector<TextureImage*> textures);
+    void updateDescriptorSet(uint32_t index, DescriptorSources descriptorSources);
 
     void removeDescriptorSets(uint32_t index, uint32_t count);
 

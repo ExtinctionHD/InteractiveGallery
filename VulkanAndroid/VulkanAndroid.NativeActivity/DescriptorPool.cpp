@@ -1,25 +1,16 @@
 #include "DescriptorPool.h"
+#include <list>
 
-DescriptorPool::DescriptorPool(Device *device, uint32_t bufferCount, uint32_t textureCount, uint32_t setCount) : device(device)
+DescriptorPool::DescriptorPool(Device *device, std::vector<VkDescriptorPoolSize> descriptorCount, uint32_t setCount)
+    : device(device)
 {
-    const VkDescriptorPoolSize uniformBufferSize{
-		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-		bufferCount,
-	};
-    const VkDescriptorPoolSize textureSize{
-		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-		textureCount,
-	};
-
-	std::vector<VkDescriptorPoolSize> poolSizes{ uniformBufferSize, textureSize };
-
 	VkDescriptorPoolCreateInfo createInfo{
 		VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 		nullptr,										
 		0,												
 		setCount,										
-		uint32_t(poolSizes.size()),						
-		poolSizes.data(),								
+		uint32_t(descriptorCount.size()),
+        descriptorCount.data(),
 	};
 
     CALL_VK(vkCreateDescriptorPool(device->get(), &createInfo, nullptr, &pool));
@@ -31,37 +22,25 @@ DescriptorPool::~DescriptorPool()
 	vkDestroyDescriptorPool(device->get(), pool, nullptr);
 }
 
-VkDescriptorSetLayout DescriptorPool::createDescriptorSetLayout(
-	std::vector<VkShaderStageFlags> bufferShaderStages,
-	std::vector<VkShaderStageFlags> textureShaderStages) const
+VkDescriptorSetLayout DescriptorPool::createDescriptorSetLayout(DescriptorShaderStages descriptorShaderStages) const
 {
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 
-	for (size_t i = 0; i < bufferShaderStages.size(); i++)
-	{
-		VkDescriptorSetLayoutBinding uniformBufferLayoutBinding{
-			uint32_t(i),                        
-			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			1,                                
-			bufferShaderStages[i],           
-			nullptr                           
-		};
+    for (const auto &[descriptorType, shaderStages] : descriptorShaderStages)
+    {
+        for (auto shaderStage : shaderStages)
+        {
+            VkDescriptorSetLayoutBinding uniformBufferLayoutBinding{
+                uint32_t(bindings.size()),
+                descriptorType,
+                1,
+                shaderStage,
+                nullptr
+            };
 
-		bindings.push_back(uniformBufferLayoutBinding);
-	}
-
-	for (size_t i = 0; i < textureShaderStages.size(); i++)
-	{
-		VkDescriptorSetLayoutBinding textureLayoutBinding{
-			uint32_t(bufferShaderStages.size() + i),    
-			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 
-			1,                                         
-			textureShaderStages[i],                   
-			nullptr                                    
-		};
-
-		bindings.push_back(textureLayoutBinding);
-	}
+            bindings.push_back(uniformBufferLayoutBinding);
+        }
+    }
 
 	VkDescriptorSetLayoutCreateInfo createInfo{
 		VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -98,67 +77,86 @@ VkDescriptorSet DescriptorPool::getDescriptorSet(VkDescriptorSetLayout layout) c
 	return set;
 }
 
-void DescriptorPool::updateDescriptorSet(
-	VkDescriptorSet set, 
-	std::vector<Buffer*> buffers,
-	std::vector<TextureImage*> textures) const
+void DescriptorPool::updateDescriptorSet(VkDescriptorSet set, DescriptorSources descriptorSources) const
 {
-	std::vector<VkWriteDescriptorSet> bufferWrites;
-	std::vector<VkDescriptorBufferInfo> bufferInfos(buffers.size());
+    std::list<VkDescriptorImageInfo> imageInfos;
+    std::list<VkDescriptorBufferInfo> bufferInfos;
+    std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-	for (size_t i = 0; i < buffers.size(); i++)
-	{
-		bufferInfos[i] = {
-			buffers[i]->get(),
-			0,
-			buffers[i]->getSize()
-		};
+    for (const auto &[descriptorType, sources] : descriptorSources)
+    {
+        switch (descriptorType)
+        {
+        // case VK_DESCRIPTOR_TYPE_SAMPLER: break;
 
-		VkWriteDescriptorSet bufferWrite{
-			VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-			nullptr,							
-			set,								
-			uint32_t(i),									
-			0,				
-			1,		
-			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,	
-			nullptr,							
-			&bufferInfos[i],					
-			nullptr,							
-		};
+        case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+            for (auto source : sources)
+            {
+                const auto texture = reinterpret_cast<TextureImage*>(source);
+                imageInfos.push_back(VkDescriptorImageInfo{
+                    texture->getSampler(),
+                    texture->getView(),
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL 
+                });
 
-		bufferWrites.push_back(bufferWrite);
-	}
+                descriptorWrites.push_back(VkWriteDescriptorSet{
+                    VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    nullptr,
+                    set,
+                    uint32_t(descriptorWrites.size()),
+                    0,
+                    1,
+                    descriptorType,
+                    &imageInfos.back(),
+                    nullptr,
+                    nullptr
+                });
+            }
+            break;
 
-	std::vector<VkWriteDescriptorSet> textureWrites;
-	std::vector<VkDescriptorImageInfo> imagesInfo(textures.size());
+        // case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: break;
+        // case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE: break;
+        // case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER: break;
+        // case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER: break;
 
-	for (size_t i = 0; i < textures.size(); i++)
-	{
-		imagesInfo[i] = {
-			textures[i]->getSampler(),				
-			textures[i]->getView(),					
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		};
+        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+            for (auto source : sources)
+            {
+                const auto buffer = reinterpret_cast<Buffer*>(source);
+                bufferInfos.push_back(VkDescriptorBufferInfo{
+                    buffer->get(),
+                    0,
+                    buffer->getSize()
+                });
 
-		VkWriteDescriptorSet textureWrite{
-			VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-			nullptr,									
-			set,										
-			uint32_t(buffers.size() + i),						
-			0,											
-			1,											
-			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,	
-			&imagesInfo[i],								
-			nullptr,									
-			nullptr,									
-		};
+                descriptorWrites.push_back(VkWriteDescriptorSet{
+                    VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    nullptr,
+                    set,
+                    uint32_t(descriptorWrites.size()),
+                    0,
+                    1,
+                    descriptorType,
+                    nullptr,
+                    &bufferInfos.back(),
+                    nullptr
+                });
+            }
+            break;
 
-		textureWrites.push_back(textureWrite);
-	}
+        // case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: break;
+        // case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC: break;
+        // case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC: break;
+        // case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT: break;
+        // case VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT: break;
+        // case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV: break;
+        // case VK_DESCRIPTOR_TYPE_RANGE_SIZE: break;
+        // case VK_DESCRIPTOR_TYPE_MAX_ENUM: break;
 
-	std::vector<VkWriteDescriptorSet> descriptorWrites(bufferWrites.begin(), bufferWrites.end());
-	descriptorWrites.insert(descriptorWrites.end(), textureWrites.begin(), textureWrites.end());
+        default: 
+            FATAL("Invalid descritor type: %d.", descriptorType);
+        }
+    }
 
 	vkUpdateDescriptorSets(device->get(), uint32_t(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 }

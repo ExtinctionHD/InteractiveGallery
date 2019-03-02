@@ -7,7 +7,7 @@ layout(set = 0, binding = 0) uniform Space
     mat4 proj;
 };
 
-layout(set = 1, binding = 0) uniform Tranformation
+layout(set = 1, binding = 3) uniform Tranformation
 {
     mat4 transformation;
 };

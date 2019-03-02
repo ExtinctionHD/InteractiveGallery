@@ -25,12 +25,19 @@ bool Engine::create(ANativeWindow *window)
     device = new Device(instance->get(), surface->get(), instance->getLayers());
     swapChain = new SwapChain(device, surface->get(), window::getExtent(window));
     scene = new Scene(device, swapChain->getExtent());
-    descriptorPool = new DescriptorPool(device, Scene::BUFFER_COUNT, Scene::TEXTURE_COUNT + 1, DESCRIPTOR_TYPE_COUNT);
 
     mainRenderPass = new MainRenderPass(device, swapChain->getExtent(), VK_SAMPLE_COUNT_1_BIT);
     toneRenderPass = new ToneRenderPass(device, swapChain);
     mainRenderPass->create();
     toneRenderPass->create();
+
+    descriptorPool = new DescriptorPool(
+        device,
+        {
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Scene::TEXTURE_COUNT + 1 },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Scene::BUFFER_COUNT + 0 }
+        },
+        DESCRIPTOR_TYPE_COUNT);
 
     initDescriptorSets();
     initPipelines();
@@ -40,10 +47,9 @@ bool Engine::create(ANativeWindow *window)
 
     initGraphicsCommands();
 
-    created = true;
     LOGI("Engine created.");
 
-    return true;
+    return created = true;
 }
 
 bool Engine::recreate(ANativeWindow *window)
@@ -65,7 +71,9 @@ bool Engine::recreate(ANativeWindow *window)
         mainRenderPass->recreate(extent);
         toneRenderPass->recreate(extent);
 
-        descriptors[DESCRIPTOR_TYPE_TONE]->updateDescriptorSet(0, {}, { mainRenderPass->getTexture() });
+        descriptors[DESCRIPTOR_TYPE_TONE]->updateDescriptorSet(
+            0,
+            { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { mainRenderPass->getTexture() } } });
 
         for(auto pipeline: pipelines)
         {
@@ -209,8 +217,6 @@ bool Engine::destroy()
 
 void Engine::initDescriptorSets()
 {
-    std::vector<TextureImage*> earthTextures = scene->getEarthTextures();
-    const std::vector<VkShaderStageFlags> earthTextureShaderStages(earthTextures.size(), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     descriptors.resize(DESCRIPTOR_TYPE_COUNT);
 
@@ -218,44 +224,59 @@ void Engine::initDescriptorSets()
 
     descriptors[DESCRIPTOR_TYPE_SCENE] = new DescriptorSets(
         descriptorPool,
-        { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT },
-        {});
+        { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT } } });
     descriptors[DESCRIPTOR_TYPE_SCENE]->pushDescriptorSet(
-        { scene->getCameraBuffer(), scene->getLightingBuffer() },
-        {});
+        { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getCameraBuffer(), scene->getLightingBuffer() } } });
 
     // Earth:
 
+    std::vector<void*> earthTextures;
+    for (const auto texture : scene->getEarthTextures())
+    {
+        earthTextures.push_back(texture);
+    }
+
     descriptors[DESCRIPTOR_TYPE_EARTH] = new DescriptorSets(
         descriptorPool,
-        { VK_SHADER_STAGE_VERTEX_BIT },
-        earthTextureShaderStages);
+        {
+            {
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                std::vector<VkShaderStageFlags>(earthTextures.size(), VK_SHADER_STAGE_FRAGMENT_BIT)
+            },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT } },
+        });
     descriptors[DESCRIPTOR_TYPE_EARTH]->pushDescriptorSet(
-        { scene->getEarthTransformationBuffer() }, 
-        earthTextures);
+        {
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, earthTextures },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getEarthTransformationBuffer() } }
+        });
 
     // Clouds and skybox:
 
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX] = new DescriptorSets(
         descriptorPool,
-        { VK_SHADER_STAGE_VERTEX_BIT },
-        { VK_SHADER_STAGE_FRAGMENT_BIT });
+        {
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { VK_SHADER_STAGE_FRAGMENT_BIT } },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT } }
+        });
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
-        { scene->getCloudsTransformationBuffer() },
-        { scene->getCloudsTexture() });
+        {
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getCloudsTexture() } },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getCloudsTransformationBuffer() } }
+        });
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
-        { scene->getSkyboxTransformationBuffer() },
-        { scene->getSkyboxTexture() });
+        {
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getSkyboxTexture() } },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getSkyboxTransformationBuffer() } }
+        });
 
     // Tone:
 
     descriptors[DESCRIPTOR_TYPE_TONE] = new DescriptorSets(
         descriptorPool,
-        {},
-        { VK_SHADER_STAGE_FRAGMENT_BIT });
+        { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { VK_SHADER_STAGE_FRAGMENT_BIT } } });
     descriptors[DESCRIPTOR_TYPE_TONE]->pushDescriptorSet(
-        {},
-        { mainRenderPass->getTexture() });
+        { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { mainRenderPass->getTexture() } } });
 }
 
 void Engine::initPipelines()
