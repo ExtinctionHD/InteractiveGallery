@@ -2,6 +2,8 @@
 #include "Vertex.h"
 #include "utils.h"
 #include "Position.h"
+#include "GraphicsPipeline.h"
+#include "ComputePipeline.h"
 
 Engine::Engine() : created(false), outdated(false)
 {
@@ -27,9 +29,7 @@ bool Engine::create(ANativeWindow *window)
     scene = new Scene(device, swapChain->getExtent());
 
     mainRenderPass = new MainRenderPass(device, swapChain->getExtent(), VK_SAMPLE_COUNT_1_BIT);
-    toneRenderPass = new ToneRenderPass(device, swapChain);
     mainRenderPass->create();
-    toneRenderPass->create();
 
     descriptorPool = new DescriptorPool(
         device,
@@ -45,7 +45,7 @@ bool Engine::create(ANativeWindow *window)
     renderingFinished = createSemaphore();
     imageAvailable = createSemaphore();
 
-    initGraphicsCommands();
+    initRenderingCommands();
 
     LOGI("Engine created.");
 
@@ -69,7 +69,6 @@ bool Engine::recreate(ANativeWindow *window)
         swapChain->recreate(surface->get(), extent);
 
         mainRenderPass->recreate(extent);
-        toneRenderPass->recreate(extent);
 
         descriptors[DESCRIPTOR_TYPE_TONE]->updateDescriptorSet(
             0,
@@ -82,7 +81,7 @@ bool Engine::recreate(ANativeWindow *window)
 
         scene->resize(extent);
 
-        initGraphicsCommands();
+        initRenderingCommands();
 
         outdated = false;
     }
@@ -152,7 +151,7 @@ bool Engine::drawFrame()
         waitSemaphores.data(),
         waitStages.data(),
         1,
-        &graphicsCommands[imageIndex],
+        &renderingCommands,
         uint32_t(signalSemaphores.size()),
         signalSemaphores.data(),
     };
@@ -200,7 +199,6 @@ bool Engine::destroy()
         delete descriptor;
     }
 
-    delete toneRenderPass;
     delete mainRenderPass;
     delete descriptorPool;
     delete scene;
@@ -345,20 +343,11 @@ void Engine::initPipelines()
 
     // Tone:
 
-    shadersPath = "shaders/Tone/";
-    shaders = {
-        std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-        std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-    };
-    pipelines[PIPELINE_TYPE_TONE] = new GraphicsPipeline(
+    pipelines[PIPELINE_TYPE_TONE] = new ComputePipeline(
         device,
-        toneRenderPass,
         { descriptors[DESCRIPTOR_TYPE_TONE]->getLayout() },
         {},
-        shaders,
-        {},
-        {},
-        true);
+        std::make_shared<ShaderModule>(device, "shaders/Tone/comp.spv", VK_SHADER_STAGE_COMPUTE_BIT));
 }
 
 VkSemaphore Engine::createSemaphore() const
@@ -376,17 +365,125 @@ VkSemaphore Engine::createSemaphore() const
     return semaphore;
 }
 
-void Engine::initGraphicsCommands()
+void Engine::initRenderingCommands()
+{
+    const VkCommandPool commandPool = device->getCommandPool();
+
+    if (renderingCommands)
+    {
+        vkFreeCommandBuffers(device->get(), commandPool, 1, &renderingCommands);
+    }
+
+    VkCommandBufferAllocateInfo allocInfo{
+        VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        nullptr,
+        commandPool,
+        VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        1,
+    };
+
+    CALL_VK(vkAllocateCommandBuffers(device->get(), &allocInfo, &renderingCommands));
+
+    VkCommandBufferBeginInfo beginInfo{
+        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        nullptr,
+        VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
+        nullptr,
+    };
+
+    CALL_VK(vkBeginCommandBuffer(renderingCommands, &beginInfo));
+
+    {
+        const VkRect2D renderArea{
+        { 0, 0 },
+        mainRenderPass->getExtent()
+        };
+        auto clearValues = mainRenderPass->getClearValues();
+        VkRenderPassBeginInfo mainRenderPassBeginInfo{
+            VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            nullptr,
+            mainRenderPass->get(),
+            mainRenderPass->getFramebuffers().front(),
+            renderArea,
+            uint32_t(clearValues.size()),
+            clearValues.data()
+        };
+
+        vkCmdBeginRenderPass(renderingCommands, &mainRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        // Skybox:
+
+        vkCmdBindPipeline(renderingCommands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_SKYBOX]->get());
+        std::vector<VkDescriptorSet> descriptorSets{
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
+            descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getDescriptorSet(1)
+        };
+        vkCmdBindDescriptorSets(
+            renderingCommands,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelines[PIPELINE_TYPE_SKYBOX]->getLayout(),
+            0,
+            descriptorSets.size(),
+            descriptorSets.data(),
+            0,
+            nullptr);
+        scene->drawCube(renderingCommands);
+
+        // Earth:
+
+        vkCmdBindPipeline(renderingCommands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_EARTH]->get());
+        descriptorSets = {
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
+            descriptors[DESCRIPTOR_TYPE_EARTH]->getDescriptorSet(0)
+        };
+        vkCmdBindDescriptorSets(
+            renderingCommands,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelines[PIPELINE_TYPE_EARTH]->getLayout(),
+            0,
+            descriptorSets.size(),
+            descriptorSets.data(),
+            0,
+            nullptr);
+        scene->drawSphere(renderingCommands);
+
+        // Clouds:
+
+        vkCmdBindPipeline(renderingCommands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_CLOUDS]->get());
+        descriptorSets = {
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
+            descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getDescriptorSet(0)
+        };
+        vkCmdBindDescriptorSets(
+            renderingCommands,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelines[PIPELINE_TYPE_CLOUDS]->getLayout(),
+            0,
+            descriptorSets.size(),
+            descriptorSets.data(),
+            0,
+            nullptr);
+        scene->drawSphere(renderingCommands);
+
+        vkCmdEndRenderPass(renderingCommands);
+    }
+
+    CALL_VK(vkEndCommandBuffer(renderingCommands));
+
+    LOGI("Graphics commands created.");
+}
+
+void Engine::initComputingCommands()
 {
     const VkCommandPool commandPool = device->getCommandPool();
     const uint32_t count = swapChain->getImageCount();
 
-    if (!graphicsCommands.empty())
+    if (!computingCommands.empty())
     {
-        vkFreeCommandBuffers(device->get(), commandPool, uint32_t(graphicsCommands.size()), graphicsCommands.data());
+        vkFreeCommandBuffers(device->get(), commandPool, uint32_t(computingCommands.size()), computingCommands.data());
     }
 
-    graphicsCommands.resize(count);
+    computingCommands.resize(count);
 
     VkCommandBufferAllocateInfo allocInfo{
         VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -396,126 +493,24 @@ void Engine::initGraphicsCommands()
         count,
     };
 
-    CALL_VK(vkAllocateCommandBuffers(device->get(), &allocInfo, graphicsCommands.data()));
-
-    VkCommandBufferBeginInfo beginInfo{
-        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        nullptr,
-        VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
-        nullptr,
-    };
+    CALL_VK(vkAllocateCommandBuffers(device->get(), &allocInfo, computingCommands.data()));
 
     for (uint32_t i = 0; i < count; i++)
     {
-        CALL_VK(vkBeginCommandBuffer(graphicsCommands[i], &beginInfo));
 
-        const VkRect2D renderArea{
-            { 0, 0 },
-            mainRenderPass->getExtent()
-        };
-        auto clearValues = mainRenderPass->getClearValues();
-        VkRenderPassBeginInfo mainRenderPassBeginInfo{
-            VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        VkCommandBufferBeginInfo beginInfo{
+            VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
             nullptr,
-            mainRenderPass->get(),
-            mainRenderPass->getFramebuffers()[0],
-            renderArea,
-            uint32_t(clearValues.size()),
-            clearValues.data()
-        };
-
-        vkCmdBeginRenderPass(graphicsCommands[i], &mainRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-        // Skybox:
-
-        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_SKYBOX]->get());
-        std::vector<VkDescriptorSet> descriptorSets{
-            descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
-            descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getDescriptorSet(1)
-        };
-        vkCmdBindDescriptorSets(
-            graphicsCommands[i],
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelines[PIPELINE_TYPE_SKYBOX]->getLayout(),
-            0,
-            descriptorSets.size(),
-            descriptorSets.data(),
-            0,
-            nullptr);
-        scene->drawCube(graphicsCommands[i]);
-
-        // Earth:
-
-        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_EARTH]->get());
-        descriptorSets = {
-            descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
-            descriptors[DESCRIPTOR_TYPE_EARTH]->getDescriptorSet(0)
-        };
-        vkCmdBindDescriptorSets(
-            graphicsCommands[i],
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelines[PIPELINE_TYPE_EARTH]->getLayout(),
-            0,
-            descriptorSets.size(),
-            descriptorSets.data(),
-            0,
-            nullptr);
-        scene->drawSphere(graphicsCommands[i]);
-
-        // Clouds:
-
-        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_CLOUDS]->get());
-        descriptorSets = {
-            descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
-            descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getDescriptorSet(0)
-        };
-        vkCmdBindDescriptorSets(
-            graphicsCommands[i],
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelines[PIPELINE_TYPE_CLOUDS]->getLayout(),
-            0,
-            descriptorSets.size(),
-            descriptorSets.data(),
-            0,
-            nullptr);
-        scene->drawSphere(graphicsCommands[i]);
-
-        vkCmdEndRenderPass(graphicsCommands[i]);
-
-        // Tone:
-
-        clearValues = toneRenderPass->getClearValues();
-        VkRenderPassBeginInfo toneRenderPassBeginInfo{
-            VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
             nullptr,
-            toneRenderPass->get(),
-            toneRenderPass->getFramebuffers()[i],
-            renderArea,
-            uint32_t(clearValues.size()),
-            clearValues.data()
         };
 
-        vkCmdBeginRenderPass(graphicsCommands[i], &toneRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        CALL_VK(vkBeginCommandBuffer(computingCommands[i], &beginInfo));
 
-        vkCmdBindPipeline(graphicsCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_TONE]->get());
-        descriptorSets = {
-            descriptors[DESCRIPTOR_TYPE_TONE]->getDescriptorSet(0)
-        };
-        vkCmdBindDescriptorSets(
-            graphicsCommands[i],
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelines[PIPELINE_TYPE_TONE]->getLayout(),
-            0,
-            descriptorSets.size(),
-            descriptorSets.data(),
-            0,
-            nullptr);
-        vkCmdDraw(graphicsCommands[i], 3, 1, 0, 0);
+        {
+            // Compute tone mapping here
+        }
 
-        vkCmdEndRenderPass(graphicsCommands[i]);
-
-        CALL_VK(vkEndCommandBuffer(graphicsCommands[i]));
+        CALL_VK(vkEndCommandBuffer(computingCommands[i]));
     }
-
-    LOGI("Graphics commands created.");
 }

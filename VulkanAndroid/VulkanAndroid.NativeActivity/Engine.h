@@ -5,7 +5,7 @@
 #include "SwapChain.h"
 #include "MainRenderPass.h"
 #include "DescriptorPool.h"
-#include "GraphicsPipeline.h"
+#include "Pipeline.h"
 #include "Scene.h"
 #include "DescriptorSets.h"
 #include "ToneRenderPass.h"
@@ -72,11 +72,9 @@ private:
 
     MainRenderPass *mainRenderPass;
 
-    ToneRenderPass *toneRenderPass;
-
     std::vector<DescriptorSets*> descriptors;
 
-    std::vector<GraphicsPipeline*> pipelines;
+    std::vector<Pipeline*> pipelines;
 
     Scene *scene;
 
@@ -84,7 +82,9 @@ private:
 
     VkSemaphore imageAvailable;
 
-    std::vector<VkCommandBuffer> graphicsCommands;
+    VkCommandBuffer renderingCommands;
+
+    std::vector<VkCommandBuffer> computingCommands;
 
     void initDescriptorSets();
 
@@ -92,6 +92,8 @@ private:
 
     VkSemaphore createSemaphore() const;
 
-    void initGraphicsCommands();
+    void initRenderingCommands();
+
+    void initComputingCommands();
 };
 
