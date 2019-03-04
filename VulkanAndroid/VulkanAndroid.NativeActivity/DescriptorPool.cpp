@@ -119,7 +119,34 @@ void DescriptorPool::updateDescriptorSet(VkDescriptorSet set, DescriptorSources 
             break;
 
         // case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: break;
-        // case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE: break;
+
+        case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+            for (auto source : sources)
+            {
+                const auto texture = dynamic_cast<Image*>(source);
+                LOGA(texture);
+
+                imageInfos.push_back(VkDescriptorImageInfo{
+                    nullptr,
+                    texture->getView(),
+                    VK_IMAGE_LAYOUT_GENERAL
+                });
+
+                descriptorWrites.push_back(VkWriteDescriptorSet{
+                    VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    nullptr,
+                    set,
+                    uint32_t(descriptorWrites.size()),
+                    0,
+                    1,
+                    descriptorType,
+                    &imageInfos.back(),
+                    nullptr,
+                    nullptr
+                });
+            }
+            break;
+
         // case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER: break;
         // case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER: break;
 

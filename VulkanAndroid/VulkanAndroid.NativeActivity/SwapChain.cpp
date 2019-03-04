@@ -62,6 +62,9 @@ void SwapChain::create(VkExtent2D surfaceExtent)
     const auto surfaceFormat = chooseSurfaceFormat(details.getFormats());
     const auto presentMode = choosePresentMode(details.getPresentModes());
 	const auto surfaceCapabilities = details.getCapabilities();
+    const auto imageFeatures = device->getFormatProperties(surfaceFormat.format).optimalTilingFeatures;
+
+    LOGA(imageFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
 
 	extent = chooseExtent(details.getCapabilities(), surfaceExtent);
 	imageFormat = surfaceFormat.format;

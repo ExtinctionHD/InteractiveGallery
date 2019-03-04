@@ -1,7 +1,8 @@
 #pragma once
 #include "SwapChainImage.h"
+#include "IDescriptorSource.h"
 
-class Image : public SwapChainImage
+class Image : public SwapChainImage, public IDescriptorSource
 {
 public:
 	Image(
