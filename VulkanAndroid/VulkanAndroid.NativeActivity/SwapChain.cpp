@@ -188,7 +188,7 @@ void SwapChain::saveImages()
     images.resize(imageCount);
     for (uint32_t i = 0; i < imageCount; i++)
     {
-        images[i] = new SwapChainImage(device, rawImages[i], imageFormat);
+        images[i] = new Image(device, rawImages[i], imageFormat);
     }
 }
 

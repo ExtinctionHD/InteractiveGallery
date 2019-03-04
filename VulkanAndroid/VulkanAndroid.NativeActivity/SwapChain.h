@@ -1,6 +1,6 @@
 #pragma once
 #include "Device.h"
-#include "SwapChainImage.h"
+#include "Image.h"
 
 class SwapChain
 {
@@ -38,7 +38,7 @@ private:
 
 	VkFormat imageFormat;
 
-    std::vector<SwapChainImage*> images;
+    std::vector<Image*> images;
 
 	void create(VkExtent2D surfaceExtent);
 

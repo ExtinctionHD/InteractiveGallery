@@ -1,8 +1,9 @@
 #pragma once
-#include "SwapChainImage.h"
+
+#include "Device.h"
 #include "IDescriptorSource.h"
 
-class Image : public SwapChainImage, public IDescriptorSource
+class Image : public IDescriptorSource
 {
 public:
 	Image(
@@ -17,7 +18,16 @@ public:
 		VkImageAspectFlags aspectFlags,
 		bool cubeMap);
 
-	~Image();
+    // For SwapChain images
+    Image(Device *device, VkImage image, VkFormat format);
+
+	virtual ~Image();
+
+    VkImage get() const;
+
+    VkImageView getView() const;
+
+    VkFormat getFormat() const;
 
 	VkExtent3D getExtent() const;
 
@@ -35,6 +45,14 @@ public:
 
 protected:
 	Image() = default;
+
+    Device *device;
+
+    VkImage image;
+
+    VkImageView view;
+
+    VkFormat format;
 
 	VkExtent3D extent;
 
@@ -55,6 +73,8 @@ protected:
 		VkImageUsageFlags usage,
 		VkImageAspectFlags aspectFlags,
 		bool cubeMap);
+
+    void createView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType);
 
 private:
 	VkDeviceMemory memory;

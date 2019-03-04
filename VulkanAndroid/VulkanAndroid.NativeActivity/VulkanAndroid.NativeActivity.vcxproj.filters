@@ -28,9 +28,6 @@
     <ClInclude Include="Image.h">
       <Filter>Engine\Images</Filter>
     </ClInclude>
-    <ClInclude Include="SwapChainImage.h">
-      <Filter>Engine\Images</Filter>
-    </ClInclude>
     <ClInclude Include="TextureImage.h">
       <Filter>Engine\Images</Filter>
     </ClInclude>
@@ -151,9 +148,6 @@
       <Filter>Engine\Device\QueueFamilyIndices</Filter>
     </ClCompile>
     <ClCompile Include="Image.cpp">
-      <Filter>Engine\Images</Filter>
-    </ClCompile>
-    <ClCompile Include="SwapChainImage.cpp">
       <Filter>Engine\Images</Filter>
     </ClCompile>
     <ClCompile Include="TextureImage.cpp">

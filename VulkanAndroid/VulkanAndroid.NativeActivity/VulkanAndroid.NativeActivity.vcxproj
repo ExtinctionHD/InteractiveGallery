@@ -309,7 +309,6 @@
     <ClInclude Include="Surface.h" />
     <ClInclude Include="SurfaceSupportDetails.h" />
     <ClInclude Include="SwapChain.h" />
-    <ClInclude Include="SwapChainImage.h" />
     <ClInclude Include="TextureImage.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="vulkan_wrapper.h" />
@@ -349,7 +348,6 @@
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="SurfaceSupportDetails.cpp" />
     <ClCompile Include="SwapChain.cpp" />
-    <ClCompile Include="SwapChainImage.cpp" />
     <ClCompile Include="TextureImage.cpp" />
     <ClCompile Include="Vertex.cpp" />
     <ClCompile Include="vulkan_wrapper.cpp" />

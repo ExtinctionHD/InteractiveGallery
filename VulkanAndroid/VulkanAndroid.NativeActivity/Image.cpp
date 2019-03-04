@@ -26,10 +26,38 @@ Image::Image(
 		cubeMap);
 }
 
+Image::Image(Device *device, VkImage image, VkFormat format) : device(device), image(image), format(format)
+{
+    const VkImageSubresourceRange subresourceRange{
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        0,
+        1,
+        0,
+        1
+    };
+
+    createView(subresourceRange, VK_IMAGE_VIEW_TYPE_2D);
+}
+
 Image::~Image()
 {
 	vkDestroyImage(device->get(), image, nullptr);
 	vkFreeMemory(device->get(), memory, nullptr);
+}
+
+VkImage Image::get() const
+{
+    return image;
+}
+
+VkImageView Image::getView() const
+{
+    return view;
+}
+
+VkFormat Image::getFormat() const
+{
+    return format;
 }
 
 VkExtent3D Image::getExtent() const
@@ -283,6 +311,22 @@ void Image::createThisImage(
 	};
 
 	createView(subresourceRange, viewType);
+}
+
+void Image::createView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType)
+{
+    VkImageViewCreateInfo createInfo{
+        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        nullptr,
+        0,
+        image,
+        viewType,
+        format,
+        VkComponentMapping{},
+        subresourceRange,
+    };
+
+    CALL_VK(vkCreateImageView(device->get(), &createInfo, nullptr, &view));
 }
 
 void Image::allocateMemory()
