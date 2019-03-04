@@ -13,7 +13,7 @@ public:
 
     std::vector<VkClearValue> getClearValues() const override;
 
-    TextureImage* getTexture() const;
+    Image* getColorImage() const;
 
 protected:
     void createAttachments() override;
@@ -23,7 +23,7 @@ protected:
 	void createFramebuffers() override;
 
 private:
-	std::shared_ptr<TextureImage> colorTexture;
+	std::shared_ptr<Image> colorImage;
 
 	std::shared_ptr<Image> depthImage;
 };

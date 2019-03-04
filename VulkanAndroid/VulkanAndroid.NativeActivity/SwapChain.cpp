@@ -19,16 +19,9 @@ VkSwapchainKHR SwapChain::get() const
 	return swapChain;
 }
 
-std::vector<VkImageView> SwapChain::getImageViews() const
+std::vector<Image*> SwapChain::getImages() const
 {
-    std::vector<VkImageView> views(images.size());
-
-    for (size_t i = 0; i < images.size(); i++)
-    {
-        views[i] = images[i]->getView();
-    }
-
-	return views;
+    return images;
 }
 
 VkExtent2D SwapChain::getExtent() const

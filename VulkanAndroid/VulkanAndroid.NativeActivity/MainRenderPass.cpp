@@ -22,13 +22,15 @@ std::vector<VkClearValue> MainRenderPass::getClearValues() const
     return { colorClearValue, depthClearValue };
 }
 
-TextureImage* MainRenderPass::getTexture() const
+Image* MainRenderPass::getColorImage() const
 {
-    return colorTexture.get();
+    return colorImage.get();
 }
 
 void MainRenderPass::createAttachments()
 {
+    const VkFormat colorImageFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
+
     const VkExtent3D attachmentExtent{
         extent.width,
         extent.height,
@@ -43,23 +45,25 @@ void MainRenderPass::createAttachments()
         1,
     };
 
-    colorTexture = std::make_shared<TextureImage>(
+    LOGA(device->getFormatProperties(colorImageFormat).optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
+
+    colorImage = std::make_shared<Image>(
         device,
         0,
-        VK_FORMAT_R16G16B16A16_SFLOAT,
+        colorImageFormat,
         attachmentExtent,
         subresourceRange.levelCount,
         subresourceRange.layerCount,
         sampleCount,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
         subresourceRange.aspectMask,
-        false,
-        VK_FILTER_NEAREST,
-        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+        false);
 
-    colorTexture->transitLayout(
+    colorImage->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_GENERAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         subresourceRange);
 
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
@@ -77,9 +81,11 @@ void MainRenderPass::createAttachments()
     depthImage->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
         subresourceRange);
 
-	attachments = { colorTexture, depthImage };
+	attachments = { colorImage, depthImage };
 }
 
 void MainRenderPass::createRenderPass()
@@ -88,14 +94,14 @@ void MainRenderPass::createRenderPass()
 
     const VkAttachmentDescription colorAttachmentDesc{
 		0,								
-        colorTexture->getFormat(),
-        colorTexture->getSampleCount(),
+        colorImage->getFormat(),
+        colorImage->getSampleCount(),
 		VK_ATTACHMENT_LOAD_OP_CLEAR,		         
 		VK_ATTACHMENT_STORE_OP_STORE,		     
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE,	     
 		VK_ATTACHMENT_STORE_OP_DONT_CARE,	     
-		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		VK_IMAGE_LAYOUT_GENERAL,
+        VK_IMAGE_LAYOUT_GENERAL,
 	};
 
     const VkAttachmentDescription depthAttachmentDesc{
@@ -189,5 +195,5 @@ void MainRenderPass::createRenderPass()
 
 void MainRenderPass::createFramebuffers()
 {
-    addFramebuffer({ colorTexture->getView(), depthImage->getView(), });
+    addFramebuffer({ colorImage->getView(), depthImage->getView(), });
 }

@@ -35,4 +35,5 @@ void ComputePipeline::createPipeline()
     };
 
     CALL_VK(vkCreateComputePipelines(device->get(), nullptr, 1, &createInfo, nullptr, &pipeline));
+    LOGI("Compute pipeline created.");
 }

@@ -37,14 +37,19 @@ public:
 
     VkSampleCountFlagBits getSampleCount() const;
 
-	void transitLayout(VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange) const;
+	void transitLayout(
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkPipelineStageFlags sourceStage,
+        VkPipelineStageFlags destinationStage,
+        VkImageSubresourceRange subresourceRange) const;
 
 	void updateData(std::vector<const void*>, uint32_t layersOffset, uint32_t pixelSize) const;
 
 	void copyTo(Image *dstImage, VkExtent3D extent, VkImageSubresourceLayers subresourceLayers) const;
 
 protected:
-	Image() = default;
+	Image();
 
     Device *device;
 
@@ -78,6 +83,8 @@ protected:
 
 private:
 	VkDeviceMemory memory;
+
+    bool swapChainImage;
 
 	void allocateMemory();
 };

@@ -8,7 +8,6 @@
 #include "Pipeline.h"
 #include "Scene.h"
 #include "DescriptorSets.h"
-#include "ToneRenderPass.h"
 
 class Engine
 {
@@ -40,8 +39,9 @@ private:
     {
         DESCRIPTOR_TYPE_SCENE,
         DESCRIPTOR_TYPE_EARTH,
-        DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX = 3,
-        DESCRIPTOR_TYPE_TONE,
+        DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX,
+        DESCRIPTOR_TYPE_TONE_SRC,
+        DESCRIPTOR_TYPE_TONE_DST,
         DESCRIPTOR_TYPE_COUNT
     };
 
@@ -80,11 +80,13 @@ private:
 
     VkSemaphore renderingFinished;
 
+    VkSemaphore computingFinished;
+
     VkSemaphore imageAvailable;
 
-    VkCommandBuffer renderingCommands;
+    VkCommandBuffer renderingCommands{};
 
-    std::vector<VkCommandBuffer> computingCommands;
+    std::vector<VkCommandBuffer> computingCommands{};
 
     void initDescriptorSets();
 

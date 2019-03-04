@@ -35,17 +35,20 @@ bool Engine::create(ANativeWindow *window)
         device,
         {
             { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Scene::TEXTURE_COUNT + 1 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 + swapChain->getImageCount() },
             { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Scene::BUFFER_COUNT + 0 }
         },
-        DESCRIPTOR_TYPE_COUNT);
+        DESCRIPTOR_TYPE_COUNT + 1 + swapChain->getImageCount());
 
     initDescriptorSets();
     initPipelines();
 
     renderingFinished = createSemaphore();
+    computingFinished = createSemaphore();
     imageAvailable = createSemaphore();
 
     initRenderingCommands();
+    initComputingCommands();
 
     LOGI("Engine created.");
 
@@ -69,10 +72,6 @@ bool Engine::recreate(ANativeWindow *window)
         swapChain->recreate(surface->get(), extent);
 
         mainRenderPass->recreate(extent);
-
-        descriptors[DESCRIPTOR_TYPE_TONE]->updateDescriptorSet(
-            0,
-            { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { mainRenderPass->getTexture() } } });
 
         for(auto pipeline: pipelines)
         {
@@ -141,19 +140,33 @@ bool Engine::drawFrame()
         CALL_VK(result);
     }
 
-    std::vector<VkSemaphore> waitSemaphores = {  imageAvailable };
-    std::vector<VkPipelineStageFlags> waitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    std::vector<VkSemaphore> signalSemaphores = { renderingFinished };
+    std::vector<VkSemaphore> renderingSignalSemaphores{ renderingFinished };
+    VkSubmitInfo renderingSubmitInfo{
+        VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        1,
+        &renderingCommands,
+        uint32_t(renderingSignalSemaphores.size()),
+        renderingSignalSemaphores.data(),
+    };
+    CALL_VK(vkQueueSubmit(device->getGraphicsQueue(), 1, &renderingSubmitInfo, nullptr));
+
+    std::vector<VkSemaphore> computingWaitSemaphores{ renderingFinished, imageAvailable};
+    std::vector<VkPipelineStageFlags> computingWaitStages{ VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT };
+    std::vector<VkSemaphore> computingSignalSemaphores{ computingFinished };
     VkSubmitInfo submitInfo{
         VK_STRUCTURE_TYPE_SUBMIT_INFO,
         nullptr,
-        uint32_t(waitSemaphores.size()),
-        waitSemaphores.data(),
-        waitStages.data(),
+        uint32_t(computingWaitSemaphores.size()),
+        computingWaitSemaphores.data(),
+        computingWaitStages.data(),
         1,
-        &renderingCommands,
-        uint32_t(signalSemaphores.size()),
-        signalSemaphores.data(),
+        &computingCommands[imageIndex],
+        uint32_t(computingSignalSemaphores.size()),
+        computingSignalSemaphores.data(),
     };
     CALL_VK(vkQueueSubmit(device->getGraphicsQueue(), 1, &submitInfo, nullptr));
 
@@ -161,8 +174,8 @@ bool Engine::drawFrame()
     VkPresentInfoKHR presentInfo{
         VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         nullptr,
-        uint32_t(signalSemaphores.size()),
-        signalSemaphores.data(),
+        uint32_t(computingSignalSemaphores.size()),
+        computingSignalSemaphores.data(),
         uint32_t(swapChains.size()),
         swapChains.data(),
         &imageIndex,
@@ -172,6 +185,7 @@ bool Engine::drawFrame()
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
+        LOGI("Presentation error.");
         return false;
     }
 
@@ -186,6 +200,7 @@ bool Engine::destroy()
 
     vkDeviceWaitIdle(device->get());
 
+    vkDestroySemaphore(device->get(), computingFinished, nullptr);
     vkDestroySemaphore(device->get(), renderingFinished, nullptr);
     vkDestroySemaphore(device->get(), imageAvailable, nullptr);
 
@@ -270,11 +285,22 @@ void Engine::initDescriptorSets()
 
     // Tone:
 
-    descriptors[DESCRIPTOR_TYPE_TONE] = new DescriptorSets(
+    descriptors[DESCRIPTOR_TYPE_TONE_SRC] = new DescriptorSets(
         descriptorPool,
-        { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { VK_SHADER_STAGE_FRAGMENT_BIT } } });
-    descriptors[DESCRIPTOR_TYPE_TONE]->pushDescriptorSet(
-        { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { mainRenderPass->getTexture() } } });
+        { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { VK_SHADER_STAGE_COMPUTE_BIT } } });
+    descriptors[DESCRIPTOR_TYPE_TONE_SRC]->pushDescriptorSet(
+        { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { mainRenderPass->getColorImage() } } });
+
+
+    descriptors[DESCRIPTOR_TYPE_TONE_DST] = new DescriptorSets(
+        descriptorPool,
+        { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { VK_SHADER_STAGE_COMPUTE_BIT } } });
+
+    for(const auto swapChainImage : swapChain->getImages())
+    {
+        descriptors[DESCRIPTOR_TYPE_TONE_DST]->pushDescriptorSet(
+            { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImage } } });
+    }
 }
 
 void Engine::initPipelines()
@@ -345,7 +371,10 @@ void Engine::initPipelines()
 
     pipelines[PIPELINE_TYPE_TONE] = new ComputePipeline(
         device,
-        { descriptors[DESCRIPTOR_TYPE_TONE]->getLayout() },
+        { 
+            descriptors[DESCRIPTOR_TYPE_TONE_SRC]->getLayout(), 
+            descriptors[DESCRIPTOR_TYPE_TONE_DST]->getLayout()
+        },
         {},
         std::make_shared<ShaderModule>(device, "shaders/Tone/comp.spv", VK_SHADER_STAGE_COMPUTE_BIT));
 }
@@ -470,7 +499,7 @@ void Engine::initRenderingCommands()
 
     CALL_VK(vkEndCommandBuffer(renderingCommands));
 
-    LOGI("Graphics commands created.");
+    LOGI("Rendering commands created.");
 }
 
 void Engine::initComputingCommands()
@@ -508,9 +537,82 @@ void Engine::initComputingCommands()
         CALL_VK(vkBeginCommandBuffer(computingCommands[i], &beginInfo));
 
         {
-            // Compute tone mapping here
+            vkCmdBindPipeline(computingCommands[i], VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[PIPELINE_TYPE_TONE]->get());
+            std::vector<VkDescriptorSet> descriptorSets{
+                descriptors[DESCRIPTOR_TYPE_TONE_SRC]->getDescriptorSet(0),
+                descriptors[DESCRIPTOR_TYPE_TONE_DST]->getDescriptorSet(i)
+            };
+            vkCmdBindDescriptorSets(
+                computingCommands[i],
+                VK_PIPELINE_BIND_POINT_COMPUTE,
+                pipelines[PIPELINE_TYPE_TONE]->getLayout(),
+                0,
+                descriptorSets.size(),
+                descriptorSets.data(),
+                0,
+                nullptr);
+
+            const VkImageSubresourceRange subresourceRange{
+                VK_IMAGE_ASPECT_COLOR_BIT,
+                0,
+                1,
+                0,
+                1
+            };
+
+            const VkImage image = swapChain->getImages()[i]->get();
+
+            const VkImageMemoryBarrier beginningBarrier{
+                VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                nullptr,
+                0,
+                VK_ACCESS_SHADER_WRITE_BIT,
+                VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_LAYOUT_GENERAL,
+                VK_QUEUE_FAMILY_IGNORED,
+                VK_QUEUE_FAMILY_IGNORED,
+                image,
+                subresourceRange
+            };
+
+            vkCmdPipelineBarrier(
+                computingCommands[i],
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                0,
+                0, nullptr,
+                0, nullptr,
+                1, &beginningBarrier);
+
+            const VkExtent2D imageExtent = swapChain->getExtent();
+
+            vkCmdDispatch(computingCommands[i], imageExtent.width / 8, imageExtent.height / 8, 1);
+
+            const VkImageMemoryBarrier endingBarrier{
+                VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                nullptr,
+                VK_ACCESS_SHADER_WRITE_BIT,
+                VK_ACCESS_UNIFORM_READ_BIT,
+                VK_IMAGE_LAYOUT_GENERAL,
+                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                VK_QUEUE_FAMILY_IGNORED,
+                VK_QUEUE_FAMILY_IGNORED,
+                image,
+                subresourceRange
+            };
+
+            vkCmdPipelineBarrier(
+                computingCommands[i], 
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 
+                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                0,
+                0, nullptr,
+                0, nullptr,
+                1, &endingBarrier);
         }
 
         CALL_VK(vkEndCommandBuffer(computingCommands[i]));
     }
+
+    LOGI("Computing commands created.");
 }
