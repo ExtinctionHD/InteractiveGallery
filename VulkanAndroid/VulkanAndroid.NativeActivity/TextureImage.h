@@ -1,9 +1,10 @@
 #pragma once
 #include "Image.h"
+#include "IDescriptorSource.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-class TextureImage : public Image
+class TextureImage : public Image, public IDescriptorSource
 {
 public:
 	TextureImage(

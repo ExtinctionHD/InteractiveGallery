@@ -124,6 +124,9 @@
     <ClInclude Include="Pipeline.h">
       <Filter>Engine\Pipelines</Filter>
     </ClInclude>
+    <ClInclude Include="IDescriptorSource.h">
+      <Filter>Engine\Descriptors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

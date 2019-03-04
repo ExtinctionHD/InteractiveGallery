@@ -1,12 +1,11 @@
 #pragma once
 #include "Device.h"
-#include "Buffer.h"
-#include "TextureImage.h"
+#include "IDescriptorSource.h"
 #include <map>
 
 typedef std::map<VkDescriptorType, std::vector<VkShaderStageFlags>> DescriptorShaderStages;
 
-typedef std::map<VkDescriptorType, std::vector<void*>> DescriptorSources;
+typedef std::map<VkDescriptorType, std::vector<IDescriptorSource*>> DescriptorSources;
 
 class DescriptorPool
 {

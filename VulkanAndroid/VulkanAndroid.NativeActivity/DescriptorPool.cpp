@@ -1,4 +1,6 @@
 #include "DescriptorPool.h"
+#include "Buffer.h"
+#include "TextureImage.h"
 #include <list>
 
 DescriptorPool::DescriptorPool(Device *device, std::vector<VkDescriptorPoolSize> descriptorCount, uint32_t setCount)
@@ -92,7 +94,9 @@ void DescriptorPool::updateDescriptorSet(VkDescriptorSet set, DescriptorSources 
         case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
             for (auto source : sources)
             {
-                const auto texture = reinterpret_cast<TextureImage*>(source);
+                const auto texture = dynamic_cast<TextureImage*>(source);
+                LOGA(texture);
+                
                 imageInfos.push_back(VkDescriptorImageInfo{
                     texture->getSampler(),
                     texture->getView(),
@@ -122,7 +126,9 @@ void DescriptorPool::updateDescriptorSet(VkDescriptorSet set, DescriptorSources 
         case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
             for (auto source : sources)
             {
-                const auto buffer = reinterpret_cast<Buffer*>(source);
+                const auto buffer = dynamic_cast<Buffer*>(source);
+                LOGA(buffer);
+
                 bufferInfos.push_back(VkDescriptorBufferInfo{
                     buffer->get(),
                     0,

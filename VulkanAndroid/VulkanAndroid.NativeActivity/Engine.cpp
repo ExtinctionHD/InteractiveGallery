@@ -230,7 +230,7 @@ void Engine::initDescriptorSets()
 
     // Earth:
 
-    std::vector<void*> earthTextures;
+    std::vector<IDescriptorSource*> earthTextures;
     for (const auto texture : scene->getEarthTextures())
     {
         earthTextures.push_back(texture);
