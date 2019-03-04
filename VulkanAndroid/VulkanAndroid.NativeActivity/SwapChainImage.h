@@ -4,17 +4,15 @@
 class SwapChainImage
 {
 public:
-	virtual ~SwapChainImage() = default;
+    SwapChainImage(Device *device, VkImage image, VkFormat format);
 
-	SwapChainImage(Device *device, VkImage image, VkFormat format);
+	virtual ~SwapChainImage();
 
 	VkImage get() const;
 
 	VkImageView getView() const;
 
 	VkFormat getFormat() const;
-
-	VkImageView createImageView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType) const;
 
 protected:
     SwapChainImage() = default;
@@ -26,5 +24,7 @@ protected:
 	VkImageView view;
 
 	VkFormat format;
+
+    void createView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType);
 };
 

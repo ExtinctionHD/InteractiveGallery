@@ -28,7 +28,6 @@ Image::Image(
 
 Image::~Image()
 {
-	vkDestroyImageView(device->get(), view, nullptr);
 	vkDestroyImage(device->get(), image, nullptr);
 	vkFreeMemory(device->get(), memory, nullptr);
 }
@@ -283,7 +282,7 @@ void Image::createThisImage(
 		arrayLayers
 	};
 
-	view = createImageView(subresourceRange, viewType);
+	createView(subresourceRange, viewType);
 }
 
 void Image::allocateMemory()

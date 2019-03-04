@@ -1,12 +1,12 @@
 #include "SwapChain.h"
 #include "SurfaceSupportDetails.h"
-#include "SwapChainImage.h"
 #include <algorithm>
 
 SwapChain::SwapChain(Device *device, VkSurfaceKHR surface, VkExtent2D surfaceExtent) : device(device), surface(surface)
 {
 	create(surfaceExtent);
-	createImageViews();
+
+    saveImages();
 }
 
 SwapChain::~SwapChain()
@@ -21,7 +21,14 @@ VkSwapchainKHR SwapChain::get() const
 
 std::vector<VkImageView> SwapChain::getImageViews() const
 {
-	return imageViews;
+    std::vector<VkImageView> views(images.size());
+
+    for (size_t i = 0; i < images.size(); i++)
+    {
+        views[i] = images[i]->getView();
+    }
+
+	return views;
 }
 
 VkExtent2D SwapChain::getExtent() const
@@ -45,7 +52,7 @@ void SwapChain::recreate(VkExtent2D newExtent)
 
 	create(newExtent);
 
-	createImageViews();
+    saveImages();
 }
 
 void SwapChain::recreate(VkSurfaceKHR surface, VkExtent2D newExtent)
@@ -105,8 +112,6 @@ void SwapChain::create(VkExtent2D surfaceExtent)
 
     CALL_VK(vkCreateSwapchainKHR(device->get(), &createInfo, nullptr, &swapChain));
     LOGI("SwapChain created.");
-
-	saveImages();
 
     LOGD("SwapChain extent: %d x %d.", extent.width, extent.height);
     LOGD("SwapChain format: %d.", imageFormat);
@@ -175,25 +180,23 @@ void SwapChain::saveImages()
 
 	// real count of images can be greater than requested
 	vkGetSwapchainImagesKHR(device->get(), swapChain, &imageCount, nullptr);  // get count
-	images.resize(imageCount);
-	vkGetSwapchainImagesKHR(device->get(), swapChain, &imageCount, images.data());  // get images
-}
 
-void SwapChain::createImageViews()
-{
-	imageViews.resize(getImageCount());
+    std::vector<VkImage> rawImages(imageCount);
 
-	for (uint32_t i = 0; i < getImageCount(); i++)
-	{
-		imageViews[i] = SwapChainImage(device, images[i], imageFormat).getView();
-	}
+	vkGetSwapchainImagesKHR(device->get(), swapChain, &imageCount, rawImages.data());  // get images
+
+    images.resize(imageCount);
+    for (uint32_t i = 0; i < imageCount; i++)
+    {
+        images[i] = new SwapChainImage(device, rawImages[i], imageFormat);
+    }
 }
 
 void SwapChain::cleanup()
 {
-	for (auto imageView : imageViews)
+	for (auto image : images)
     {
-		vkDestroyImageView(device->get(), imageView, nullptr);
+		delete image;
 	}
 
 	vkDestroySwapchainKHR(device->get(), swapChain, nullptr);
