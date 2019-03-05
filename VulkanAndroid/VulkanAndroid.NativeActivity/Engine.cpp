@@ -185,7 +185,7 @@ bool Engine::drawFrame()
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
-        LOGI("Presentation error.");
+        LOGI("vkQueuePresentKHR: VK_ERROR_OUT_OF_DATE_KHR || VK_SUBOPTIMAL_KHR");
         return false;
     }
 
@@ -287,9 +287,9 @@ void Engine::initDescriptorSets()
 
     descriptors[DESCRIPTOR_TYPE_TONE_SRC] = new DescriptorSets(
         descriptorPool,
-        { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { VK_SHADER_STAGE_COMPUTE_BIT } } });
+        { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { VK_SHADER_STAGE_COMPUTE_BIT } } });
     descriptors[DESCRIPTOR_TYPE_TONE_SRC]->pushDescriptorSet(
-        { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { mainRenderPass->getColorImage() } } });
+        { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { mainRenderPass->getColorTexture() } } });
 
 
     descriptors[DESCRIPTOR_TYPE_TONE_DST] = new DescriptorSets(
@@ -560,55 +560,29 @@ void Engine::initComputingCommands()
                 1
             };
 
-            const VkImage image = swapChain->getImages()[i]->get();
-
-            const VkImageMemoryBarrier beginningBarrier{
-                VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                nullptr,
+            auto image = swapChain->getImages()[i];
+            image->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                VK_IMAGE_LAYOUT_GENERAL,
                 0,
                 VK_ACCESS_SHADER_WRITE_BIT,
-                VK_IMAGE_LAYOUT_UNDEFINED,
-                VK_IMAGE_LAYOUT_GENERAL,
-                VK_QUEUE_FAMILY_IGNORED,
-                VK_QUEUE_FAMILY_IGNORED,
-                image,
-                subresourceRange
-            };
-
-            vkCmdPipelineBarrier(
-                computingCommands[i],
                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                0,
-                0, nullptr,
-                0, nullptr,
-                1, &beginningBarrier);
+                subresourceRange);
 
-            const VkExtent2D imageExtent = swapChain->getExtent();
-
+            const auto imageExtent = swapChain->getExtent();
             vkCmdDispatch(computingCommands[i], imageExtent.width / 8, imageExtent.height / 8, 1);
 
-            const VkImageMemoryBarrier endingBarrier{
-                VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                nullptr,
-                VK_ACCESS_SHADER_WRITE_BIT,
-                VK_ACCESS_UNIFORM_READ_BIT,
+            image->memoryBarrier(
+                computingCommands[i],
                 VK_IMAGE_LAYOUT_GENERAL,
                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                VK_QUEUE_FAMILY_IGNORED,
-                VK_QUEUE_FAMILY_IGNORED,
-                image,
-                subresourceRange
-            };
-
-            vkCmdPipelineBarrier(
-                computingCommands[i], 
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 
+                VK_ACCESS_SHADER_WRITE_BIT,
+                VK_ACCESS_UNIFORM_READ_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                0,
-                0, nullptr,
-                0, nullptr,
-                1, &endingBarrier);
+                subresourceRange);
         }
 
         CALL_VK(vkEndCommandBuffer(computingCommands[i]));

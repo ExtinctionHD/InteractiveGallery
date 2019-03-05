@@ -37,14 +37,24 @@ public:
 
     VkSampleCountFlagBits getSampleCount() const;
 
+    void memoryBarrier(
+        VkCommandBuffer commandBuffer,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkAccessFlags srcAccessMask,
+        VkAccessFlags dstAccessMask,
+        VkPipelineStageFlags srcStageMask,
+        VkPipelineStageFlags dstStageMask,
+        VkImageSubresourceRange subresourceRange);
+
 	void transitLayout(
         VkImageLayout oldLayout,
         VkImageLayout newLayout,
-        VkPipelineStageFlags sourceStage,
-        VkPipelineStageFlags destinationStage,
-        VkImageSubresourceRange subresourceRange) const;
+        VkPipelineStageFlags srcStageMask,
+        VkPipelineStageFlags dstStageMask,
+        VkImageSubresourceRange subresourceRange);
 
-	void updateData(std::vector<const void*>, uint32_t layersOffset, uint32_t pixelSize) const;
+	void updateData(std::vector<const void*>, uint32_t layersOffset, uint32_t pixelSize);
 
 	void copyTo(Image *dstImage, VkExtent3D extent, VkImageSubresourceLayers subresourceLayers) const;
 

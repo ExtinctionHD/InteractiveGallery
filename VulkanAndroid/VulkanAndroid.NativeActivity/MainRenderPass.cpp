@@ -22,9 +22,9 @@ std::vector<VkClearValue> MainRenderPass::getClearValues() const
     return { colorClearValue, depthClearValue };
 }
 
-Image* MainRenderPass::getColorImage() const
+TextureImage* MainRenderPass::getColorTexture() const
 {
-    return colorImage.get();
+    return colorTexture.get();
 }
 
 void MainRenderPass::createAttachments()
@@ -47,7 +47,7 @@ void MainRenderPass::createAttachments()
 
     LOGA(device->getFormatProperties(colorImageFormat).optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
 
-    colorImage = std::make_shared<Image>(
+    colorTexture = std::make_shared<TextureImage>(
         device,
         0,
         colorImageFormat,
@@ -57,11 +57,13 @@ void MainRenderPass::createAttachments()
         sampleCount,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
         subresourceRange.aspectMask,
-        false);
+        false,
+        VK_FILTER_NEAREST,
+        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 
-    colorImage->transitLayout(
+    colorTexture->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_GENERAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         subresourceRange);
@@ -85,7 +87,7 @@ void MainRenderPass::createAttachments()
         VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
         subresourceRange);
 
-	attachments = { colorImage, depthImage };
+	attachments = { colorTexture, depthImage };
 }
 
 void MainRenderPass::createRenderPass()
@@ -94,14 +96,14 @@ void MainRenderPass::createRenderPass()
 
     const VkAttachmentDescription colorAttachmentDesc{
 		0,								
-        colorImage->getFormat(),
-        colorImage->getSampleCount(),
+        colorTexture->getFormat(),
+        colorTexture->getSampleCount(),
 		VK_ATTACHMENT_LOAD_OP_CLEAR,		         
 		VK_ATTACHMENT_STORE_OP_STORE,		     
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE,	     
 		VK_ATTACHMENT_STORE_OP_DONT_CARE,	     
-		VK_IMAGE_LAYOUT_GENERAL,
-        VK_IMAGE_LAYOUT_GENERAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 	};
 
     const VkAttachmentDescription depthAttachmentDesc{
@@ -195,5 +197,5 @@ void MainRenderPass::createRenderPass()
 
 void MainRenderPass::createFramebuffers()
 {
-    addFramebuffer({ colorImage->getView(), depthImage->getView(), });
+    addFramebuffer({ colorTexture->getView(), depthImage->getView(), });
 }

@@ -112,7 +112,7 @@ void Scene::update()
     camera->update(controller->getLocation());
 
     skybox->setPosition(camera->getPosition());
-    earth->rotate(5.0f * deltaSec, -axis::Y);
+    // earth->rotate(5.0f * deltaSec, -axis::Y);
     clouds->setEarthTransformation(earth->getTransformation());
 
 #ifndef NDEBUG

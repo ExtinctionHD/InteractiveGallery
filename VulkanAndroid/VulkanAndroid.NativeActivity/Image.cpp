@@ -84,27 +84,49 @@ uint32_t Image::getArrayLayerCount() const
 	return arrayLayers;
 }
 
+void Image::memoryBarrier(
+    VkCommandBuffer commandBuffer,
+    VkImageLayout oldLayout,
+    VkImageLayout newLayout,
+    VkAccessFlags srcAccessMask,
+    VkAccessFlags dstAccessMask,
+    VkPipelineStageFlags srcStageMask,
+    VkPipelineStageFlags dstStageMask,
+    VkImageSubresourceRange subresourceRange)
+{
+    const VkImageMemoryBarrier barrier{
+        VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        nullptr,
+        srcAccessMask,
+        dstAccessMask,
+        oldLayout,
+        newLayout,
+        VK_QUEUE_FAMILY_IGNORED,
+        VK_QUEUE_FAMILY_IGNORED,
+        image,
+        subresourceRange,
+    };
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        srcStageMask, dstStageMask,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &barrier);
+}
+
 void Image::transitLayout(
     VkImageLayout oldLayout,
     VkImageLayout newLayout,
-    VkPipelineStageFlags sourceStage,
-    VkPipelineStageFlags destinationStage,
-    VkImageSubresourceRange subresourceRange) const
+    VkPipelineStageFlags srcStageMask,
+    VkPipelineStageFlags dstStageMask,
+    VkImageSubresourceRange subresourceRange)
 {
 	VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
 
-	VkImageMemoryBarrier barrier{
-		VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-		nullptr,								
-		0,										
-		0,										
-		oldLayout,								
-		newLayout,								
-		VK_QUEUE_FAMILY_IGNORED,				
-		VK_QUEUE_FAMILY_IGNORED,				
-		image,									
-		subresourceRange,						
-	};
+    VkAccessFlags srcAccessMask{};
+    VkAccessFlags dstAccessMask{};
 
     // Source layouts (old)
     // Source access mask controls actions that have to be finished on the old layout
@@ -115,44 +137,44 @@ void Image::transitLayout(
         // Image layout is undefined (or does not matter)
         // Only valid as initial layout
         // No flags required, listed only for completeness
-        barrier.srcAccessMask = 0;
+        srcAccessMask = 0;
         break;
 
     case VK_IMAGE_LAYOUT_PREINITIALIZED:
         // Image is preinitialized
         // Only valid as initial layout for linear images, preserves memory contents
         // Make sure host writes have been finished
-        barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+        srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
         break;
 
     case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
         // Image is a color attachment
         // Make sure any writes to the color buffer have been finished
-        barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         break;
 
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
         // Image is a depth/stencil attachment
         // Make sure any writes to the depth/stencil buffer have been finished
-        barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         break;
 
     case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
         // Image is a transfer source 
         // Make sure any reads from the image have been finished
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         break;
 
     case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
         // Image is a transfer destination
         // Make sure any writes to the image have been finished
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT; 
+        srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT; 
         break;
 
     case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
         // Image is read by a shader
         // Make sure any shader reads from the image have been finished
-        barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
         break;
     default:
         // Other source layouts aren't handled (yet)
@@ -166,53 +188,55 @@ void Image::transitLayout(
     case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
         // Image will be used as a transfer destination
         // Make sure any writes to the image have been finished
-        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         break;
 
     case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
         // Image will be used as a transfer source
         // Make sure any reads from the image have been finished
-        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         break;
 
     case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
         // Image will be used as a color attachment
         // Make sure any writes to the color buffer have been finished
-        barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         break;
 
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
         // Image layout will be used as a depth/stencil attachment
         // Make sure any writes to depth/stencil buffer have been finished
-        barrier.dstAccessMask = barrier.dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dstAccessMask = dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         break;
 
     case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
         // Image will be read in a shader (sampler, input attachment)
         // Make sure any writes to the image have been finished
-        if (barrier.srcAccessMask == 0)
+        if (oldLayout != VK_IMAGE_LAYOUT_UNDEFINED && !srcAccessMask)
         {
-            barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+            srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
         }
-        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
         break;
     default:
         // Other source layouts aren't handled (yet)
         break;
     }
 
-	vkCmdPipelineBarrier(
-		commandBuffer,
-		sourceStage, destinationStage,
-		0,
-		0, nullptr,
-		0, nullptr,
-		1, &barrier);
+    memoryBarrier(
+        commandBuffer,
+        oldLayout,
+        newLayout,
+        srcAccessMask,
+        dstAccessMask,
+        srcStageMask,
+        dstStageMask,
+        subresourceRange);
 
 	device->endOneTimeCommands(commandBuffer);
 }
 
-void Image::updateData(std::vector<const void*> data, uint32_t layersOffset, uint32_t pixelSize) const
+void Image::updateData(std::vector<const void*> data, uint32_t layersOffset, uint32_t pixelSize)
 {
 	const auto updatedLayers = uint32_t(data.size());
 

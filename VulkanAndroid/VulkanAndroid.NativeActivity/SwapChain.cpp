@@ -182,6 +182,21 @@ void SwapChain::saveImages()
     for (uint32_t i = 0; i < imageCount; i++)
     {
         images[i] = new Image(device, rawImages[i], imageFormat);
+
+        const VkImageSubresourceRange subresourceRange{
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            0,
+            1,
+            0,
+            1
+        };
+
+        images[i]->transitLayout(
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            subresourceRange);
     }
 }
 
