@@ -157,7 +157,7 @@ bool Engine::drawFrame()
     std::vector<VkSemaphore> computingWaitSemaphores{ renderingFinished, imageAvailable};
     std::vector<VkPipelineStageFlags> computingWaitStages{ VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT };
     std::vector<VkSemaphore> computingSignalSemaphores{ computingFinished };
-    VkSubmitInfo submitInfo{
+    VkSubmitInfo computingSubmitInfo{
         VK_STRUCTURE_TYPE_SUBMIT_INFO,
         nullptr,
         uint32_t(computingWaitSemaphores.size()),
@@ -168,7 +168,7 @@ bool Engine::drawFrame()
         uint32_t(computingSignalSemaphores.size()),
         computingSignalSemaphores.data(),
     };
-    CALL_VK(vkQueueSubmit(device->getGraphicsQueue(), 1, &submitInfo, nullptr));
+    CALL_VK(vkQueueSubmit(device->getComputeQueue(), 1, &computingSubmitInfo, nullptr));
 
     std::vector<VkSwapchainKHR> swapChains{ swapChain->get() };
     VkPresentInfoKHR presentInfo{

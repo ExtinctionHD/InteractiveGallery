@@ -93,7 +93,7 @@ void SwapChain::create(VkExtent2D surfaceExtent)
 	// concurrent sharing mode only when using different queue families
     const QueueFamilyIndices queueFamilyIndices = device->getQueueFamilyIndices();
 	std::vector<uint32_t> indices{
-		queueFamilyIndices.getGraphics(),
+		queueFamilyIndices.getCompute(),
 		queueFamilyIndices.getPresentation()
 	};
 	if (indices[0] != indices[1])
