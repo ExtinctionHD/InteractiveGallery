@@ -86,9 +86,13 @@ private:
 
     VkCommandBuffer renderingCommands{};
 
+    glm::uvec2 localGroupSize{ 16 };
+
     std::vector<VkCommandBuffer> computingCommands{};
 
     void initDescriptorSets();
+
+    void initLocalGroupSize();
 
     void initPipelines();
 

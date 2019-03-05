@@ -41,13 +41,14 @@ bool Engine::create(ANativeWindow *window)
         DESCRIPTOR_TYPE_COUNT + 1 + swapChain->getImageCount());
 
     initDescriptorSets();
+    initLocalGroupSize();
     initPipelines();
 
     renderingFinished = createSemaphore();
     computingFinished = createSemaphore();
     imageAvailable = createSemaphore();
 
-    initRenderingCommands();
+    initRenderingCommands(); 
     initComputingCommands();
 
     LOGI("Engine created.");
@@ -303,6 +304,23 @@ void Engine::initDescriptorSets()
     }
 }
 
+void Engine::initLocalGroupSize()
+{
+    const VkExtent2D extent = swapChain->getExtent();
+
+    while (extent.width % localGroupSize.x != 0)
+    {
+        localGroupSize.x /= 2;
+    }
+
+    while (extent.height % localGroupSize.y != 0)
+    {
+        localGroupSize.y /= 2;
+    }
+
+    LOGD("Local group size: %d x %d", localGroupSize.x, localGroupSize.y);
+}
+
 void Engine::initPipelines()
 {
     pipelines.resize(PIPELINE_TYPE_COUNT);
@@ -369,6 +387,23 @@ void Engine::initPipelines()
 
     // Tone:
 
+    std::vector<VkSpecializationMapEntry> specializationEntries{
+        {0, 0, sizeof localGroupSize.x},
+        {1, sizeof localGroupSize.x, sizeof localGroupSize.y}
+    };
+
+    std::vector<const void*> data{
+        &localGroupSize.x,
+        &localGroupSize.y
+    };
+
+    const std::shared_ptr<ShaderModule> computeShader = std::make_shared<ShaderModule>(
+        device,
+        "shaders/Tone/comp.spv",
+        VK_SHADER_STAGE_COMPUTE_BIT,
+        specializationEntries,
+        data);
+
     pipelines[PIPELINE_TYPE_TONE] = new ComputePipeline(
         device,
         { 
@@ -376,7 +411,7 @@ void Engine::initPipelines()
             descriptors[DESCRIPTOR_TYPE_TONE_DST]->getLayout()
         },
         {},
-        std::make_shared<ShaderModule>(device, "shaders/Tone/comp.spv", VK_SHADER_STAGE_COMPUTE_BIT));
+        computeShader);
 }
 
 VkSemaphore Engine::createSemaphore() const
@@ -572,7 +607,7 @@ void Engine::initComputingCommands()
                 subresourceRange);
 
             const auto imageExtent = swapChain->getExtent();
-            vkCmdDispatch(computingCommands[i], imageExtent.width / 8, imageExtent.height / 8, 1);
+            vkCmdDispatch(computingCommands[i], imageExtent.width / localGroupSize.x, imageExtent.height / localGroupSize.y, 1);
 
             image->memoryBarrier(
                 computingCommands[i],

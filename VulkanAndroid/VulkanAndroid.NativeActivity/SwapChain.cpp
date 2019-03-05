@@ -107,7 +107,8 @@ void SwapChain::create(VkExtent2D surfaceExtent)
     LOGI("SwapChain created.");
 
     LOGD("SwapChain extent: %d x %d.", extent.width, extent.height);
-    LOGD("SwapChain format: %d.", imageFormat);
+    LOGD("SwapChain format: %d.", surfaceFormat.format);
+    LOGD("SwapChain color space: %d.", surfaceFormat.colorSpace);
     LOGD("SwapChain present mode: %d.", presentMode);
     LOGD("SwapChain image count: %d.", uint32_t(images.size()));
 }
