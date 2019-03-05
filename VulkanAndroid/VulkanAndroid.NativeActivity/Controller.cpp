@@ -2,7 +2,10 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include "utils.h"
 
-Controller::Controller(glm::vec3 target, glm::vec3 position) : target(target), radius(glm::distance(target, position))
+Controller::Controller(glm::vec3 target, glm::vec3 position)
+    : target(target),
+      radius(glm::distance(target, position)),
+      delta(glm::vec2(0.0f))
 {
     const glm::vec3 view = normalize(target - position);
     const glm::vec3 horizontal = normalize(glm::vec3(view.x, 0.0f, view.z ));

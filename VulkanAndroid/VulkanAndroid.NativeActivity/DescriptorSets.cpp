@@ -1,11 +1,8 @@
 #include "DescriptorSets.h"
 
-DescriptorSets::DescriptorSets(
-    DescriptorPool *pool,
-    std::vector<VkShaderStageFlags> bufferShaderStages,
-    std::vector<VkShaderStageFlags> textureShaderStages)
+DescriptorSets::DescriptorSets(DescriptorPool *pool, DescriptorShaderStages descriptorShaderStages)
     : pool(pool),
-      layout(pool->createDescriptorSetLayout(bufferShaderStages, textureShaderStages))
+      layout(pool->createDescriptorSetLayout(descriptorShaderStages))
 {
 }
 
@@ -24,18 +21,15 @@ VkDescriptorSet DescriptorSets::getDescriptorSet(uint32_t index) const
     return sets[index];
 }
 
-void DescriptorSets::pushDescriptorSet(std::vector<Buffer *> buffers, std::vector<TextureImage *> textures)
+void DescriptorSets::pushDescriptorSet(DescriptorSources descriptorSources)
 {
     sets.push_back(pool->getDescriptorSet(layout));
-    pool->updateDescriptorSet(sets.back(), buffers, textures);
+    pool->updateDescriptorSet(sets.back(), descriptorSources);
 }
 
-void DescriptorSets::updateDescriptorSet(
-    uint32_t index,
-    std::vector<Buffer *> buffers,
-    std::vector<TextureImage *> textures)
+void DescriptorSets::updateDescriptorSet(uint32_t index, DescriptorSources descriptorSources)
 {
-    pool->updateDescriptorSet(sets[index], buffers, textures);
+    pool->updateDescriptorSet(sets[index], descriptorSources);
 }
 
 void DescriptorSets::removeDescriptorSets(uint32_t index, uint32_t count)

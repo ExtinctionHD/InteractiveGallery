@@ -1,0 +1,21 @@
+#version 450
+
+layout (local_size_x_id = 0) in;               
+layout (local_size_y_id = 1) in;
+
+layout (set = 0, binding = 0) uniform sampler2D hdrImage;
+layout (set = 1, binding = 0, rgba8) uniform image2D resultImage;
+
+const float EXPOSURE = 1.0f;
+
+void main()
+{	
+	// ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 uv = ivec2(gl_WorkGroupID.xy * gl_WorkGroupSize.xy + gl_LocalInvocationID.xy);
+
+	vec3 hdrColor = texelFetch(hdrImage, uv, 0).rgb;
+
+	vec3 result = vec3(1.0f) - exp(-hdrColor * EXPOSURE);
+
+	imageStore(resultImage, uv, vec4(result, 1.0f));
+}

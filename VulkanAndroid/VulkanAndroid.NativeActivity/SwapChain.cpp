@@ -1,12 +1,12 @@
 #include "SwapChain.h"
 #include "SurfaceSupportDetails.h"
-#include "SwapChainImage.h"
 #include <algorithm>
 
 SwapChain::SwapChain(Device *device, VkSurfaceKHR surface, VkExtent2D surfaceExtent) : device(device), surface(surface)
 {
 	create(surfaceExtent);
-	createImageViews();
+
+    saveImages();
 }
 
 SwapChain::~SwapChain()
@@ -19,9 +19,9 @@ VkSwapchainKHR SwapChain::get() const
 	return swapChain;
 }
 
-std::vector<VkImageView> SwapChain::getImageViews() const
+std::vector<Image*> SwapChain::getImages() const
 {
-	return imageViews;
+    return images;
 }
 
 VkExtent2D SwapChain::getExtent() const
@@ -45,7 +45,7 @@ void SwapChain::recreate(VkExtent2D newExtent)
 
 	create(newExtent);
 
-	createImageViews();
+    saveImages();
 }
 
 void SwapChain::recreate(VkSurfaceKHR surface, VkExtent2D newExtent)
@@ -62,6 +62,9 @@ void SwapChain::create(VkExtent2D surfaceExtent)
     const auto surfaceFormat = chooseSurfaceFormat(details.getFormats());
     const auto presentMode = choosePresentMode(details.getPresentModes());
 	const auto surfaceCapabilities = details.getCapabilities();
+    const auto imageFeatures = device->getFormatProperties(surfaceFormat.format).optimalTilingFeatures;
+
+    LOGA(imageFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
 
 	extent = chooseExtent(details.getCapabilities(), surfaceExtent);
 	imageFormat = surfaceFormat.format;
@@ -76,7 +79,7 @@ void SwapChain::create(VkExtent2D surfaceExtent)
 		surfaceFormat.colorSpace,
 		extent,
 		1,
-		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
 		VK_SHARING_MODE_EXCLUSIVE,
 		0,
 		nullptr,
@@ -90,7 +93,7 @@ void SwapChain::create(VkExtent2D surfaceExtent)
 	// concurrent sharing mode only when using different queue families
     const QueueFamilyIndices queueFamilyIndices = device->getQueueFamilyIndices();
 	std::vector<uint32_t> indices{
-		queueFamilyIndices.getGraphics(),
+		queueFamilyIndices.getCompute(),
 		queueFamilyIndices.getPresentation()
 	};
 	if (indices[0] != indices[1])
@@ -103,10 +106,9 @@ void SwapChain::create(VkExtent2D surfaceExtent)
     CALL_VK(vkCreateSwapchainKHR(device->get(), &createInfo, nullptr, &swapChain));
     LOGI("SwapChain created.");
 
-	saveImages();
-
     LOGD("SwapChain extent: %d x %d.", extent.width, extent.height);
-    LOGD("SwapChain format: %d.", imageFormat);
+    LOGD("SwapChain format: %d.", surfaceFormat.format);
+    LOGD("SwapChain color space: %d.", surfaceFormat.colorSpace);
     LOGD("SwapChain present mode: %d.", presentMode);
     LOGD("SwapChain image count: %d.", uint32_t(images.size()));
 }
@@ -172,25 +174,38 @@ void SwapChain::saveImages()
 
 	// real count of images can be greater than requested
 	vkGetSwapchainImagesKHR(device->get(), swapChain, &imageCount, nullptr);  // get count
-	images.resize(imageCount);
-	vkGetSwapchainImagesKHR(device->get(), swapChain, &imageCount, images.data());  // get images
-}
 
-void SwapChain::createImageViews()
-{
-	imageViews.resize(getImageCount());
+    std::vector<VkImage> rawImages(imageCount);
 
-	for (uint32_t i = 0; i < getImageCount(); i++)
-	{
-		imageViews[i] = SwapChainImage(device, images[i], imageFormat).getView();
-	}
+	vkGetSwapchainImagesKHR(device->get(), swapChain, &imageCount, rawImages.data());  // get images
+
+    images.resize(imageCount);
+    for (uint32_t i = 0; i < imageCount; i++)
+    {
+        images[i] = new Image(device, rawImages[i], imageFormat);
+
+        const VkImageSubresourceRange subresourceRange{
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            0,
+            1,
+            0,
+            1
+        };
+
+        images[i]->transitLayout(
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            subresourceRange);
+    }
 }
 
 void SwapChain::cleanup()
 {
-	for (auto imageView : imageViews)
+	for (auto image : images)
     {
-		vkDestroyImageView(device->get(), imageView, nullptr);
+		delete image;
 	}
 
 	vkDestroySwapchainKHR(device->get(), swapChain, nullptr);

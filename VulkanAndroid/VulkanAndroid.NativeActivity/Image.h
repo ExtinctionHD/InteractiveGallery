@@ -1,7 +1,9 @@
 #pragma once
-#include "SwapChainImage.h"
 
-class Image : public SwapChainImage
+#include "Device.h"
+#include "IDescriptorSource.h"
+
+class Image : public IDescriptorSource
 {
 public:
 	Image(
@@ -16,7 +18,16 @@ public:
 		VkImageAspectFlags aspectFlags,
 		bool cubeMap);
 
-	~Image();
+    // For SwapChain images
+    Image(Device *device, VkImage image, VkFormat format);
+
+	virtual ~Image();
+
+    VkImage get() const;
+
+    VkImageView getView() const;
+
+    VkFormat getFormat() const;
 
 	VkExtent3D getExtent() const;
 
@@ -26,14 +37,37 @@ public:
 
     VkSampleCountFlagBits getSampleCount() const;
 
-	void transitLayout(VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange) const;
+    void memoryBarrier(
+        VkCommandBuffer commandBuffer,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkAccessFlags srcAccessMask,
+        VkAccessFlags dstAccessMask,
+        VkPipelineStageFlags srcStageMask,
+        VkPipelineStageFlags dstStageMask,
+        VkImageSubresourceRange subresourceRange);
 
-	void updateData(std::vector<const void*>, uint32_t layersOffset, uint32_t pixelSize) const;
+	void transitLayout(
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkPipelineStageFlags srcStageMask,
+        VkPipelineStageFlags dstStageMask,
+        VkImageSubresourceRange subresourceRange);
+
+	void updateData(std::vector<const void*>, uint32_t layersOffset, uint32_t pixelSize);
 
 	void copyTo(Image *dstImage, VkExtent3D extent, VkImageSubresourceLayers subresourceLayers) const;
 
 protected:
-	Image() = default;
+	Image();
+
+    Device *device;
+
+    VkImage image;
+
+    VkImageView view;
+
+    VkFormat format;
 
 	VkExtent3D extent;
 
@@ -55,8 +89,12 @@ protected:
 		VkImageAspectFlags aspectFlags,
 		bool cubeMap);
 
+    void createView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType);
+
 private:
 	VkDeviceMemory memory;
+
+    bool swapChainImage;
 
 	void allocateMemory();
 };

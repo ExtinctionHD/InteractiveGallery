@@ -13,6 +13,8 @@ public:
 
 	VkQueue getGraphicsQueue() const;
 
+    VkQueue getComputeQueue() const;
+
 	VkQueue getPresentQueue() const;
 
 	VkCommandPool getCommandPool() const;
@@ -54,6 +56,8 @@ private:
 	VkSurfaceKHR surface;
 
 	VkQueue graphicsQueue;
+
+    VkQueue computeQueue;
 
 	VkQueue presentQueue;
 

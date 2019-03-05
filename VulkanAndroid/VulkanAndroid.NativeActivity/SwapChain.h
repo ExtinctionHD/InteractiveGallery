@@ -1,5 +1,6 @@
 #pragma once
 #include "Device.h"
+#include "Image.h"
 
 class SwapChain
 {
@@ -10,7 +11,7 @@ public:
 
 	VkSwapchainKHR get() const;
 
-	std::vector<VkImageView> getImageViews() const;
+    std::vector<Image*> getImages() const;
 
 	VkExtent2D getExtent() const;
 
@@ -23,7 +24,7 @@ public:
     void recreate(VkSurfaceKHR surface, VkExtent2D newExtent);
 
 private:
-	const VkSurfaceFormatKHR PREFERRED_PRESENT_FORMAT = { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
+	const VkSurfaceFormatKHR PREFERRED_PRESENT_FORMAT = { VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
 
 	const VkPresentModeKHR PREFERRED_PRESENT_MODE = VK_PRESENT_MODE_MAILBOX_KHR;
 
@@ -37,9 +38,7 @@ private:
 
 	VkFormat imageFormat;
 
-	std::vector<VkImage> images;
-
-	std::vector<VkImageView> imageViews;
+    std::vector<Image*> images;
 
 	void create(VkExtent2D surfaceExtent);
 
@@ -50,8 +49,6 @@ private:
 	static VkExtent2D chooseExtent(VkSurfaceCapabilitiesKHR capabilities, VkExtent2D actualExtent);
 
 	void saveImages();
-
-	void createImageViews();
 
 	void cleanup();
 };

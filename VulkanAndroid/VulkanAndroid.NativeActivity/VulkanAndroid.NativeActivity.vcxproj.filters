@@ -28,9 +28,6 @@
     <ClInclude Include="Image.h">
       <Filter>Engine\Images</Filter>
     </ClInclude>
-    <ClInclude Include="SwapChainImage.h">
-      <Filter>Engine\Images</Filter>
-    </ClInclude>
     <ClInclude Include="TextureImage.h">
       <Filter>Engine\Images</Filter>
     </ClInclude>
@@ -115,8 +112,14 @@
     <ClInclude Include="Clouds.h">
       <Filter>Scene\Models</Filter>
     </ClInclude>
-    <ClInclude Include="ToneRenderPass.h">
-      <Filter>Engine\RenderPasses</Filter>
+    <ClInclude Include="ComputePipeline.h">
+      <Filter>Engine\Pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="Pipeline.h">
+      <Filter>Engine\Pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="IDescriptorSource.h">
+      <Filter>Engine\Descriptors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -142,9 +145,6 @@
       <Filter>Engine\Device\QueueFamilyIndices</Filter>
     </ClCompile>
     <ClCompile Include="Image.cpp">
-      <Filter>Engine\Images</Filter>
-    </ClCompile>
-    <ClCompile Include="SwapChainImage.cpp">
       <Filter>Engine\Images</Filter>
     </ClCompile>
     <ClCompile Include="TextureImage.cpp">
@@ -225,8 +225,11 @@
     <ClCompile Include="Clouds.cpp">
       <Filter>Scene\Models</Filter>
     </ClCompile>
-    <ClCompile Include="ToneRenderPass.cpp">
-      <Filter>Engine\RenderPasses</Filter>
+    <ClCompile Include="ComputePipeline.cpp">
+      <Filter>Engine\Pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="Pipeline.cpp">
+      <Filter>Engine\Pipelines</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

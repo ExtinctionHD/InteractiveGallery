@@ -13,7 +13,7 @@ public:
 
     std::vector<VkClearValue> getClearValues() const override;
 
-    TextureImage* getTexture() const;
+    TextureImage* getColorTexture() const;
 
 protected:
     void createAttachments() override;

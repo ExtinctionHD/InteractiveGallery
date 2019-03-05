@@ -9,7 +9,7 @@ layout(set = 0, binding = 1) uniform Lighting
 	float transitionPower;
 };
 
-layout(set = 1, binding = 1) uniform samplerCube cubeTexture;
+layout(set = 1, binding = 0) uniform samplerCube cubeTexture;
 
 layout(location = 0) in vec3 inUV;
 

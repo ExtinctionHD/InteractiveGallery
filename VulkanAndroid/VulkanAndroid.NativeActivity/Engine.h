@@ -5,10 +5,9 @@
 #include "SwapChain.h"
 #include "MainRenderPass.h"
 #include "DescriptorPool.h"
-#include "GraphicsPipeline.h"
+#include "Pipeline.h"
 #include "Scene.h"
 #include "DescriptorSets.h"
-#include "ToneRenderPass.h"
 
 class Engine
 {
@@ -40,8 +39,9 @@ private:
     {
         DESCRIPTOR_TYPE_SCENE,
         DESCRIPTOR_TYPE_EARTH,
-        DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX = 3,
-        DESCRIPTOR_TYPE_TONE,
+        DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX,
+        DESCRIPTOR_TYPE_TONE_SRC,
+        DESCRIPTOR_TYPE_TONE_DST,
         DESCRIPTOR_TYPE_COUNT
     };
 
@@ -72,26 +72,34 @@ private:
 
     MainRenderPass *mainRenderPass;
 
-    ToneRenderPass *toneRenderPass;
-
     std::vector<DescriptorSets*> descriptors;
 
-    std::vector<GraphicsPipeline*> pipelines;
+    std::vector<Pipeline*> pipelines;
 
     Scene *scene;
 
     VkSemaphore renderingFinished;
 
+    VkSemaphore computingFinished;
+
     VkSemaphore imageAvailable;
 
-    std::vector<VkCommandBuffer> graphicsCommands;
+    VkCommandBuffer renderingCommands{};
+
+    glm::uvec2 localGroupSize{ 16 };
+
+    std::vector<VkCommandBuffer> computingCommands{};
 
     void initDescriptorSets();
+
+    void initLocalGroupSize();
 
     void initPipelines();
 
     VkSemaphore createSemaphore() const;
 
-    void initGraphicsCommands();
+    void initRenderingCommands();
+
+    void initComputingCommands();
 };
 

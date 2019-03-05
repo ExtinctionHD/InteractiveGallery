@@ -29,6 +29,11 @@ VkQueue Device::getGraphicsQueue() const
 	return graphicsQueue;
 }
 
+VkQueue Device::getComputeQueue() const
+{
+    return computeQueue;
+}
+
 VkQueue Device::getPresentQueue() const
 {
 	return presentQueue;
@@ -163,9 +168,9 @@ void Device::endOneTimeCommands(VkCommandBuffer commandBuffer) const
 		nullptr,
 	};
 
-	CALL_VK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
+	CALL_VK(vkQueueSubmit(computeQueue, 1, &submitInfo, VK_NULL_HANDLE));
 
-	vkQueueWaitIdle(graphicsQueue);
+	vkQueueWaitIdle(computeQueue);
 
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
@@ -291,6 +296,7 @@ void Device::createDevice(const std::vector<const char*> &layers)
 
 	// save queue handlers
 	vkGetDeviceQueue(device, queueFamilyIndices.getGraphics(), 0, &graphicsQueue);
+    vkGetDeviceQueue(device, queueFamilyIndices.getCompute(), 0, &computeQueue);
 	vkGetDeviceQueue(device, queueFamilyIndices.getPresentation(), 0, &presentQueue);
 }
 
