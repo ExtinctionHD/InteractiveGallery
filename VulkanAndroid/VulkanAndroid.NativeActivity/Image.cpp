@@ -286,26 +286,85 @@ void Image::updateData(std::vector<const void*> data, uint32_t layersOffset, uin
 	stagingBuffer.copyToImage(image, regions);
 }
 
-void Image::copyTo(Image *dstImage, VkExtent3D extent, VkImageSubresourceLayers subresourceLayers) const
+void Image::blitTo(
+    VkCommandBuffer commandBuffer,
+    Image *dstImage,
+    VkImageSubresourceLayers srcSubresource,
+    VkImageSubresourceLayers dstSubresource,
+    std::array<VkOffset3D, 2> srcOffsets,
+    std::array<VkOffset3D, 2> dstOffsets,
+    VkFilter filter) const
+{
+    VkImageBlit region;
+
+    region.srcSubresource = srcSubresource;
+    region.srcOffsets[0] = srcOffsets[0];
+    region.srcOffsets[1] = srcOffsets[1];
+
+    region.dstSubresource = dstSubresource;
+    region.dstOffsets[0] = dstOffsets[0];
+    region.dstOffsets[1] = dstOffsets[1];
+
+    vkCmdBlitImage(
+        commandBuffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        dstImage->image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1,
+        &region,
+        filter);
+}
+
+void Image::blitTo(
+    Image *dstImage,
+    VkImageSubresourceLayers srcSubresource,
+    VkImageSubresourceLayers dstSubresource,
+    std::array<VkOffset3D, 2> srcOffsets,
+    std::array<VkOffset3D, 2> dstOffsets,
+    VkFilter filter) const
+{
+    VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
+
+    blitTo(dstImage, srcSubresource, dstSubresource, srcOffsets, dstOffsets, filter);
+
+    device->endOneTimeCommands(commandBuffer);
+}
+
+void Image::copyTo(
+    VkCommandBuffer commandBuffer,
+    Image *dstImage,
+    VkImageSubresourceLayers srcSubresource,
+    VkImageSubresourceLayers dstSubresource,
+    VkExtent3D extent) const
+{
+    VkImageCopy region{
+        srcSubresource,
+        { 0, 0, 0},
+        dstSubresource,
+        { 0, 0, 0 },
+        extent
+    };
+
+    vkCmdCopyImage(
+        commandBuffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        dstImage->image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1,
+        &region);
+}
+
+void Image::copyTo(
+    Image *dstImage,
+    VkImageSubresourceLayers srcSubresource,
+    VkImageSubresourceLayers dstSubresource,
+    VkExtent3D extent) const
 {
 	VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
 
-	VkImageCopy region{
-		subresourceLayers,	
-		{ 0, 0, 0},
-		subresourceLayers,
-		{ 0, 0, 0 },
-		extent	
-	};
-
-	vkCmdCopyImage(
-		commandBuffer,
-		image,
-		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		dstImage->image,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		1,
-		&region);
+    copyTo(dstImage, srcSubresource, dstSubresource, extent);
 
 	device->endOneTimeCommands(commandBuffer);
 }

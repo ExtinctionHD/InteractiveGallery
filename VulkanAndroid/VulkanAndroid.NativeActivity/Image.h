@@ -2,6 +2,7 @@
 
 #include "Device.h"
 #include "IDescriptorSource.h"
+#include <array>
 
 class Image : public IDescriptorSource
 {
@@ -56,7 +57,35 @@ public:
 
 	void updateData(std::vector<const void*>, uint32_t layersOffset, uint32_t pixelSize);
 
-	void copyTo(Image *dstImage, VkExtent3D extent, VkImageSubresourceLayers subresourceLayers) const;
+    void blitTo(
+        VkCommandBuffer commandBuffer,
+        Image *dstImage,
+        VkImageSubresourceLayers srcSubresource,
+        VkImageSubresourceLayers dstSubresource,
+        std::array<VkOffset3D, 2> srcOffsets,
+        std::array<VkOffset3D, 2> dstOffsets,
+        VkFilter filter) const;
+
+    void blitTo(
+        Image *dstImage,
+        VkImageSubresourceLayers srcSubresource,
+        VkImageSubresourceLayers dstSubresource,
+        std::array<VkOffset3D, 2> srcOffsets,
+        std::array<VkOffset3D, 2> dstOffsets,
+        VkFilter filter) const;
+
+    void copyTo(
+        VkCommandBuffer commandBuffer,
+        Image *dstImage,
+        VkImageSubresourceLayers srcSubresource,
+        VkImageSubresourceLayers dstSubresource,
+        VkExtent3D extent) const;
+
+	void copyTo(
+        Image *dstImage,
+        VkImageSubresourceLayers srcSubresource,
+        VkImageSubresourceLayers dstSubresource,
+        VkExtent3D extent) const;
 
 protected:
 	Image();

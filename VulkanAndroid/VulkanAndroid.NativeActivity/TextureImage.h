@@ -36,7 +36,7 @@ protected:
 
 	stbi_uc* loadPixels(const std::string &path);
 
-	void generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filter) const;
+	void generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filter);
 
 	void createSampler(VkFilter filter, VkSamplerAddressMode addressMode);
 };

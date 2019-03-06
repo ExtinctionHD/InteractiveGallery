@@ -114,31 +114,20 @@ stbi_uc* TextureImage::loadPixels(const std::string &path)
 	return pixels;
 }
 
-void TextureImage::generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filter) const
+void TextureImage::generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filter)
 {
 	const auto featureFlags = device->getFormatProperties(format).optimalTilingFeatures;
 	LOGA(featureFlags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
 
 	VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
 
-	VkImageMemoryBarrier barrier{
-		VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-		nullptr,								
-		0,										
-		0,										
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,	
-		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,	
-		VK_QUEUE_FAMILY_IGNORED,				
-		VK_QUEUE_FAMILY_IGNORED,				
-		image,									
-		{
-			aspectFlags,	
-			0,			
-			1,						
-			0,						
-			arrayLayers				
-		}										
-	};
+    VkImageSubresourceRange subresourceRange{
+        aspectFlags,
+        0,
+        1,
+        0,
+        arrayLayers
+    };
 
 	int32_t mipWidth = extent.width;
 	int32_t mipHeight = extent.height;
@@ -146,60 +135,56 @@ void TextureImage::generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filt
 	for (uint32_t i = 1; i < mipLevels; i++)
 	{
 		// transit current miplevel layout to TRANSFER_SRC
-		barrier.subresourceRange.baseMipLevel = i - 1;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		vkCmdPipelineBarrier(
-			commandBuffer,
-			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
-			0, nullptr,
-			0, nullptr,
-			1, &barrier);
+		subresourceRange.baseMipLevel = i - 1;
+        memoryBarrier(
+            commandBuffer,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            subresourceRange);
 
-		// scale and copy image from this to next miplevel
-		VkImageBlit blit = {};
-		// src area:
-		blit.srcOffsets[0] = { 0, 0, 0 };
-		blit.srcOffsets[1] = {
-			mipWidth,
-			mipHeight,
-			1
-		};
-		blit.srcSubresource.aspectMask = aspectFlags;
-		blit.srcSubresource.mipLevel = i - 1;
-		blit.srcSubresource.baseArrayLayer = 0;
-		blit.srcSubresource.layerCount = arrayLayers;
-		// dst area:
-		blit.dstOffsets[0] = { 0, 0, 0 };
-		blit.dstOffsets[1] = {
-			mipWidth > 1 ? mipWidth / 2 : 1,
-			mipHeight > 1 ? mipHeight / 2 : 1,
-			1
-		};
-		blit.dstSubresource.aspectMask = aspectFlags;
-		blit.dstSubresource.mipLevel = i;
-		blit.dstSubresource.baseArrayLayer = 0;
-		blit.dstSubresource.layerCount = arrayLayers;
-		vkCmdBlitImage(
-			commandBuffer,
-			image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			1, &blit,
-			filter);
+        const VkImageSubresourceLayers srcSubresource{
+            aspectFlags,
+            i - 1,
+            0,
+            arrayLayers,
+        };
+
+        const VkImageSubresourceLayers dstSubresource{
+            aspectFlags,
+            i,
+            0,
+            arrayLayers,
+        };
+
+        blitTo(
+            commandBuffer,
+            this,
+            srcSubresource,
+            dstSubresource,
+            { {
+                VkOffset3D{ 0, 0, 0 },
+                VkOffset3D{ mipWidth, mipHeight, 1 }
+            } },
+            { {
+                VkOffset3D{ 0, 0, 0 },
+                VkOffset3D{ mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 }
+            } },
+            VK_FILTER_LINEAR);
 
 		// transit current miplevel layout to SHADER_READ_ONLY
-		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		vkCmdPipelineBarrier(
-			commandBuffer,
-			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-			0, nullptr,
-			0, nullptr,
-			1, &barrier);
+        memoryBarrier(
+            commandBuffer,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            subresourceRange);
 
 		// next miplevel scale
 		if (mipWidth > 1) mipWidth /= 2;
@@ -207,17 +192,16 @@ void TextureImage::generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filt
 	}
 
 	// transit last miplevel layout to SHADER_READ_ONLY_OPTIMAL
-	barrier.subresourceRange.baseMipLevel = mipLevels - 1;
-	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	vkCmdPipelineBarrier(
-		commandBuffer,
-		VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-		0, nullptr,
-		0, nullptr,
-		1, &barrier);
+	subresourceRange.baseMipLevel = mipLevels - 1;
+    memoryBarrier(
+        commandBuffer,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_ACCESS_TRANSFER_WRITE_BIT,
+        VK_ACCESS_SHADER_READ_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        subresourceRange);
 
 	device->endOneTimeCommands(commandBuffer);
 }
