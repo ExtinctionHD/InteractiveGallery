@@ -35,7 +35,7 @@ bool Engine::create(ANativeWindow *window)
         device,
         {
             { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Scene::TEXTURE_COUNT + 1 },
-            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 + swapChain->getImageCount() },
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, swapChain->getImageCount() },
             { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Scene::BUFFER_COUNT + 0 }
         },
         DESCRIPTOR_TYPE_COUNT + 1 + swapChain->getImageCount());
@@ -82,6 +82,7 @@ bool Engine::recreate(ANativeWindow *window)
         scene->resize(extent);
 
         initRenderingCommands();
+        initComputingCommands();
 
         outdated = false;
     }
