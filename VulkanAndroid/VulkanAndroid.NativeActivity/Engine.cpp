@@ -289,9 +289,19 @@ void Engine::initDescriptorSets()
 
     descriptors[DESCRIPTOR_TYPE_TONE_SRC] = new DescriptorSets(
         descriptorPool,
-        { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { VK_SHADER_STAGE_COMPUTE_BIT } } });
+        {
+            {
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                { VK_SHADER_STAGE_COMPUTE_BIT, VK_SHADER_STAGE_COMPUTE_BIT }
+            }
+        });
     descriptors[DESCRIPTOR_TYPE_TONE_SRC]->pushDescriptorSet(
-        { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { mainRenderPass->getColorTexture() } } });
+        {
+            {
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                { mainRenderPass->getColorTexture(), scene->getExposureTexture() }
+            }
+        });
 
 
     descriptors[DESCRIPTOR_TYPE_TONE_DST] = new DescriptorSets(
@@ -573,6 +583,69 @@ void Engine::initComputingCommands()
         CALL_VK(vkBeginCommandBuffer(computingCommands[i], &beginInfo));
 
         {
+            const VkImageSubresourceRange subresourceRange{
+                VK_IMAGE_ASPECT_COLOR_BIT,
+                0,
+                1,
+                0,
+                1
+            };
+
+            const auto colorTexture = mainRenderPass->getColorTexture();
+            const auto exposureTexture = scene->getExposureTexture();
+            const auto colorTextureExtent = VkOffset3D{
+                int32_t(colorTexture->getExtent().width),
+                int32_t(colorTexture->getExtent().height),
+                1
+            };
+
+            exposureTexture->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_ACCESS_TRANSFER_WRITE_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                subresourceRange);
+
+            colorTexture->blitTo(
+                computingCommands[i],
+                exposureTexture,
+                { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
+                { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
+                { {
+                    VkOffset3D{ 0, 0, 0 },
+                    colorTextureExtent
+                } },
+                { {
+                    VkOffset3D{ 0, 0, 0 },
+                    VkOffset3D{ 1, 1, 1 }
+                } },
+                VK_FILTER_LINEAR);
+
+            exposureTexture->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_ACCESS_TRANSFER_WRITE_BIT,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                subresourceRange);
+
+            auto swapChainImage = swapChain->getImages()[i];
+
+            swapChainImage->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                VK_IMAGE_LAYOUT_GENERAL,
+                0,
+                VK_ACCESS_SHADER_WRITE_BIT,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                subresourceRange);
+
             vkCmdBindPipeline(computingCommands[i], VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[PIPELINE_TYPE_TONE]->get());
             std::vector<VkDescriptorSet> descriptorSets{
                 descriptors[DESCRIPTOR_TYPE_TONE_SRC]->getDescriptorSet(0),
@@ -588,29 +661,10 @@ void Engine::initComputingCommands()
                 0,
                 nullptr);
 
-            const VkImageSubresourceRange subresourceRange{
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                0,
-                1,
-                0,
-                1
-            };
-
-            auto image = swapChain->getImages()[i];
-            image->memoryBarrier(
-                computingCommands[i],
-                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                VK_IMAGE_LAYOUT_GENERAL,
-                0,
-                VK_ACCESS_SHADER_WRITE_BIT,
-                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                subresourceRange);
-
             const auto imageExtent = swapChain->getExtent();
             vkCmdDispatch(computingCommands[i], imageExtent.width / localGroupSize.x, imageExtent.height / localGroupSize.y, 1);
 
-            image->memoryBarrier(
+            swapChainImage->memoryBarrier(
                 computingCommands[i],
                 VK_IMAGE_LAYOUT_GENERAL,
                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
