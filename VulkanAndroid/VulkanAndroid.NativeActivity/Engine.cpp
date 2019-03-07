@@ -64,22 +64,20 @@ bool Engine::recreate(ANativeWindow *window)
     {
         vkDeviceWaitIdle(device->get());
 
-        const auto extent = window::getExtent(window);
-
         delete surface;
-
         surface = new Surface(instance->get(), window);
         device->updateSurface(surface->get());
+
+        const auto extent = window::getExtent(window);
         swapChain->recreate(surface->get(), extent);
-
         mainRenderPass->recreate(extent);
-
-        for(auto pipeline: pipelines)
+        scene->resize(extent);
+        for (auto pipeline : pipelines)
         {
             pipeline->recreate();
         }
 
-        scene->resize(extent);
+        updateChangedDescriptorSets();
 
         initRenderingCommands();
         initComputingCommands();
@@ -545,7 +543,7 @@ void Engine::initRenderingCommands()
 
     CALL_VK(vkEndCommandBuffer(renderingCommands));
 
-    LOGI("Rendering commands created.");
+    LOGI("Rendering commands initialized.");
 }
 
 void Engine::initComputingCommands()
@@ -678,5 +676,25 @@ void Engine::initComputingCommands()
         CALL_VK(vkEndCommandBuffer(computingCommands[i]));
     }
 
-    LOGI("Computing commands created.");
+    LOGI("Computing commands initialized.");
+}
+
+void Engine::updateChangedDescriptorSets()
+{
+    descriptors[DESCRIPTOR_TYPE_TONE_SRC]->updateDescriptorSet(
+        0,
+        {
+            {
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                { mainRenderPass->getColorTexture(), scene->getExposureTexture() }
+            }
+        });
+
+    const auto swapChainImages = swapChain->getImages();
+    for (uint32_t i = 0; i < swapChainImages.size(); i++)
+    {
+        descriptors[DESCRIPTOR_TYPE_TONE_DST]->updateDescriptorSet(
+            i,
+            { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImages[i] } } });
+    }
 }

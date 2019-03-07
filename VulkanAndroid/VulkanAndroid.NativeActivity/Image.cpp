@@ -326,7 +326,7 @@ void Image::blitTo(
 {
     VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
 
-    blitTo(dstImage, srcSubresource, dstSubresource, srcOffsets, dstOffsets, filter);
+    blitTo(commandBuffer, dstImage, srcSubresource, dstSubresource, srcOffsets, dstOffsets, filter);
 
     device->endOneTimeCommands(commandBuffer);
 }
@@ -364,7 +364,7 @@ void Image::copyTo(
 {
 	VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
 
-    copyTo(dstImage, srcSubresource, dstSubresource, extent);
+    copyTo(commandBuffer, dstImage, srcSubresource, dstSubresource, extent);
 
 	device->endOneTimeCommands(commandBuffer);
 }
