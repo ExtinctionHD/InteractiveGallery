@@ -33,8 +33,6 @@ public:
 
     TextureImage* getSkyboxTexture() const;
 
-    TextureImage* getExposureTexture() const;
-
     void handleMotion(glm::vec2 delta);
 
     void skipTime();
@@ -72,10 +70,6 @@ private:
     Clouds *clouds;
 
     Skybox *skybox;
-
-    TextureImage *exposure;
-
-    void initExposure(Device *device);
 
     void initMeshes(Device *device);
 

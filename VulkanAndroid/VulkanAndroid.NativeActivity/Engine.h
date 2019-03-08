@@ -78,6 +78,10 @@ private:
 
     Scene *scene;
 
+    TextureImage *exposureTexture;
+
+    Image *colorImage;
+
     VkSemaphore renderingFinished;
 
     VkSemaphore computingFinished;
@@ -89,6 +93,10 @@ private:
     glm::uvec2 localGroupSize{ 16 };
 
     std::vector<VkCommandBuffer> computingCommands{};
+
+    void createExposureTexture();
+
+    void createColorImage();
 
     void initDescriptorSets();
 

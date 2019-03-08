@@ -22,7 +22,7 @@ Scene::Scene(Device *device, VkExtent2D extent)
 
     const Lighting::Attributes lightingAttributes{
         glm::vec3(1.0f, 0.0f, 0.0f),
-        2.0f,
+        10.0f,
         cameraLocation.position,
         8.0f,
         0.05f
@@ -34,7 +34,6 @@ Scene::Scene(Device *device, VkExtent2D extent)
     clouds = new Clouds(device, "textures/earth/2K/");
     skybox = new Skybox(device, "textures/Stars/");
 
-    initExposure(device);
     initMeshes(device);
 
     LOGI("Scene created.");
@@ -47,7 +46,6 @@ Scene::~Scene()
         delete buffer;
     }
 
-    delete exposure;
     delete skybox;
     delete clouds;
     delete earth;
@@ -94,11 +92,6 @@ TextureImage* Scene::getCloudsTexture() const
 TextureImage* Scene::getSkyboxTexture() const
 {
     return skybox->getCubeTexture();
-}
-
-TextureImage* Scene::getExposureTexture() const
-{
-    return exposure;
 }
 
 void Scene::handleMotion(glm::vec2 delta)
@@ -154,37 +147,6 @@ void Scene::drawCube(VkCommandBuffer commandBuffer) const
     vkCmdBindIndexBuffer(commandBuffer, buffer, 0, VK_INDEX_TYPE_UINT32);
 
     vkCmdDrawIndexed(commandBuffer, cube::INDICES.size(), 1, 0, 0, 0);
-}
-
-void Scene::initExposure(Device *device)
-{
-
-    const VkImageSubresourceRange subresourceRange{
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        0,
-        1,
-        0,
-        1
-    };
-    exposure = new TextureImage(
-        device,
-        0,
-        VK_FORMAT_R16G16B16A16_SFLOAT,
-        { 1, 1, 1 },
-        1,
-        1,
-        VK_SAMPLE_COUNT_1_BIT,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        false,
-        VK_FILTER_NEAREST,
-        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
-    exposure->transitLayout(
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        subresourceRange);
 }
 
 void Scene::initMeshes(Device *device)
