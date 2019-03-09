@@ -79,7 +79,7 @@ void SwapChain::create(VkExtent2D surfaceExtent)
 		surfaceFormat.colorSpace,
 		extent,
 		1,
-		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
 		VK_SHARING_MODE_EXCLUSIVE,
 		0,
 		nullptr,
@@ -182,8 +182,6 @@ void SwapChain::saveImages()
     images.resize(imageCount);
     for (uint32_t i = 0; i < imageCount; i++)
     {
-        images[i] = new Image(device, rawImages[i], imageFormat);
-
         const VkImageSubresourceRange subresourceRange{
             VK_IMAGE_ASPECT_COLOR_BIT,
             0,
@@ -192,6 +190,7 @@ void SwapChain::saveImages()
             1
         };
 
+        images[i] = new Image(device, rawImages[i], imageFormat);
         images[i]->transitLayout(
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,

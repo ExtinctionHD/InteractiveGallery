@@ -78,9 +78,7 @@ private:
 
     Scene *scene;
 
-    TextureImage *exposureTexture;
-
-    Image *colorImage;
+    TextureImage *luminosityTexture;
 
     VkSemaphore renderingFinished;
 
@@ -94,9 +92,7 @@ private:
 
     std::vector<VkCommandBuffer> computingCommands{};
 
-    void createExposureTexture();
-
-    void createColorImage();
+    void createLuminosityTexture();
 
     void initDescriptorSets();
 

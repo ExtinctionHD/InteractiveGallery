@@ -60,10 +60,9 @@ void MainRenderPass::createAttachments()
         false,
         VK_FILTER_NEAREST,
         VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
-
     colorTexture->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         subresourceRange);
@@ -98,12 +97,12 @@ void MainRenderPass::createRenderPass()
 		0,								
         colorTexture->getFormat(),
         colorTexture->getSampleCount(),
-		VK_ATTACHMENT_LOAD_OP_CLEAR,		         
+        VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 		VK_ATTACHMENT_STORE_OP_STORE,		     
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE,	     
 		VK_ATTACHMENT_STORE_OP_DONT_CARE,	     
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 	};
 
     const VkAttachmentDescription depthAttachmentDesc{

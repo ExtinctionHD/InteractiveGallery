@@ -40,8 +40,7 @@ bool Engine::create(ANativeWindow *window)
         },
         DESCRIPTOR_TYPE_COUNT + 1 + swapChain->getImageCount());
 
-    createExposureTexture();
-    createColorImage();
+    createLuminosityTexture();
 
     initDescriptorSets();
     initLocalGroupSize();
@@ -219,8 +218,7 @@ bool Engine::destroy()
 
     delete mainRenderPass;
     delete descriptorPool;
-    delete colorImage;
-    delete exposureTexture;
+    delete luminosityTexture;
     delete scene;
     delete swapChain;
     delete device;
@@ -233,7 +231,7 @@ bool Engine::destroy()
     return true;
 }
 
-void Engine::createExposureTexture()
+void Engine::createLuminosityTexture()
 {
     const VkImageSubresourceRange subresourceRange{
         VK_IMAGE_ASPECT_COLOR_BIT,
@@ -242,7 +240,7 @@ void Engine::createExposureTexture()
         0,
         1
     };
-    exposureTexture = new TextureImage(
+    luminosityTexture = new TextureImage(
         device,
         0,
         VK_FORMAT_R16G16B16A16_SFLOAT,
@@ -255,45 +253,11 @@ void Engine::createExposureTexture()
         false,
         VK_FILTER_NEAREST,
         VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
-    exposureTexture->transitLayout(
+    luminosityTexture->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        subresourceRange);
-}
-
-void Engine::createColorImage()
-{
-
-    const VkImageSubresourceRange subresourceRange{
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        0,
-        1,
-        0,
-        1
-    };
-    const VkExtent3D extent{
-        swapChain->getExtent().width,
-        swapChain->getExtent().height,
-        1
-    };
-    colorImage = new Image(
-        device,
-        0,
-        swapChain->getImageFormat(),
-        extent,
-        1,
-        1,
-        VK_SAMPLE_COUNT_1_BIT,
-        VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        false);
-    colorImage->transitLayout(
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
         subresourceRange);
 }
 
@@ -365,20 +329,23 @@ void Engine::initDescriptorSets()
         {
             {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                { mainRenderPass->getColorTexture(), exposureTexture }
+                { mainRenderPass->getColorTexture(), luminosityTexture }
             }
         });
 
     descriptors[DESCRIPTOR_TYPE_TONE_DST] = new DescriptorSets(
         descriptorPool,
         { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { VK_SHADER_STAGE_COMPUTE_BIT } } });
-    descriptors[DESCRIPTOR_TYPE_TONE_DST]->pushDescriptorSet(
-        { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { colorImage } } });
+    for (const auto swapChainImage : swapChain->getImages())
+    {
+        descriptors[DESCRIPTOR_TYPE_TONE_DST]->pushDescriptorSet(
+            { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImage } } });
+    }
 }
 
 void Engine::initLocalGroupSize()
 {
-    const auto extent = colorImage->getExtent();
+    const auto extent = swapChain->getExtent();
 
     while (extent.width % localGroupSize.x != 0)
     {
@@ -652,14 +619,24 @@ void Engine::initComputingCommands()
                 1
             };
 
-
-            const auto colorImageExtent = VkOffset3D{
-                int32_t(colorImage->getExtent().width),
-                int32_t(colorImage->getExtent().height),
+            const auto colorTexture = mainRenderPass->getColorTexture();
+            const auto colorTextureExtent = VkOffset3D{
+                int32_t(colorTexture->getExtent().width),
+                int32_t(colorTexture->getExtent().height),
                 1
             };
 
-            exposureTexture->memoryBarrier(
+            colorTexture->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+                VK_ACCESS_TRANSFER_READ_BIT,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                subresourceRange);
+
+            luminosityTexture->memoryBarrier(
                 computingCommands[i],
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -669,14 +646,14 @@ void Engine::initComputingCommands()
                 VK_PIPELINE_STAGE_TRANSFER_BIT,
                 subresourceRange);
 
-            colorImage->blitTo(
+            colorTexture->blitTo(
                 computingCommands[i],
-                exposureTexture,
+                luminosityTexture,
                 { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
                 { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
                 { {
                     VkOffset3D{ 0, 0, 0 },
-                    colorImageExtent
+                    colorTextureExtent
                 } },
                 { {
                     VkOffset3D{ 0, 0, 0 },
@@ -684,7 +661,17 @@ void Engine::initComputingCommands()
                 } },
                 VK_FILTER_LINEAR);
 
-            exposureTexture->memoryBarrier(
+            colorTexture->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_ACCESS_TRANSFER_READ_BIT,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                subresourceRange);
+
+            luminosityTexture->memoryBarrier(
                 computingCommands[i],
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -694,10 +681,22 @@ void Engine::initComputingCommands()
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                 subresourceRange);
 
+            const auto swapChainImage = swapChain->getImages()[i];
+
+            swapChainImage->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                VK_IMAGE_LAYOUT_GENERAL,
+                0,
+                VK_ACCESS_SHADER_WRITE_BIT,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                subresourceRange);
+
             vkCmdBindPipeline(computingCommands[i], VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[PIPELINE_TYPE_TONE]->get());
             std::vector<VkDescriptorSet> descriptorSets{
                 descriptors[DESCRIPTOR_TYPE_TONE_SRC]->getDescriptorSet(0),
-                descriptors[DESCRIPTOR_TYPE_TONE_DST]->getDescriptorSet(0)
+                descriptors[DESCRIPTOR_TYPE_TONE_DST]->getDescriptorSet(i)
             };
             vkCmdBindDescriptorSets(
                 computingCommands[i],
@@ -709,60 +708,26 @@ void Engine::initComputingCommands()
                 0,
                 nullptr);
 
-            colorImage->memoryBarrier(
-                computingCommands[i],
-                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                VK_IMAGE_LAYOUT_GENERAL,
-                VK_ACCESS_TRANSFER_READ_BIT,
-                VK_ACCESS_SHADER_WRITE_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                subresourceRange);
-
-            const auto imageExtent = colorImage->getExtent();
+            const auto imageExtent = swapChain->getExtent();
             vkCmdDispatch(computingCommands[i], imageExtent.width / localGroupSize.x, imageExtent.height / localGroupSize.y, 1);
 
-            colorImage->memoryBarrier(
+            colorTexture->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                subresourceRange);
+
+            swapChainImage->memoryBarrier(
                 computingCommands[i],
                 VK_IMAGE_LAYOUT_GENERAL,
-                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                 VK_ACCESS_SHADER_WRITE_BIT,
-                VK_ACCESS_TRANSFER_READ_BIT,
+                0,
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                subresourceRange);
-
-            const auto swapChainImage = swapChain->getImages()[i];
-            swapChainImage->memoryBarrier(
-                computingCommands[i],
-                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_ACCESS_HOST_READ_BIT,
-                VK_ACCESS_TRANSFER_WRITE_BIT,
-                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                subresourceRange);
-
-            const VkImageSubresourceLayers subresourceLayers{
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                0,
-                0,
-                1
-            };
-            colorImage->copyTo(
-                computingCommands[i], 
-                swapChainImage, 
-                subresourceLayers,
-                subresourceLayers, 
-                imageExtent);
-
-            swapChainImage->memoryBarrier(
-                computingCommands[i],
-                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                VK_ACCESS_TRANSFER_WRITE_BIT,
-                VK_ACCESS_HOST_READ_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                 subresourceRange);
         }
@@ -780,14 +745,14 @@ void Engine::updateChangedDescriptorSets()
         {
             {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                { mainRenderPass->getColorTexture(), exposureTexture }
+                { mainRenderPass->getColorTexture(), luminosityTexture }
             }
         });
-
-    delete colorImage;
-    createColorImage();
-
-    descriptors[DESCRIPTOR_TYPE_TONE_DST]->updateDescriptorSet(
-        0,
-        { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { colorImage } } });
+    const auto swapChainImages = swapChain->getImages();
+    for (uint32_t i = 0; i < swapChainImages.size(); i++)
+    {
+        descriptors[DESCRIPTOR_TYPE_TONE_DST]->updateDescriptorSet(
+            i,
+            { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImages[i] } } });
+    }
 }

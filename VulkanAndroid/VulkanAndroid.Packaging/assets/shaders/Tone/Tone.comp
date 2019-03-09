@@ -4,10 +4,10 @@ layout (local_size_x_id = 0) in;
 layout (local_size_y_id = 1) in;
 
 layout (set = 0, binding = 0) uniform sampler2D hdrTexture;
-layout (set = 0, binding = 1) uniform sampler2D exposureTexture;
+layout (set = 0, binding = 1) uniform sampler2D luminosityTexture;
 layout (set = 1, binding = 0, rgba8) uniform image2D resultImage;
 
-const float MIN_EXPOSURE = 0.4f;
+const float MIN_LUM = 0.25f;
 
 void main()
 {	
@@ -16,15 +16,15 @@ void main()
 	
 	vec3 hdrColor = texelFetch(hdrTexture, uv, 0).rgb;
 
-	vec3 exposureColor = texelFetch(exposureTexture, ivec2(0.0f), 0).rgb;
-	float exposure = (exposureColor.r + exposureColor.g + exposureColor.b) / 3;
+	vec3 lumColor = texelFetch(luminosityTexture, ivec2(0.0f), 0).rgb;
+	float lum = (lumColor.r + lumColor.g + lumColor.b) / 3;
 
-	float T = pow(exposure + MIN_EXPOSURE, -1);
+	float T = pow(lum + MIN_LUM, -1);
 	vec3 result = 1 - exp(-T * hdrColor);
 
 	if (uv.x < 64 && uv.y < 64)
 	{
-		imageStore(resultImage, uv, vec4(vec3(exposure), 1.0f));
+		imageStore(resultImage, uv, vec4(vec3(lum), 1.0f));
 	}
 	else
 	{
