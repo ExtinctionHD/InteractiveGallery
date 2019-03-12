@@ -110,7 +110,6 @@ void SwapChain::create(VkExtent2D surfaceExtent)
     LOGD("SwapChain format: %d.", surfaceFormat.format);
     LOGD("SwapChain color space: %d.", surfaceFormat.colorSpace);
     LOGD("SwapChain present mode: %d.", presentMode);
-    LOGD("SwapChain image count: %d.", uint32_t(images.size()));
 }
 
 VkSurfaceFormatKHR SwapChain::chooseSurfaceFormat(std::vector<VkSurfaceFormatKHR> availableFormats) const
@@ -190,7 +189,14 @@ void SwapChain::saveImages()
             1
         };
 
-        images[i] = new Image(device, rawImages[i], imageFormat);
+        const VkExtent3D imageExtent{
+            extent.width,
+            extent.height,
+            1
+        };
+
+        images[i] = new Image(device, rawImages[i], imageFormat, imageExtent);
+        images[i]->pushFullView(subresourceRange.aspectMask);
         images[i]->transitLayout(
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
@@ -198,6 +204,8 @@ void SwapChain::saveImages()
             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
             subresourceRange);
     }
+
+    LOGD("SwapChain image count: %d.", uint32_t(images.size()));
 }
 
 void SwapChain::cleanup()

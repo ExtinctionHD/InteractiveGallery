@@ -16,17 +16,16 @@ public:
 		uint32_t arrayLayers,
 		VkSampleCountFlagBits sampleCount,
 		VkImageUsageFlags usage,
-		VkImageAspectFlags aspectFlags,
 		bool cubeMap);
 
     // For SwapChain images
-    Image(Device *device, VkImage image, VkFormat format);
+    Image(Device *device, VkImage image, VkFormat format, VkExtent3D extent);
 
 	virtual ~Image();
 
     VkImage get() const;
 
-    VkImageView getView() const;
+    VkImageView getView(uint32_t index = 0) const;
 
     VkFormat getFormat() const;
 
@@ -38,7 +37,11 @@ public:
 
     VkSampleCountFlagBits getSampleCount() const;
 
-    DescriptorInfo getStorageImageInfo() const;
+    DescriptorInfo getStorageImageInfo(uint32_t viewIndex = 0) const;
+
+    void pushView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType);
+
+    void pushFullView(VkImageAspectFlags aspectFlags);
 
     void memoryBarrier(
         VkCommandBuffer commandBuffer,
@@ -96,8 +99,6 @@ protected:
 
     VkImage image;
 
-    VkImageView view;
-
     VkFormat format;
 
 	VkExtent3D extent;
@@ -108,6 +109,8 @@ protected:
 
     VkSampleCountFlagBits sampleCount;
 
+    std::vector<VkImageView> views;
+
 	void createThisImage(
 		Device* device,
 		VkImageCreateFlags flags,
@@ -117,15 +120,14 @@ protected:
 		uint32_t arrayLayers,
 		VkSampleCountFlagBits sampleCount,
 		VkImageUsageFlags usage,
-		VkImageAspectFlags aspectFlags,
 		bool cubeMap);
-
-    void createView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType);
 
 private:
 	VkDeviceMemory memory;
 
     bool swapChainImage;
+
+    bool cubeMap;
 
 	void allocateMemory();
 };

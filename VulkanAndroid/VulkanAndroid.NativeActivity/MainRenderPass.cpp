@@ -56,10 +56,9 @@ void MainRenderPass::createAttachments()
         subresourceRange.layerCount,
         sampleCount,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-        subresourceRange.aspectMask,
-        false,
-        VK_FILTER_NEAREST,
-        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+        false);
+    colorTexture->pushFullView(subresourceRange.aspectMask);
+    colorTexture->pushSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
     colorTexture->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -77,8 +76,8 @@ void MainRenderPass::createAttachments()
         subresourceRange.layerCount,
         sampleCount,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        subresourceRange.aspectMask,
         false);
+    depthImage->pushFullView(subresourceRange.aspectMask);
     depthImage->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,

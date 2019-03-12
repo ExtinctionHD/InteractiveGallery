@@ -5,9 +5,7 @@
 TextureImage::TextureImage(
 	Device *device,
 	const std::vector<std::string> &paths,
-	bool cubeMap,
-	VkFilter filter,
-	VkSamplerAddressMode samplerAddressMode)
+	bool cubeMap)
 {
     extent = VkExtent3D{0, 0, 1};
 
@@ -29,7 +27,6 @@ TextureImage::TextureImage(
         paths.size(),
 		VK_SAMPLE_COUNT_1_BIT,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT,
 		cubeMap);
 
 	updateData(pixels, 0, STBI_rgb_alpha);
@@ -39,9 +36,7 @@ TextureImage::TextureImage(
 		stbi_image_free(const_cast<void*>(arrayLayerPixels));
     }
 
-	generateMipmaps(VK_IMAGE_ASPECT_COLOR_BIT, filter);
-
-	createSampler(filter, samplerAddressMode);
+	generateMipmaps(VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_LINEAR);
 }
 
 TextureImage::TextureImage(
@@ -53,10 +48,7 @@ TextureImage::TextureImage(
     uint32_t arrayLayers,
     VkSampleCountFlagBits sampleCount,
     VkImageUsageFlags usage,
-    VkImageAspectFlags aspectFlags,
-    bool cubeMap,
-    VkFilter filter,
-    VkSamplerAddressMode samplerAddressMode)
+    bool cubeMap)
 	: Image(
         device,
         flags,
@@ -66,32 +58,69 @@ TextureImage::TextureImage(
         arrayLayers,
         sampleCount,
         usage | VK_IMAGE_USAGE_SAMPLED_BIT,
-        aspectFlags,
         cubeMap)
 {
-	createSampler(filter, samplerAddressMode);
+
 }
 
 TextureImage::~TextureImage()
 {
-	vkDestroySampler(device->get(), sampler, nullptr);
+    for (auto sampler : samplers)
+    {
+        vkDestroySampler(device->get(), sampler, nullptr);
+    }
 }
 
-VkSampler TextureImage::getSampler() const
+VkSampler TextureImage::getSampler(uint32_t index = 0) const
 {
-	return sampler;
+	return samplers[index];
 }
 
-DescriptorInfo TextureImage::getCombineSamplerInfo() const
+DescriptorInfo TextureImage::getCombineSamplerInfo(uint32_t samplerIndex, uint32_t viewIndex) const
 {
     DescriptorInfo info;
     info.image = VkDescriptorImageInfo{
-        sampler,
-        view,
+        samplers[samplerIndex],
+        views[viewIndex],
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
     return info;
+}
+
+void TextureImage::pushSampler(VkFilter filter, VkSamplerAddressMode addressMode)
+{
+    VkSampler sampler;
+
+    VkSamplerCreateInfo createInfo{
+        VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        nullptr,
+        0,
+        filter,
+        filter,
+        VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        addressMode,
+        addressMode,
+        addressMode,
+        0,
+        false,
+        0.0f,
+        false,
+        VK_COMPARE_OP_ALWAYS,
+        0,
+        float(mipLevels),
+        VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
+        false,
+    };
+    if (filter == VK_FILTER_NEAREST)
+    {
+        createInfo.anisotropyEnable = false;
+        createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    }
+
+    CALL_VK(vkCreateSampler(device->get(), &createInfo, nullptr, &sampler));
+
+    samplers.push_back(sampler);
 }
 
 stbi_uc* TextureImage::loadPixels(const std::string &path)
@@ -128,9 +157,6 @@ stbi_uc* TextureImage::loadPixels(const std::string &path)
 
 void TextureImage::generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filter)
 {
-	const auto featureFlags = device->getFormatProperties(format).optimalTilingFeatures;
-	LOGA(featureFlags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
-
 	VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
 
     VkImageSubresourceRange subresourceRange{
@@ -185,7 +211,7 @@ void TextureImage::generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filt
                 VkOffset3D{ 0, 0, 0 },
                 VkOffset3D{ mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 }
             } },
-            VK_FILTER_LINEAR);
+            filter);
 
 		// transit current miplevel layout to SHADER_READ_ONLY
         memoryBarrier(
@@ -216,35 +242,4 @@ void TextureImage::generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filt
         subresourceRange);
 
 	device->endOneTimeCommands(commandBuffer);
-}
-
-void TextureImage::createSampler(VkFilter filter, VkSamplerAddressMode addressMode)
-{
-	VkSamplerCreateInfo createInfo{
-		VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-		nullptr,								
-		0,										
-		filter,									
-		filter,									
-		VK_SAMPLER_MIPMAP_MODE_LINEAR,			
-		addressMode,			              
-		addressMode,			              
-		addressMode,			              
-		0,										
-		false,								
-		0.0f,									
-		false,								
-		VK_COMPARE_OP_ALWAYS,					
-		0,										
-		float(mipLevels),						
-		VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,		
-		false,								
-	};
-	if (filter == VK_FILTER_NEAREST)
-	{
-		createInfo.anisotropyEnable = false;
-		createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	}
-
-    CALL_VK(vkCreateSampler(device->get(), &createInfo, nullptr, &sampler));
 }

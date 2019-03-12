@@ -249,10 +249,9 @@ void Engine::createLuminosityTexture()
         1,
         VK_SAMPLE_COUNT_1_BIT,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        false,
-        VK_FILTER_NEAREST,
-        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+        false);
+    luminosityTexture->pushFullView(subresourceRange.aspectMask);
+    luminosityTexture->pushSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
     luminosityTexture->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,

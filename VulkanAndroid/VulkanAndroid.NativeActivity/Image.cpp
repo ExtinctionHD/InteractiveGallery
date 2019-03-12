@@ -10,7 +10,6 @@ Image::Image(
 	uint32_t arrayLayers,
 	VkSampleCountFlagBits sampleCount,
 	VkImageUsageFlags usage,
-	VkImageAspectFlags aspectFlags,
 	bool cubeMap) : swapChainImage(false)
 {
 	createThisImage(
@@ -22,26 +21,29 @@ Image::Image(
 		arrayLayers,
 		sampleCount,
 		usage,
-		aspectFlags,
 		cubeMap);
 }
 
-Image::Image(Device *device, VkImage image, VkFormat format) : device(device), image(image), format(format), swapChainImage(true)
+Image::Image(Device *device, VkImage image, VkFormat format, VkExtent3D extent)
+    : device(device),
+      image(image),
+      format(format),
+      extent(extent),
+      mipLevels(1),
+      arrayLayers(1),
+      sampleCount(VK_SAMPLE_COUNT_1_BIT),
+      swapChainImage(true),
+      cubeMap(false)
 {
-    const VkImageSubresourceRange subresourceRange{
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        0,
-        1,
-        0,
-        1
-    };
 
-    createView(subresourceRange, VK_IMAGE_VIEW_TYPE_2D);
 }
 
 Image::~Image()
 {
-    vkDestroyImageView(device->get(), view, nullptr);
+    for (auto view : views)
+    {
+        vkDestroyImageView(device->get(), view, nullptr);
+    }
     if (!swapChainImage)
     {
         vkDestroyImage(device->get(), image, nullptr);
@@ -54,9 +56,9 @@ VkImage Image::get() const
     return image;
 }
 
-VkImageView Image::getView() const
+VkImageView Image::getView(uint32_t index) const
 {
-    return view;
+    return views[index];
 }
 
 VkFormat Image::getFormat() const
@@ -74,16 +76,65 @@ VkSampleCountFlagBits Image::getSampleCount() const
 	return sampleCount;
 }
 
-DescriptorInfo Image::getStorageImageInfo() const
+DescriptorInfo Image::getStorageImageInfo(uint32_t viewIndex) const
 {
     DescriptorInfo info;
     info.image = VkDescriptorImageInfo{
         nullptr,
-        view,
+        views[viewIndex],
         VK_IMAGE_LAYOUT_GENERAL
     };
 
     return info;
+}
+
+void Image::pushView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType)
+{
+    VkImageView view;
+
+    VkImageViewCreateInfo createInfo{
+        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        nullptr,
+        0,
+        image,
+        viewType,
+        format,
+        VkComponentMapping{},
+        subresourceRange,
+    };
+
+    CALL_VK(vkCreateImageView(device->get(), &createInfo, nullptr, &view));
+
+    views.push_back(view);
+}
+
+void Image::pushFullView(VkImageAspectFlags aspectFlags)
+{
+    const VkImageSubresourceRange subresourceRange{
+        aspectFlags,
+        0,
+        mipLevels,
+        0,
+        arrayLayers
+    };
+
+    VkImageViewType viewType = arrayLayers == 1 ? VK_IMAGE_VIEW_TYPE_1D : VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+    if (extent.height > 0)
+    {
+        viewType = VK_IMAGE_VIEW_TYPE_2D;
+
+        if (cubeMap)
+        {
+            LOGA(arrayLayers >= 6);
+            viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+        }
+        else if (arrayLayers > 1)
+        {
+            viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        }
+    }
+
+    pushView(subresourceRange, viewType);
 }
 
 uint32_t Image::getMipLevelCount() const
@@ -394,7 +445,6 @@ void Image::createThisImage(
 	uint32_t arrayLayers,
 	VkSampleCountFlagBits sampleCount,
 	VkImageUsageFlags usage,
-	VkImageAspectFlags aspectFlags,
 	bool cubeMap)
 {
 	this->device = device;
@@ -403,24 +453,18 @@ void Image::createThisImage(
 	this->mipLevels = mipLevels;
 	this->arrayLayers = arrayLayers;
     this->sampleCount = sampleCount;
+    this->cubeMap = cubeMap;
 
 	VkImageType imageType = VK_IMAGE_TYPE_1D;
-	VkImageViewType viewType = arrayLayers == 1 ? VK_IMAGE_VIEW_TYPE_1D : VK_IMAGE_VIEW_TYPE_1D_ARRAY;
 	if (extent.height > 0)
 	{
 		imageType = VK_IMAGE_TYPE_2D;
-		viewType = VK_IMAGE_VIEW_TYPE_2D;
 
 		if (cubeMap)
 		{
 			LOGA(arrayLayers >= 6);
 
 			flags = flags | VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-			viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-		}
-		else if (arrayLayers > 1)
-		{
-			viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 		}
 	}
 
@@ -447,32 +491,6 @@ void Image::createThisImage(
 	allocateMemory();
 
 	vkBindImageMemory(device->get(), image, memory, 0);
-
-	const VkImageSubresourceRange subresourceRange{
-		aspectFlags,
-		0,
-		mipLevels,
-		0,
-		arrayLayers
-	};
-
-	createView(subresourceRange, viewType);
-}
-
-void Image::createView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType)
-{
-    VkImageViewCreateInfo createInfo{
-        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        nullptr,
-        0,
-        image,
-        viewType,
-        format,
-        VkComponentMapping{},
-        subresourceRange,
-    };
-
-    CALL_VK(vkCreateImageView(device->get(), &createInfo, nullptr, &view));
 }
 
 void Image::allocateMemory()
