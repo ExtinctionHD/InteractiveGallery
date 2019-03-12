@@ -271,14 +271,19 @@ void Engine::initDescriptorSets()
         descriptorPool,
         { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT } } });
     descriptors[DESCRIPTOR_TYPE_SCENE]->pushDescriptorSet(
-        { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getCameraBuffer(), scene->getLightingBuffer() } } });
+        {
+            {
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                { scene->getCameraBuffer()->getUniformBufferInfo(), scene->getLightingBuffer()->getUniformBufferInfo() }
+            }
+        });
 
     // Earth:
 
-    std::vector<IDescriptorSource*> earthTextures;
+    std::vector<DescriptorInfo> earthTextureInfos;
     for (const auto texture : scene->getEarthTextures())
     {
-        earthTextures.push_back(texture);
+        earthTextureInfos.push_back(texture->getCombineSamplerInfo());
     }
 
     descriptors[DESCRIPTOR_TYPE_EARTH] = new DescriptorSets(
@@ -286,14 +291,14 @@ void Engine::initDescriptorSets()
         {
             {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                std::vector<VkShaderStageFlags>(earthTextures.size(), VK_SHADER_STAGE_FRAGMENT_BIT)
+                std::vector<VkShaderStageFlags>(earthTextureInfos.size(), VK_SHADER_STAGE_FRAGMENT_BIT)
             },
             { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT } },
         });
     descriptors[DESCRIPTOR_TYPE_EARTH]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, earthTextures },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getEarthTransformationBuffer() } }
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, earthTextureInfos },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getEarthTransformationBuffer()->getUniformBufferInfo() } }
         });
 
     // Clouds and skybox:
@@ -306,13 +311,13 @@ void Engine::initDescriptorSets()
         });
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getCloudsTexture() } },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getCloudsTransformationBuffer() } }
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getCloudsTexture()->getCombineSamplerInfo() } },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getCloudsTransformationBuffer()->getUniformBufferInfo() } }
         });
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getSkyboxTexture() } },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getSkyboxTransformationBuffer() } }
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getSkyboxTexture()->getCombineSamplerInfo() } },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getSkyboxTransformationBuffer()->getUniformBufferInfo() } }
         });
 
     // Tone:
@@ -329,7 +334,7 @@ void Engine::initDescriptorSets()
         {
             {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                { mainRenderPass->getColorTexture(), luminosityTexture }
+                { mainRenderPass->getColorTexture()->getCombineSamplerInfo(), luminosityTexture->getCombineSamplerInfo() }
             }
         });
 
@@ -339,7 +344,7 @@ void Engine::initDescriptorSets()
     for (const auto swapChainImage : swapChain->getImages())
     {
         descriptors[DESCRIPTOR_TYPE_TONE_DST]->pushDescriptorSet(
-            { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImage } } });
+            { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImage->getStorageImageInfo() } } });
     }
 }
 
@@ -745,7 +750,7 @@ void Engine::updateChangedDescriptorSets()
         {
             {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                { mainRenderPass->getColorTexture(), luminosityTexture }
+                { mainRenderPass->getColorTexture()->getCombineSamplerInfo(), luminosityTexture->getCombineSamplerInfo() }
             }
         });
     const auto swapChainImages = swapChain->getImages();
@@ -753,6 +758,6 @@ void Engine::updateChangedDescriptorSets()
     {
         descriptors[DESCRIPTOR_TYPE_TONE_DST]->updateDescriptorSet(
             i,
-            { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImages[i] } } });
+            { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImages[i]->getStorageImageInfo() } } });
     }
 }

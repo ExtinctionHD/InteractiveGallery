@@ -74,6 +74,18 @@ VkSampleCountFlagBits Image::getSampleCount() const
 	return sampleCount;
 }
 
+DescriptorInfo Image::getStorageImageInfo() const
+{
+    DescriptorInfo info;
+    info.image = VkDescriptorImageInfo{
+        nullptr,
+        view,
+        VK_IMAGE_LAYOUT_GENERAL
+    };
+
+    return info;
+}
+
 uint32_t Image::getMipLevelCount() const
 {
 	return mipLevels;

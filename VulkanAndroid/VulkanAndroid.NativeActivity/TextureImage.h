@@ -31,6 +31,8 @@ public:
 
 	VkSampler getSampler() const;
 
+    DescriptorInfo getCombineSamplerInfo() const;
+
 protected:
 	VkSampler sampler;
 

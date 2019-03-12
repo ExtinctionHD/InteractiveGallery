@@ -279,13 +279,13 @@
     <ClInclude Include="ComputePipeline.h" />
     <ClInclude Include="Controller.h" />
     <ClInclude Include="cube.h" />
+    <ClInclude Include="DescriptorInfo.h" />
     <ClInclude Include="DescriptorPool.h" />
     <ClInclude Include="DescriptorSets.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Earth.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="GraphicsPipeline.h" />
-    <ClInclude Include="IDescriptorSource.h" />
     <ClInclude Include="Lighting.h" />
     <ClInclude Include="MainRenderPass.h" />
     <ClInclude Include="Image.h" />

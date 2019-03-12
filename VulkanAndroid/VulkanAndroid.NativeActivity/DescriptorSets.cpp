@@ -21,15 +21,15 @@ VkDescriptorSet DescriptorSets::getDescriptorSet(uint32_t index) const
     return sets[index];
 }
 
-void DescriptorSets::pushDescriptorSet(DescriptorSources descriptorSources)
+void DescriptorSets::pushDescriptorSet(DescriptorInfos descriptorInfos)
 {
     sets.push_back(pool->getDescriptorSet(layout));
-    pool->updateDescriptorSet(sets.back(), descriptorSources);
+    pool->updateDescriptorSet(sets.back(), descriptorInfos);
 }
 
-void DescriptorSets::updateDescriptorSet(uint32_t index, DescriptorSources descriptorSources)
+void DescriptorSets::updateDescriptorSet(uint32_t index, DescriptorInfos descriptorInfos)
 {
-    pool->updateDescriptorSet(sets[index], descriptorSources);
+    pool->updateDescriptorSet(sets[index], descriptorInfos);
 }
 
 void DescriptorSets::removeDescriptorSets(uint32_t index, uint32_t count)

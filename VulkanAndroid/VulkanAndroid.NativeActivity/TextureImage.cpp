@@ -82,6 +82,18 @@ VkSampler TextureImage::getSampler() const
 	return sampler;
 }
 
+DescriptorInfo TextureImage::getCombineSamplerInfo() const
+{
+    DescriptorInfo info;
+    info.image = VkDescriptorImageInfo{
+        sampler,
+        view,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    return info;
+}
+
 stbi_uc* TextureImage::loadPixels(const std::string &path)
 {
     std::vector<stbi_uc> buffer = AssetManager::getBytes(path);

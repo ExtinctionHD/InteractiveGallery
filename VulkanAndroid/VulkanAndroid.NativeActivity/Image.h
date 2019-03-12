@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Device.h"
-#include "IDescriptorSource.h"
 #include <array>
+#include "DescriptorInfo.h"
 
-class Image : public IDescriptorSource
+class Image
 {
 public:
 	Image(
@@ -37,6 +37,8 @@ public:
 	uint32_t getArrayLayerCount() const;
 
     VkSampleCountFlagBits getSampleCount() const;
+
+    DescriptorInfo getStorageImageInfo() const;
 
     void memoryBarrier(
         VkCommandBuffer commandBuffer,
