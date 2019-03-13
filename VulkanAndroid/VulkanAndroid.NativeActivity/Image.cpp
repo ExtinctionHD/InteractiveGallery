@@ -1,5 +1,6 @@
 #include "Image.h"
 #include "StagingBuffer.h"
+#include "utils.h"
 
 Image::Image(
 	Device *device,
@@ -394,6 +395,109 @@ void Image::blitTo(
     device->endOneTimeCommands(commandBuffer);
 }
 
+void Image::generateMipmaps(
+    VkCommandBuffer commandBuffer,
+    VkImageAspectFlags aspectFlags,
+    VkFilter filter,
+    VkImageLayout finalLayout,
+    VkPipelineStageFlags finalStage)
+{
+    VkImageSubresourceRange subresourceRange{
+        aspectFlags,
+        0,
+        1,
+        0,
+        arrayLayers
+    };
+
+    int32_t mipWidth = extent.width;
+    int32_t mipHeight = extent.height;
+
+    for (uint32_t i = 1; i < mipLevels; i++)
+    {
+        // transit current miplevel layout to TRANSFER_SRC
+        subresourceRange.baseMipLevel = i - 1;
+        memoryBarrier(
+            commandBuffer,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            subresourceRange);
+
+        const VkImageSubresourceLayers srcSubresource{
+            aspectFlags,
+            i - 1,
+            0,
+            arrayLayers,
+        };
+
+        const VkImageSubresourceLayers dstSubresource{
+            aspectFlags,
+            i,
+            0,
+            arrayLayers,
+        };
+
+        blitTo(
+            commandBuffer,
+            this,
+            srcSubresource,
+            dstSubresource,
+            { {
+                VkOffset3D{ 0, 0, 0 },
+                VkOffset3D{ mipWidth, mipHeight, 1 }
+            } },
+            { {
+                VkOffset3D{ 0, 0, 0 },
+                VkOffset3D{ mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 }
+            } },
+            filter);
+
+        // transit current miplevel layout to SHADER_READ_ONLY
+        memoryBarrier(
+            commandBuffer,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            finalLayout,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            finalStage,
+            subresourceRange);
+
+        // next miplevel scale
+        if (mipWidth > 1) mipWidth /= 2;
+        if (mipHeight > 1) mipHeight /= 2;
+    }
+
+    // transit last miplevel layout to SHADER_READ_ONLY_OPTIMAL
+    subresourceRange.baseMipLevel = mipLevels - 1;
+    memoryBarrier(
+        commandBuffer,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        finalLayout,
+        VK_ACCESS_TRANSFER_WRITE_BIT,
+        VK_ACCESS_SHADER_READ_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        finalStage,
+        subresourceRange);
+}
+
+void Image::generateMipmaps(
+    VkImageAspectFlags aspectFlags,
+    VkFilter filter,
+    VkImageLayout finalLayout,
+    VkPipelineStageFlags finalStage)
+{
+    VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
+
+    generateMipmaps(commandBuffer, aspectFlags, filter, finalLayout, finalStage);
+
+    device->endOneTimeCommands(commandBuffer);
+}
+
 void Image::copyTo(
     VkCommandBuffer commandBuffer,
     Image *dstImage,
@@ -430,6 +534,12 @@ void Image::copyTo(
     copyTo(commandBuffer, dstImage, srcSubresource, dstSubresource, extent);
 
 	device->endOneTimeCommands(commandBuffer);
+}
+
+uint32_t Image::calculateMipLevelCount(VkExtent3D extent)
+{
+    const uint32_t mipLevels = math::ceilLog2(std::max(std::max(extent.width, extent.height), extent.depth));
+    return mipLevels > 0 ? mipLevels : 1;
 }
 
 Image::Image() : swapChainImage(false)

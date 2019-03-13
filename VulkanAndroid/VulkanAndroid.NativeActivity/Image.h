@@ -79,6 +79,19 @@ public:
         std::array<VkOffset3D, 2> dstOffsets,
         VkFilter filter) const;
 
+    void generateMipmaps(
+        VkCommandBuffer commandBuffer,
+        VkImageAspectFlags aspectFlags,
+        VkFilter filter,
+        VkImageLayout finalLayout,
+        VkPipelineStageFlags finalStage);
+
+    void generateMipmaps(
+        VkImageAspectFlags aspectFlags,
+        VkFilter filter,
+        VkImageLayout finalLayout,
+        VkPipelineStageFlags finalStage);
+
     void copyTo(
         VkCommandBuffer commandBuffer,
         Image *dstImage,
@@ -91,6 +104,8 @@ public:
         VkImageSubresourceLayers srcSubresource,
         VkImageSubresourceLayers dstSubresource,
         VkExtent3D extent) const;
+
+    static uint32_t calculateMipLevelCount(VkExtent3D extent);
 
 protected:
 	Image();

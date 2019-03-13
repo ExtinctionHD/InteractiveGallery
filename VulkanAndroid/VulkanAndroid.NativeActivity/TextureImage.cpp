@@ -1,5 +1,4 @@
 #include "TextureImage.h"
-#include "utils.h"
 #include "AssetManager.h"
 
 TextureImage::TextureImage(
@@ -15,15 +14,12 @@ TextureImage::TextureImage(
 		pixels[i] = loadPixels(paths[i]);
 	}
 
-	mipLevels = math::ceilLog2(std::max(extent.width, extent.height));
-	mipLevels = mipLevels > 0 ? mipLevels : 1;
-
 	createThisImage(
 		device,
         0,
         VK_FORMAT_R8G8B8A8_UNORM,
 		extent,
-        mipLevels,
+        calculateMipLevelCount(extent),
         paths.size(),
 		VK_SAMPLE_COUNT_1_BIT,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -36,7 +32,7 @@ TextureImage::TextureImage(
 		stbi_image_free(const_cast<void*>(arrayLayerPixels));
     }
 
-	generateMipmaps(VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_LINEAR);
+	generateMipmaps(VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_LINEAR, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
 TextureImage::TextureImage(
@@ -153,93 +149,4 @@ stbi_uc* TextureImage::loadPixels(const std::string &path)
     }
 
 	return pixels;
-}
-
-void TextureImage::generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filter)
-{
-	VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
-
-    VkImageSubresourceRange subresourceRange{
-        aspectFlags,
-        0,
-        1,
-        0,
-        arrayLayers
-    };
-
-	int32_t mipWidth = extent.width;
-	int32_t mipHeight = extent.height;
-
-	for (uint32_t i = 1; i < mipLevels; i++)
-	{
-		// transit current miplevel layout to TRANSFER_SRC
-		subresourceRange.baseMipLevel = i - 1;
-        memoryBarrier(
-            commandBuffer,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_ACCESS_TRANSFER_WRITE_BIT,
-            VK_ACCESS_TRANSFER_READ_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            subresourceRange);
-
-        const VkImageSubresourceLayers srcSubresource{
-            aspectFlags,
-            i - 1,
-            0,
-            arrayLayers,
-        };
-
-        const VkImageSubresourceLayers dstSubresource{
-            aspectFlags,
-            i,
-            0,
-            arrayLayers,
-        };
-
-        blitTo(
-            commandBuffer,
-            this,
-            srcSubresource,
-            dstSubresource,
-            { {
-                VkOffset3D{ 0, 0, 0 },
-                VkOffset3D{ mipWidth, mipHeight, 1 }
-            } },
-            { {
-                VkOffset3D{ 0, 0, 0 },
-                VkOffset3D{ mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 }
-            } },
-            filter);
-
-		// transit current miplevel layout to SHADER_READ_ONLY
-        memoryBarrier(
-            commandBuffer,
-            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            VK_ACCESS_TRANSFER_READ_BIT,
-            VK_ACCESS_SHADER_READ_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-            subresourceRange);
-
-		// next miplevel scale
-		if (mipWidth > 1) mipWidth /= 2;
-		if (mipHeight > 1) mipHeight /= 2;
-	}
-
-	// transit last miplevel layout to SHADER_READ_ONLY_OPTIMAL
-	subresourceRange.baseMipLevel = mipLevels - 1;
-    memoryBarrier(
-        commandBuffer,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        VK_ACCESS_TRANSFER_WRITE_BIT,
-        VK_ACCESS_SHADER_READ_BIT,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        subresourceRange);
-
-	device->endOneTimeCommands(commandBuffer);
 }

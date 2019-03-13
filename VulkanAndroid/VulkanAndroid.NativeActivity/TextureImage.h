@@ -34,7 +34,5 @@ protected:
 	std::vector<VkSampler> samplers;
 
 	stbi_uc* loadPixels(const std::string &path);
-
-	void generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filter);
 };
 
