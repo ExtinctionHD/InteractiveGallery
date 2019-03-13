@@ -39,7 +39,7 @@ public:
 
     DescriptorInfo getStorageImageInfo(uint32_t viewIndex = 0) const;
 
-    void pushView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType);
+    void pushView(VkImageViewType viewType, VkImageSubresourceRange subresourceRange);
 
     void pushFullView(VkImageAspectFlags aspectFlags);
 
@@ -84,12 +84,14 @@ public:
         VkImageAspectFlags aspectFlags,
         VkFilter filter,
         VkImageLayout finalLayout,
+        VkAccessFlags finalAccess,
         VkPipelineStageFlags finalStage);
 
     void generateMipmaps(
         VkImageAspectFlags aspectFlags,
         VkFilter filter,
         VkImageLayout finalLayout,
+        VkAccessFlags finalAccess,
         VkPipelineStageFlags finalStage);
 
     void copyTo(

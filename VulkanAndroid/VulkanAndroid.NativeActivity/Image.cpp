@@ -89,7 +89,7 @@ DescriptorInfo Image::getStorageImageInfo(uint32_t viewIndex) const
     return info;
 }
 
-void Image::pushView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType)
+void Image::pushView(VkImageViewType viewType, VkImageSubresourceRange subresourceRange)
 {
     VkImageView view;
 
@@ -135,7 +135,7 @@ void Image::pushFullView(VkImageAspectFlags aspectFlags)
         }
     }
 
-    pushView(subresourceRange, viewType);
+    pushView(viewType, subresourceRange);
 }
 
 uint32_t Image::getMipLevelCount() const
@@ -264,7 +264,7 @@ void Image::transitLayout(
     case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
         // Image will be used as a color attachment
         // Make sure any writes to the color buffer have been finished
-        dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
         break;
 
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
@@ -400,6 +400,7 @@ void Image::generateMipmaps(
     VkImageAspectFlags aspectFlags,
     VkFilter filter,
     VkImageLayout finalLayout,
+    VkAccessFlags finalAccess,
     VkPipelineStageFlags finalStage)
 {
     VkImageSubresourceRange subresourceRange{
@@ -456,13 +457,12 @@ void Image::generateMipmaps(
             } },
             filter);
 
-        // transit current miplevel layout to SHADER_READ_ONLY
         memoryBarrier(
             commandBuffer,
             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             finalLayout,
             VK_ACCESS_TRANSFER_READ_BIT,
-            VK_ACCESS_SHADER_READ_BIT,
+            finalAccess,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
             finalStage,
             subresourceRange);
@@ -472,14 +472,13 @@ void Image::generateMipmaps(
         if (mipHeight > 1) mipHeight /= 2;
     }
 
-    // transit last miplevel layout to SHADER_READ_ONLY_OPTIMAL
     subresourceRange.baseMipLevel = mipLevels - 1;
     memoryBarrier(
         commandBuffer,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         finalLayout,
         VK_ACCESS_TRANSFER_WRITE_BIT,
-        VK_ACCESS_SHADER_READ_BIT,
+        finalAccess,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
         finalStage,
         subresourceRange);
@@ -489,11 +488,12 @@ void Image::generateMipmaps(
     VkImageAspectFlags aspectFlags,
     VkFilter filter,
     VkImageLayout finalLayout,
+    VkAccessFlags finalAccess,
     VkPipelineStageFlags finalStage)
 {
     VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
 
-    generateMipmaps(commandBuffer, aspectFlags, filter, finalLayout, finalStage);
+    generateMipmaps(commandBuffer, aspectFlags, filter, finalLayout, finalAccess, finalStage);
 
     device->endOneTimeCommands(commandBuffer);
 }

@@ -29,21 +29,15 @@ TextureImage* MainRenderPass::getColorTexture() const
 
 void MainRenderPass::createAttachments()
 {
-    const VkFormat colorImageFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
+    // Color attachment:
 
+    const VkFormat colorImageFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
     const VkExtent3D attachmentExtent{
         extent.width,
         extent.height,
         1
     };
 
-    VkImageSubresourceRange subresourceRange{
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        0,
-        1,
-        0,
-        1,
-    };
 
     LOGA(device->getFormatProperties(colorImageFormat).optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
 
@@ -52,38 +46,81 @@ void MainRenderPass::createAttachments()
         0,
         colorImageFormat,
         attachmentExtent,
-        subresourceRange.levelCount,
-        subresourceRange.layerCount,
+        Image::calculateMipLevelCount(attachmentExtent),
+        1,
         sampleCount,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         false);
-    colorTexture->pushFullView(subresourceRange.aspectMask);
+    colorTexture->pushView(
+        VK_IMAGE_VIEW_TYPE_2D,
+        {
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            0, 
+            1, 
+            0, 
+            1
+        });
+    colorTexture->pushView(
+        VK_IMAGE_VIEW_TYPE_2D,
+        {
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            colorTexture->getMipLevelCount() - 1,
+            1,
+            0,
+            1
+        });
     colorTexture->pushSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+
     colorTexture->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        subresourceRange);
+        {
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            0,
+            1,
+            0,
+            1
+        });
+    colorTexture->transitLayout(
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        {
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            1,
+            colorTexture->getMipLevelCount() - 1,
+            0,
+            1
+        });
 
-    subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    // Depth attachment:
+
     depthImage = std::make_shared<Image>(
         device,
         0,
         depthAttachmentFormat,
         attachmentExtent,
-        subresourceRange.levelCount,
-        subresourceRange.layerCount,
+        1,
+        1,
         sampleCount,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         false);
-    depthImage->pushFullView(subresourceRange.aspectMask);
+    depthImage->pushFullView(VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
     depthImage->transitLayout(
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
         VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-        subresourceRange);
+        {
+            VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
+            0,
+            1,
+            0,
+            1
+        });
 
 	attachments = { colorTexture, depthImage };
 }

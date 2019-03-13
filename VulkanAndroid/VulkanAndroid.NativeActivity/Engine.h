@@ -78,8 +78,6 @@ private:
 
     Scene *scene;
 
-    TextureImage *luminosityTexture;
-
     VkSemaphore renderingFinished;
 
     VkSemaphore computingFinished;
@@ -91,8 +89,6 @@ private:
     glm::uvec2 localGroupSize{ 16 };
 
     std::vector<VkCommandBuffer> computingCommands{};
-
-    void createLuminosityTexture();
 
     void initDescriptorSets();
 

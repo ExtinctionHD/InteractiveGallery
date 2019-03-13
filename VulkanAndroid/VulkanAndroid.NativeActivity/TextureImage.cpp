@@ -32,7 +32,12 @@ TextureImage::TextureImage(
 		stbi_image_free(const_cast<void*>(arrayLayerPixels));
     }
 
-	generateMipmaps(VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_LINEAR, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	generateMipmaps(
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        VK_FILTER_LINEAR,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_ACCESS_SHADER_READ_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
 TextureImage::TextureImage(

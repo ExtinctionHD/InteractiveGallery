@@ -39,9 +39,7 @@ bool Engine::create(ANativeWindow *window)
             { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Scene::BUFFER_COUNT + 0 }
         },
         DESCRIPTOR_TYPE_COUNT + 1 + swapChain->getImageCount());
-
-    createLuminosityTexture();
-
+    
     initDescriptorSets();
     initLocalGroupSize();
     initPipelines();
@@ -218,7 +216,6 @@ bool Engine::destroy()
 
     delete mainRenderPass;
     delete descriptorPool;
-    delete luminosityTexture;
     delete scene;
     delete swapChain;
     delete device;
@@ -229,35 +226,6 @@ bool Engine::destroy()
     LOGI("Engine destroyed.");
 
     return true;
-}
-
-void Engine::createLuminosityTexture()
-{
-    const VkImageSubresourceRange subresourceRange{
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        0,
-        1,
-        0,
-        1
-    };
-    luminosityTexture = new TextureImage(
-        device,
-        0,
-        VK_FORMAT_R16G16B16A16_SFLOAT,
-        { 1, 1, 1 },
-        1,
-        1,
-        VK_SAMPLE_COUNT_1_BIT,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-        false);
-    luminosityTexture->pushFullView(subresourceRange.aspectMask);
-    luminosityTexture->pushSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
-    luminosityTexture->transitLayout(
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        subresourceRange);
 }
 
 void Engine::initDescriptorSets()
@@ -321,6 +289,8 @@ void Engine::initDescriptorSets()
 
     // Tone:
 
+    const auto colorTexture = mainRenderPass->getColorTexture();
+
     descriptors[DESCRIPTOR_TYPE_TONE_SRC] = new DescriptorSets(
         descriptorPool,
         {
@@ -333,7 +303,7 @@ void Engine::initDescriptorSets()
         {
             {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                { mainRenderPass->getColorTexture()->getCombineSamplerInfo(), luminosityTexture->getCombineSamplerInfo() }
+                { colorTexture->getCombineSamplerInfo(), colorTexture->getCombineSamplerInfo(0, 1) }
             }
         });
 
@@ -615,75 +585,46 @@ void Engine::initComputingCommands()
         CALL_VK(vkBeginCommandBuffer(computingCommands[i], &beginInfo));
 
         {
-            const VkImageSubresourceRange subresourceRange{
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                0,
-                1,
-                0,
-                1
-            };
-
             const auto colorTexture = mainRenderPass->getColorTexture();
-            const auto colorTextureExtent = VkOffset3D{
-                int32_t(colorTexture->getExtent().width),
-                int32_t(colorTexture->getExtent().height),
-                1
-            };
 
             colorTexture->memoryBarrier(
                 computingCommands[i],
                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
-                VK_ACCESS_TRANSFER_READ_BIT,
+                VK_ACCESS_TRANSFER_WRITE_BIT,
                 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                 VK_PIPELINE_STAGE_TRANSFER_BIT,
-                subresourceRange);
-
-            luminosityTexture->memoryBarrier(
-                computingCommands[i],
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_ACCESS_SHADER_READ_BIT,
-                VK_ACCESS_TRANSFER_WRITE_BIT,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                subresourceRange);
-
-            colorTexture->blitTo(
-                computingCommands[i],
-                luminosityTexture,
-                { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
-                { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
-                { {
-                    VkOffset3D{ 0, 0, 0 },
-                    colorTextureExtent
-                } },
-                { {
-                    VkOffset3D{ 0, 0, 0 },
-                    VkOffset3D{ 1, 1, 1 }
-                } },
-                VK_FILTER_LINEAR);
-
+                {
+                    VK_IMAGE_ASPECT_COLOR_BIT, 
+                    0,
+                    1, 
+                    0, 
+                    1
+                });
             colorTexture->memoryBarrier(
                 computingCommands[i],
-                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                VK_ACCESS_TRANSFER_READ_BIT,
-                VK_ACCESS_SHADER_READ_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                subresourceRange);
-
-            luminosityTexture->memoryBarrier(
-                computingCommands[i],
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                VK_ACCESS_TRANSFER_WRITE_BIT,
                 VK_ACCESS_SHADER_READ_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VK_ACCESS_TRANSFER_WRITE_BIT,
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                subresourceRange);
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                {
+                    VK_IMAGE_ASPECT_COLOR_BIT,
+                    1,
+                    colorTexture->getMipLevelCount() - 1,
+                    0,
+                    1
+                });
+
+            colorTexture->generateMipmaps(
+                computingCommands[i],
+                VK_IMAGE_ASPECT_COLOR_BIT,
+                VK_FILTER_LINEAR,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 
             const auto swapChainImage = swapChain->getImages()[i];
 
@@ -695,7 +636,13 @@ void Engine::initComputingCommands()
                 VK_ACCESS_SHADER_WRITE_BIT,
                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                subresourceRange);
+                {
+                    VK_IMAGE_ASPECT_COLOR_BIT,
+                    0,
+                    1,
+                    0,
+                    1
+                });
 
             vkCmdBindPipeline(computingCommands[i], VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[PIPELINE_TYPE_TONE]->get());
             std::vector<VkDescriptorSet> descriptorSets{
@@ -722,8 +669,14 @@ void Engine::initComputingCommands()
                 VK_ACCESS_SHADER_READ_BIT,
                 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                subresourceRange);
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                {
+                    VK_IMAGE_ASPECT_COLOR_BIT,
+                    0,
+                    1,
+                    0,
+                    1
+                });
 
             swapChainImage->memoryBarrier(
                 computingCommands[i],
@@ -733,7 +686,13 @@ void Engine::initComputingCommands()
                 0,
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                subresourceRange);
+                {
+                    VK_IMAGE_ASPECT_COLOR_BIT,
+                    0,
+                    1,
+                    0,
+                    1
+                });
         }
 
         CALL_VK(vkEndCommandBuffer(computingCommands[i]));
@@ -744,12 +703,14 @@ void Engine::initComputingCommands()
 
 void Engine::updateChangedDescriptorSets()
 {
+    const auto colorTexture = mainRenderPass->getColorTexture();
+
     descriptors[DESCRIPTOR_TYPE_TONE_SRC]->updateDescriptorSet(
         0,
         {
             {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                { mainRenderPass->getColorTexture()->getCombineSamplerInfo(), luminosityTexture->getCombineSamplerInfo() }
+                { colorTexture->getCombineSamplerInfo(), colorTexture->getCombineSamplerInfo(0, 1) }
             }
         });
     const auto swapChainImages = swapChain->getImages();
