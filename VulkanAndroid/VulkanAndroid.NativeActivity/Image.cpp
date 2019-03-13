@@ -1,5 +1,6 @@
 #include "Image.h"
 #include "StagingBuffer.h"
+#include "utils.h"
 
 Image::Image(
 	Device *device,
@@ -10,7 +11,6 @@ Image::Image(
 	uint32_t arrayLayers,
 	VkSampleCountFlagBits sampleCount,
 	VkImageUsageFlags usage,
-	VkImageAspectFlags aspectFlags,
 	bool cubeMap) : swapChainImage(false)
 {
 	createThisImage(
@@ -22,26 +22,29 @@ Image::Image(
 		arrayLayers,
 		sampleCount,
 		usage,
-		aspectFlags,
 		cubeMap);
 }
 
-Image::Image(Device *device, VkImage image, VkFormat format) : device(device), image(image), format(format), swapChainImage(true)
+Image::Image(Device *device, VkImage image, VkFormat format, VkExtent3D extent)
+    : device(device),
+      image(image),
+      format(format),
+      extent(extent),
+      mipLevels(1),
+      arrayLayers(1),
+      sampleCount(VK_SAMPLE_COUNT_1_BIT),
+      swapChainImage(true),
+      cubeMap(false)
 {
-    const VkImageSubresourceRange subresourceRange{
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        0,
-        1,
-        0,
-        1
-    };
 
-    createView(subresourceRange, VK_IMAGE_VIEW_TYPE_2D);
 }
 
 Image::~Image()
 {
-    vkDestroyImageView(device->get(), view, nullptr);
+    for (auto view : views)
+    {
+        vkDestroyImageView(device->get(), view, nullptr);
+    }
     if (!swapChainImage)
     {
         vkDestroyImage(device->get(), image, nullptr);
@@ -54,9 +57,9 @@ VkImage Image::get() const
     return image;
 }
 
-VkImageView Image::getView() const
+VkImageView Image::getView(uint32_t index) const
 {
-    return view;
+    return views[index];
 }
 
 VkFormat Image::getFormat() const
@@ -72,6 +75,67 @@ VkExtent3D Image::getExtent() const
 VkSampleCountFlagBits Image::getSampleCount() const
 {
 	return sampleCount;
+}
+
+DescriptorInfo Image::getStorageImageInfo(uint32_t viewIndex) const
+{
+    DescriptorInfo info;
+    info.image = VkDescriptorImageInfo{
+        nullptr,
+        views[viewIndex],
+        VK_IMAGE_LAYOUT_GENERAL
+    };
+
+    return info;
+}
+
+void Image::pushView(VkImageViewType viewType, VkImageSubresourceRange subresourceRange)
+{
+    VkImageView view;
+
+    VkImageViewCreateInfo createInfo{
+        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        nullptr,
+        0,
+        image,
+        viewType,
+        format,
+        VkComponentMapping{},
+        subresourceRange,
+    };
+
+    CALL_VK(vkCreateImageView(device->get(), &createInfo, nullptr, &view));
+
+    views.push_back(view);
+}
+
+void Image::pushFullView(VkImageAspectFlags aspectFlags)
+{
+    const VkImageSubresourceRange subresourceRange{
+        aspectFlags,
+        0,
+        mipLevels,
+        0,
+        arrayLayers
+    };
+
+    VkImageViewType viewType = arrayLayers == 1 ? VK_IMAGE_VIEW_TYPE_1D : VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+    if (extent.height > 0)
+    {
+        viewType = VK_IMAGE_VIEW_TYPE_2D;
+
+        if (cubeMap)
+        {
+            LOGA(arrayLayers >= 6);
+            viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+        }
+        else if (arrayLayers > 1)
+        {
+            viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        }
+    }
+
+    pushView(viewType, subresourceRange);
 }
 
 uint32_t Image::getMipLevelCount() const
@@ -200,7 +264,7 @@ void Image::transitLayout(
     case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
         // Image will be used as a color attachment
         // Make sure any writes to the color buffer have been finished
-        dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
         break;
 
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
@@ -286,28 +350,196 @@ void Image::updateData(std::vector<const void*> data, uint32_t layersOffset, uin
 	stagingBuffer.copyToImage(image, regions);
 }
 
-void Image::copyTo(Image *dstImage, VkExtent3D extent, VkImageSubresourceLayers subresourceLayers) const
+void Image::blitTo(
+    VkCommandBuffer commandBuffer,
+    Image *dstImage,
+    VkImageSubresourceLayers srcSubresource,
+    VkImageSubresourceLayers dstSubresource,
+    std::array<VkOffset3D, 2> srcOffsets,
+    std::array<VkOffset3D, 2> dstOffsets,
+    VkFilter filter) const
+{
+    VkImageBlit region;
+
+    region.srcSubresource = srcSubresource;
+    region.srcOffsets[0] = srcOffsets[0];
+    region.srcOffsets[1] = srcOffsets[1];
+
+    region.dstSubresource = dstSubresource;
+    region.dstOffsets[0] = dstOffsets[0];
+    region.dstOffsets[1] = dstOffsets[1];
+
+    vkCmdBlitImage(
+        commandBuffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        dstImage->image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1,
+        &region,
+        filter);
+}
+
+void Image::blitTo(
+    Image *dstImage,
+    VkImageSubresourceLayers srcSubresource,
+    VkImageSubresourceLayers dstSubresource,
+    std::array<VkOffset3D, 2> srcOffsets,
+    std::array<VkOffset3D, 2> dstOffsets,
+    VkFilter filter) const
+{
+    VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
+
+    blitTo(commandBuffer, dstImage, srcSubresource, dstSubresource, srcOffsets, dstOffsets, filter);
+
+    device->endOneTimeCommands(commandBuffer);
+}
+
+void Image::generateMipmaps(
+    VkCommandBuffer commandBuffer,
+    VkImageAspectFlags aspectFlags,
+    VkFilter filter,
+    VkImageLayout finalLayout,
+    VkAccessFlags finalAccess,
+    VkPipelineStageFlags finalStage)
+{
+    VkImageSubresourceRange subresourceRange{
+        aspectFlags,
+        0,
+        1,
+        0,
+        arrayLayers
+    };
+
+    int32_t mipWidth = extent.width;
+    int32_t mipHeight = extent.height;
+
+    for (uint32_t i = 1; i < mipLevels; i++)
+    {
+        // transit current miplevel layout to TRANSFER_SRC
+        subresourceRange.baseMipLevel = i - 1;
+        memoryBarrier(
+            commandBuffer,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            subresourceRange);
+
+        const VkImageSubresourceLayers srcSubresource{
+            aspectFlags,
+            i - 1,
+            0,
+            arrayLayers,
+        };
+
+        const VkImageSubresourceLayers dstSubresource{
+            aspectFlags,
+            i,
+            0,
+            arrayLayers,
+        };
+
+        blitTo(
+            commandBuffer,
+            this,
+            srcSubresource,
+            dstSubresource,
+            { {
+                VkOffset3D{ 0, 0, 0 },
+                VkOffset3D{ mipWidth, mipHeight, 1 }
+            } },
+            { {
+                VkOffset3D{ 0, 0, 0 },
+                VkOffset3D{ mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 }
+            } },
+            filter);
+
+        memoryBarrier(
+            commandBuffer,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            finalLayout,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            finalAccess,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            finalStage,
+            subresourceRange);
+
+        // next miplevel scale
+        if (mipWidth > 1) mipWidth /= 2;
+        if (mipHeight > 1) mipHeight /= 2;
+    }
+
+    subresourceRange.baseMipLevel = mipLevels - 1;
+    memoryBarrier(
+        commandBuffer,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        finalLayout,
+        VK_ACCESS_TRANSFER_WRITE_BIT,
+        finalAccess,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        finalStage,
+        subresourceRange);
+}
+
+void Image::generateMipmaps(
+    VkImageAspectFlags aspectFlags,
+    VkFilter filter,
+    VkImageLayout finalLayout,
+    VkAccessFlags finalAccess,
+    VkPipelineStageFlags finalStage)
+{
+    VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
+
+    generateMipmaps(commandBuffer, aspectFlags, filter, finalLayout, finalAccess, finalStage);
+
+    device->endOneTimeCommands(commandBuffer);
+}
+
+void Image::copyTo(
+    VkCommandBuffer commandBuffer,
+    Image *dstImage,
+    VkImageSubresourceLayers srcSubresource,
+    VkImageSubresourceLayers dstSubresource,
+    VkExtent3D extent) const
+{
+    VkImageCopy region{
+        srcSubresource,
+        { 0, 0, 0},
+        dstSubresource,
+        { 0, 0, 0 },
+        extent
+    };
+
+    vkCmdCopyImage(
+        commandBuffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        dstImage->image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1,
+        &region);
+}
+
+void Image::copyTo(
+    Image *dstImage,
+    VkImageSubresourceLayers srcSubresource,
+    VkImageSubresourceLayers dstSubresource,
+    VkExtent3D extent) const
 {
 	VkCommandBuffer commandBuffer = device->beginOneTimeCommands();
 
-	VkImageCopy region{
-		subresourceLayers,	
-		{ 0, 0, 0},
-		subresourceLayers,
-		{ 0, 0, 0 },
-		extent	
-	};
-
-	vkCmdCopyImage(
-		commandBuffer,
-		image,
-		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		dstImage->image,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		1,
-		&region);
+    copyTo(commandBuffer, dstImage, srcSubresource, dstSubresource, extent);
 
 	device->endOneTimeCommands(commandBuffer);
+}
+
+uint32_t Image::calculateMipLevelCount(VkExtent3D extent)
+{
+    const uint32_t mipLevels = math::ceilLog2(std::max(std::max(extent.width, extent.height), extent.depth));
+    return mipLevels > 0 ? mipLevels : 1;
 }
 
 Image::Image() : swapChainImage(false)
@@ -323,7 +555,6 @@ void Image::createThisImage(
 	uint32_t arrayLayers,
 	VkSampleCountFlagBits sampleCount,
 	VkImageUsageFlags usage,
-	VkImageAspectFlags aspectFlags,
 	bool cubeMap)
 {
 	this->device = device;
@@ -332,24 +563,18 @@ void Image::createThisImage(
 	this->mipLevels = mipLevels;
 	this->arrayLayers = arrayLayers;
     this->sampleCount = sampleCount;
+    this->cubeMap = cubeMap;
 
 	VkImageType imageType = VK_IMAGE_TYPE_1D;
-	VkImageViewType viewType = arrayLayers == 1 ? VK_IMAGE_VIEW_TYPE_1D : VK_IMAGE_VIEW_TYPE_1D_ARRAY;
 	if (extent.height > 0)
 	{
 		imageType = VK_IMAGE_TYPE_2D;
-		viewType = VK_IMAGE_VIEW_TYPE_2D;
 
 		if (cubeMap)
 		{
 			LOGA(arrayLayers >= 6);
 
 			flags = flags | VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-			viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-		}
-		else if (arrayLayers > 1)
-		{
-			viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 		}
 	}
 
@@ -376,32 +601,6 @@ void Image::createThisImage(
 	allocateMemory();
 
 	vkBindImageMemory(device->get(), image, memory, 0);
-
-	const VkImageSubresourceRange subresourceRange{
-		aspectFlags,
-		0,
-		mipLevels,
-		0,
-		arrayLayers
-	};
-
-	createView(subresourceRange, viewType);
-}
-
-void Image::createView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType)
-{
-    VkImageViewCreateInfo createInfo{
-        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        nullptr,
-        0,
-        image,
-        viewType,
-        format,
-        VkComponentMapping{},
-        subresourceRange,
-    };
-
-    CALL_VK(vkCreateImageView(device->get(), &createInfo, nullptr, &view));
 }
 
 void Image::allocateMemory()

@@ -1,9 +1,10 @@
 #pragma once
 
 #include "Device.h"
-#include "IDescriptorSource.h"
+#include <array>
+#include "DescriptorInfo.h"
 
-class Image : public IDescriptorSource
+class Image
 {
 public:
 	Image(
@@ -15,17 +16,16 @@ public:
 		uint32_t arrayLayers,
 		VkSampleCountFlagBits sampleCount,
 		VkImageUsageFlags usage,
-		VkImageAspectFlags aspectFlags,
 		bool cubeMap);
 
     // For SwapChain images
-    Image(Device *device, VkImage image, VkFormat format);
+    Image(Device *device, VkImage image, VkFormat format, VkExtent3D extent);
 
 	virtual ~Image();
 
     VkImage get() const;
 
-    VkImageView getView() const;
+    VkImageView getView(uint32_t index = 0) const;
 
     VkFormat getFormat() const;
 
@@ -36,6 +36,12 @@ public:
 	uint32_t getArrayLayerCount() const;
 
     VkSampleCountFlagBits getSampleCount() const;
+
+    DescriptorInfo getStorageImageInfo(uint32_t viewIndex = 0) const;
+
+    void pushView(VkImageViewType viewType, VkImageSubresourceRange subresourceRange);
+
+    void pushFullView(VkImageAspectFlags aspectFlags);
 
     void memoryBarrier(
         VkCommandBuffer commandBuffer,
@@ -56,7 +62,52 @@ public:
 
 	void updateData(std::vector<const void*>, uint32_t layersOffset, uint32_t pixelSize);
 
-	void copyTo(Image *dstImage, VkExtent3D extent, VkImageSubresourceLayers subresourceLayers) const;
+    void blitTo(
+        VkCommandBuffer commandBuffer,
+        Image *dstImage,
+        VkImageSubresourceLayers srcSubresource,
+        VkImageSubresourceLayers dstSubresource,
+        std::array<VkOffset3D, 2> srcOffsets,
+        std::array<VkOffset3D, 2> dstOffsets,
+        VkFilter filter) const;
+
+    void blitTo(
+        Image *dstImage,
+        VkImageSubresourceLayers srcSubresource,
+        VkImageSubresourceLayers dstSubresource,
+        std::array<VkOffset3D, 2> srcOffsets,
+        std::array<VkOffset3D, 2> dstOffsets,
+        VkFilter filter) const;
+
+    void generateMipmaps(
+        VkCommandBuffer commandBuffer,
+        VkImageAspectFlags aspectFlags,
+        VkFilter filter,
+        VkImageLayout finalLayout,
+        VkAccessFlags finalAccess,
+        VkPipelineStageFlags finalStage);
+
+    void generateMipmaps(
+        VkImageAspectFlags aspectFlags,
+        VkFilter filter,
+        VkImageLayout finalLayout,
+        VkAccessFlags finalAccess,
+        VkPipelineStageFlags finalStage);
+
+    void copyTo(
+        VkCommandBuffer commandBuffer,
+        Image *dstImage,
+        VkImageSubresourceLayers srcSubresource,
+        VkImageSubresourceLayers dstSubresource,
+        VkExtent3D extent) const;
+
+	void copyTo(
+        Image *dstImage,
+        VkImageSubresourceLayers srcSubresource,
+        VkImageSubresourceLayers dstSubresource,
+        VkExtent3D extent) const;
+
+    static uint32_t calculateMipLevelCount(VkExtent3D extent);
 
 protected:
 	Image();
@@ -64,8 +115,6 @@ protected:
     Device *device;
 
     VkImage image;
-
-    VkImageView view;
 
     VkFormat format;
 
@@ -77,6 +126,8 @@ protected:
 
     VkSampleCountFlagBits sampleCount;
 
+    std::vector<VkImageView> views;
+
 	void createThisImage(
 		Device* device,
 		VkImageCreateFlags flags,
@@ -86,15 +137,14 @@ protected:
 		uint32_t arrayLayers,
 		VkSampleCountFlagBits sampleCount,
 		VkImageUsageFlags usage,
-		VkImageAspectFlags aspectFlags,
 		bool cubeMap);
-
-    void createView(VkImageSubresourceRange subresourceRange, VkImageViewType viewType);
 
 private:
 	VkDeviceMemory memory;
 
     bool swapChainImage;
+
+    bool cubeMap;
 
 	void allocateMemory();
 };

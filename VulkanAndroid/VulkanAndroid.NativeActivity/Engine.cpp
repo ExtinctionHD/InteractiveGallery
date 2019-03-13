@@ -35,11 +35,11 @@ bool Engine::create(ANativeWindow *window)
         device,
         {
             { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Scene::TEXTURE_COUNT + 1 },
-            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 + swapChain->getImageCount() },
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, swapChain->getImageCount() },
             { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Scene::BUFFER_COUNT + 0 }
         },
         DESCRIPTOR_TYPE_COUNT + 1 + swapChain->getImageCount());
-
+    
     initDescriptorSets();
     initLocalGroupSize();
     initPipelines();
@@ -64,24 +64,23 @@ bool Engine::recreate(ANativeWindow *window)
     {
         vkDeviceWaitIdle(device->get());
 
-        const auto extent = window::getExtent(window);
-
         delete surface;
-
         surface = new Surface(instance->get(), window);
         device->updateSurface(surface->get());
+
+        const auto extent = window::getExtent(window);
         swapChain->recreate(surface->get(), extent);
-
         mainRenderPass->recreate(extent);
-
-        for(auto pipeline: pipelines)
+        scene->resize(extent);
+        for (auto pipeline : pipelines)
         {
             pipeline->recreate();
         }
 
-        scene->resize(extent);
+        updateChangedDescriptorSets();
 
         initRenderingCommands();
+        initComputingCommands();
 
         outdated = false;
     }
@@ -231,7 +230,6 @@ bool Engine::destroy()
 
 void Engine::initDescriptorSets()
 {
-
     descriptors.resize(DESCRIPTOR_TYPE_COUNT);
 
     // Scene:
@@ -240,14 +238,19 @@ void Engine::initDescriptorSets()
         descriptorPool,
         { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT } } });
     descriptors[DESCRIPTOR_TYPE_SCENE]->pushDescriptorSet(
-        { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getCameraBuffer(), scene->getLightingBuffer() } } });
+        {
+            {
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                { scene->getCameraBuffer()->getUniformBufferInfo(), scene->getLightingBuffer()->getUniformBufferInfo() }
+            }
+        });
 
     // Earth:
 
-    std::vector<IDescriptorSource*> earthTextures;
+    std::vector<DescriptorInfo> earthTextureInfos;
     for (const auto texture : scene->getEarthTextures())
     {
-        earthTextures.push_back(texture);
+        earthTextureInfos.push_back(texture->getCombineSamplerInfo());
     }
 
     descriptors[DESCRIPTOR_TYPE_EARTH] = new DescriptorSets(
@@ -255,14 +258,14 @@ void Engine::initDescriptorSets()
         {
             {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                std::vector<VkShaderStageFlags>(earthTextures.size(), VK_SHADER_STAGE_FRAGMENT_BIT)
+                std::vector<VkShaderStageFlags>(earthTextureInfos.size(), VK_SHADER_STAGE_FRAGMENT_BIT)
             },
             { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT } },
         });
     descriptors[DESCRIPTOR_TYPE_EARTH]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, earthTextures },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getEarthTransformationBuffer() } }
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, earthTextureInfos },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getEarthTransformationBuffer()->getUniformBufferInfo() } }
         });
 
     // Clouds and skybox:
@@ -275,38 +278,48 @@ void Engine::initDescriptorSets()
         });
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getCloudsTexture() } },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getCloudsTransformationBuffer() } }
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getCloudsTexture()->getCombineSamplerInfo() } },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getCloudsTransformationBuffer()->getUniformBufferInfo() } }
         });
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getSkyboxTexture() } },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getSkyboxTransformationBuffer() } }
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getSkyboxTexture()->getCombineSamplerInfo() } },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getSkyboxTransformationBuffer()->getUniformBufferInfo() } }
         });
 
     // Tone:
 
+    const auto colorTexture = mainRenderPass->getColorTexture();
+
     descriptors[DESCRIPTOR_TYPE_TONE_SRC] = new DescriptorSets(
         descriptorPool,
-        { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { VK_SHADER_STAGE_COMPUTE_BIT } } });
+        {
+            {
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                { VK_SHADER_STAGE_COMPUTE_BIT, VK_SHADER_STAGE_COMPUTE_BIT }
+            }
+        });
     descriptors[DESCRIPTOR_TYPE_TONE_SRC]->pushDescriptorSet(
-        { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { mainRenderPass->getColorTexture() } } });
-
+        {
+            {
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                { colorTexture->getCombineSamplerInfo(), colorTexture->getCombineSamplerInfo(0, 1) }
+            }
+        });
 
     descriptors[DESCRIPTOR_TYPE_TONE_DST] = new DescriptorSets(
         descriptorPool,
         { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { VK_SHADER_STAGE_COMPUTE_BIT } } });
-
-    for(const auto swapChainImage : swapChain->getImages())
+    for (const auto swapChainImage : swapChain->getImages())
     {
         descriptors[DESCRIPTOR_TYPE_TONE_DST]->pushDescriptorSet(
-            { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImage } } });
+            { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImage->getStorageImageInfo() } } });
     }
 }
 
 void Engine::initLocalGroupSize()
 {
-    const VkExtent2D extent = swapChain->getExtent();
+    const auto extent = swapChain->getExtent();
 
     while (extent.width % localGroupSize.x != 0)
     {
@@ -534,7 +547,7 @@ void Engine::initRenderingCommands()
 
     CALL_VK(vkEndCommandBuffer(renderingCommands));
 
-    LOGI("Rendering commands created.");
+    LOGI("Rendering commands initialized.");
 }
 
 void Engine::initComputingCommands()
@@ -572,6 +585,65 @@ void Engine::initComputingCommands()
         CALL_VK(vkBeginCommandBuffer(computingCommands[i], &beginInfo));
 
         {
+            const auto colorTexture = mainRenderPass->getColorTexture();
+
+            colorTexture->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+                VK_ACCESS_TRANSFER_WRITE_BIT,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                {
+                    VK_IMAGE_ASPECT_COLOR_BIT, 
+                    0,
+                    1, 
+                    0, 
+                    1
+                });
+            colorTexture->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_ACCESS_TRANSFER_WRITE_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                {
+                    VK_IMAGE_ASPECT_COLOR_BIT,
+                    1,
+                    colorTexture->getMipLevelCount() - 1,
+                    0,
+                    1
+                });
+
+            colorTexture->generateMipmaps(
+                computingCommands[i],
+                VK_IMAGE_ASPECT_COLOR_BIT,
+                VK_FILTER_LINEAR,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+
+            const auto swapChainImage = swapChain->getImages()[i];
+
+            swapChainImage->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                VK_IMAGE_LAYOUT_GENERAL,
+                0,
+                VK_ACCESS_SHADER_WRITE_BIT,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                {
+                    VK_IMAGE_ASPECT_COLOR_BIT,
+                    0,
+                    1,
+                    0,
+                    1
+                });
+
             vkCmdBindPipeline(computingCommands[i], VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[PIPELINE_TYPE_TONE]->get());
             std::vector<VkDescriptorSet> descriptorSets{
                 descriptors[DESCRIPTOR_TYPE_TONE_SRC]->getDescriptorSet(0),
@@ -587,41 +659,65 @@ void Engine::initComputingCommands()
                 0,
                 nullptr);
 
-            const VkImageSubresourceRange subresourceRange{
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                0,
-                1,
-                0,
-                1
-            };
-
-            auto image = swapChain->getImages()[i];
-            image->memoryBarrier(
-                computingCommands[i],
-                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                VK_IMAGE_LAYOUT_GENERAL,
-                0,
-                VK_ACCESS_SHADER_WRITE_BIT,
-                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                subresourceRange);
-
             const auto imageExtent = swapChain->getExtent();
             vkCmdDispatch(computingCommands[i], imageExtent.width / localGroupSize.x, imageExtent.height / localGroupSize.y, 1);
 
-            image->memoryBarrier(
+            colorTexture->memoryBarrier(
+                computingCommands[i],
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                {
+                    VK_IMAGE_ASPECT_COLOR_BIT,
+                    0,
+                    1,
+                    0,
+                    1
+                });
+
+            swapChainImage->memoryBarrier(
                 computingCommands[i],
                 VK_IMAGE_LAYOUT_GENERAL,
                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                 VK_ACCESS_SHADER_WRITE_BIT,
-                VK_ACCESS_UNIFORM_READ_BIT,
+                0,
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                subresourceRange);
+                {
+                    VK_IMAGE_ASPECT_COLOR_BIT,
+                    0,
+                    1,
+                    0,
+                    1
+                });
         }
 
         CALL_VK(vkEndCommandBuffer(computingCommands[i]));
     }
 
-    LOGI("Computing commands created.");
+    LOGI("Computing commands initialized.");
+}
+
+void Engine::updateChangedDescriptorSets()
+{
+    const auto colorTexture = mainRenderPass->getColorTexture();
+
+    descriptors[DESCRIPTOR_TYPE_TONE_SRC]->updateDescriptorSet(
+        0,
+        {
+            {
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                { colorTexture->getCombineSamplerInfo(), colorTexture->getCombineSamplerInfo(0, 1) }
+            }
+        });
+    const auto swapChainImages = swapChain->getImages();
+    for (uint32_t i = 0; i < swapChainImages.size(); i++)
+    {
+        descriptors[DESCRIPTOR_TYPE_TONE_DST]->updateDescriptorSet(
+            i,
+            { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImages[i]->getStorageImageInfo() } } });
+    }
 }

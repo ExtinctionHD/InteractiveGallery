@@ -12,9 +12,9 @@ public:
 
     VkDescriptorSet getDescriptorSet(uint32_t index) const;
 
-    void pushDescriptorSet(DescriptorSources descriptorSources);
+    void pushDescriptorSet(DescriptorInfos descriptorInfos);
 
-    void updateDescriptorSet(uint32_t index, DescriptorSources descriptorSources);
+    void updateDescriptorSet(uint32_t index, DescriptorInfos descriptorInfos);
 
     void removeDescriptorSets(uint32_t index, uint32_t count);
 

@@ -1,11 +1,11 @@
 #pragma once
 #include "Device.h"
-#include "IDescriptorSource.h"
 #include <map>
+#include "DescriptorInfo.h"
 
 typedef std::map<VkDescriptorType, std::vector<VkShaderStageFlags>> DescriptorShaderStages;
 
-typedef std::map<VkDescriptorType, std::vector<IDescriptorSource*>> DescriptorSources;
+typedef std::map<VkDescriptorType, std::vector<DescriptorInfo>> DescriptorInfos;
 
 class DescriptorPool
 {
@@ -20,7 +20,7 @@ public:
 
 	VkDescriptorSet getDescriptorSet(VkDescriptorSetLayout layout) const;
 
-	void updateDescriptorSet( VkDescriptorSet set, DescriptorSources descriptorSources) const;
+	void updateDescriptorSet( VkDescriptorSet set, DescriptorInfos descriptorInfos) const;
 
     void freeDescriptorSets(std::vector<VkDescriptorSet> sets);
 

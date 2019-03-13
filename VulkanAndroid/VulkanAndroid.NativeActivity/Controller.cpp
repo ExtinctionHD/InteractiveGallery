@@ -61,13 +61,6 @@ void Controller::setDelta(glm::vec2 newDelta)
 {
     newDelta.x = -newDelta.x;
     delta = (delta + newDelta) / 2.0f;
-
-    const float maxDelta = 100.0f;
-    const glm::vec2 absDelta = abs(delta);
-    delta.x = absDelta.x > maxDelta ? maxDelta * delta.x / absDelta.x : delta.x;
-    delta.y = absDelta.y > maxDelta ? maxDelta * delta.y / absDelta.y : delta.y;
-
-    LOGD("Delta x: %f, y: %f.", delta.x, delta.y);
 }
 
 void Controller::update(float deltaSec)
@@ -79,8 +72,8 @@ void Controller::update(float deltaSec)
     delta.x = glm::abs(delta.x) > glm::abs(fading.x) ? delta.x - fading.x : 0.0f;
     delta.y = glm::abs(delta.y) > glm::abs(fading.y) ? delta.y - fading.y : 0.0f;
 
+    // restricts Y angle
     const float maxY = 85.0f;
     const float absY = glm::abs(angle.y);
-
     angle.y = absY > maxY ? maxY * angle.y / absY : angle.y;
 }

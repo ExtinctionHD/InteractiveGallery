@@ -11,7 +11,7 @@ class Scene
 {
 public:
     static const uint32_t BUFFER_COUNT = 5;
-    static const uint32_t TEXTURE_COUNT = EARTH_TEXTURE_TYPE_COUNT + 2;
+    static const uint32_t TEXTURE_COUNT = EARTH_TEXTURE_TYPE_COUNT + 3;
 
     Scene(Device *device, VkExtent2D extent);
 

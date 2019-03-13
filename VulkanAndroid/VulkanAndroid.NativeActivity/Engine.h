@@ -101,5 +101,7 @@ private:
     void initRenderingCommands();
 
     void initComputingCommands();
+
+    void updateChangedDescriptorSets();
 };
 

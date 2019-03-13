@@ -1,5 +1,4 @@
 #include "Buffer.h"
-#include <limits>
 
 Buffer::Buffer(Device *device, VkBufferUsageFlags usage, VkDeviceSize size) : StagingBuffer(device, size)
 {
@@ -21,6 +20,18 @@ Buffer::~Buffer()
 VkBuffer Buffer::get() const
 {
 	return buffer;
+}
+
+DescriptorInfo Buffer::getUniformBufferInfo() const
+{
+    DescriptorInfo info;
+    info.buffer = VkDescriptorBufferInfo{
+        buffer,
+        0,
+        size
+    };
+
+    return info;
 }
 
 void Buffer::updateData(const void *data, VkDeviceSize offset, VkDeviceSize dataSize)

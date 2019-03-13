@@ -79,29 +79,22 @@ VkDescriptorSet DescriptorPool::getDescriptorSet(VkDescriptorSetLayout layout) c
 	return set;
 }
 
-void DescriptorPool::updateDescriptorSet(VkDescriptorSet set, DescriptorSources descriptorSources) const
+void DescriptorPool::updateDescriptorSet(VkDescriptorSet set, DescriptorInfos descriptorInfos) const
 {
     std::list<VkDescriptorImageInfo> imageInfos;
     std::list<VkDescriptorBufferInfo> bufferInfos;
     std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-    for (const auto &[descriptorType, sources] : descriptorSources)
+    for (const auto &[descriptorType, infos] : descriptorInfos)
     {
         switch (descriptorType)
         {
         // case VK_DESCRIPTOR_TYPE_SAMPLER: break;
 
         case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-            for (auto source : sources)
+            for (auto info : infos)
             {
-                const auto texture = dynamic_cast<TextureImage*>(source);
-                LOGA(texture);
-                
-                imageInfos.push_back(VkDescriptorImageInfo{
-                    texture->getSampler(),
-                    texture->getView(),
-                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL 
-                });
+                imageInfos.push_back(info.image);
 
                 descriptorWrites.push_back(VkWriteDescriptorSet{
                     VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -121,16 +114,9 @@ void DescriptorPool::updateDescriptorSet(VkDescriptorSet set, DescriptorSources 
         // case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: break;
 
         case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
-            for (auto source : sources)
+            for (auto info : infos)
             {
-                const auto texture = dynamic_cast<Image*>(source);
-                LOGA(texture);
-
-                imageInfos.push_back(VkDescriptorImageInfo{
-                    nullptr,
-                    texture->getView(),
-                    VK_IMAGE_LAYOUT_GENERAL
-                });
+                imageInfos.push_back(info.image);
 
                 descriptorWrites.push_back(VkWriteDescriptorSet{
                     VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -151,16 +137,9 @@ void DescriptorPool::updateDescriptorSet(VkDescriptorSet set, DescriptorSources 
         // case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER: break;
 
         case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-            for (auto source : sources)
+            for (auto info : infos)
             {
-                const auto buffer = dynamic_cast<Buffer*>(source);
-                LOGA(buffer);
-
-                bufferInfos.push_back(VkDescriptorBufferInfo{
-                    buffer->get(),
-                    0,
-                    buffer->getSize()
-                });
+                bufferInfos.push_back(info.buffer);
 
                 descriptorWrites.push_back(VkWriteDescriptorSet{
                     VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,

@@ -118,7 +118,7 @@
     <ClInclude Include="Pipeline.h">
       <Filter>Engine\Pipelines</Filter>
     </ClInclude>
-    <ClInclude Include="IDescriptorSource.h">
+    <ClInclude Include="DescriptorInfo.h">
       <Filter>Engine\Descriptors</Filter>
     </ClInclude>
   </ItemGroup>

@@ -6,14 +6,12 @@
 class TextureImage : public Image
 {
 public:
-	TextureImage(
-		Device *device,
-		const std::vector<std::string> &paths,
-		bool cubeMap,
-		VkFilter filter,
-		VkSamplerAddressMode samplerAddressMode);
+    TextureImage(
+        Device *device,
+        const std::vector<std::string> &paths,
+        bool cubeMap);
 
-	TextureImage(
+    TextureImage(
         Device* device,
         VkImageCreateFlags flags,
         VkFormat format,
@@ -22,22 +20,19 @@ public:
         uint32_t arrayLayers,
         VkSampleCountFlagBits sampleCount,
         VkImageUsageFlags usage,
-        VkImageAspectFlags aspectFlags,
-        bool cubeMap,
-		VkFilter filter,
-		VkSamplerAddressMode samplerAddressMode);
+        bool cubeMap);
 
 	~TextureImage();
 
-	VkSampler getSampler() const;
+	VkSampler getSampler(uint32_t index) const;
+
+    DescriptorInfo getCombineSamplerInfo(uint32_t samplerIndex = 0, uint32_t viewIndex = 0) const;
+
+    void pushSampler(VkFilter filter, VkSamplerAddressMode addressMode);
 
 protected:
-	VkSampler sampler;
+	std::vector<VkSampler> samplers;
 
 	stbi_uc* loadPixels(const std::string &path);
-
-	void generateMipmaps(VkImageAspectFlags aspectFlags, VkFilter filter) const;
-
-	void createSampler(VkFilter filter, VkSamplerAddressMode addressMode);
 };
 

@@ -8,7 +8,9 @@ Skybox::Skybox(Device *device, const std::string &texturePath) : Model(device)
         paths[i] = texturePath + CUBE_MAP_FILES[i];
     }
 
-    cubeTexture = new TextureImage(device, paths, true, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);
+    cubeTexture = new TextureImage(device, paths, true);
+    cubeTexture->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
+    cubeTexture->pushSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);
 }
 
 Skybox::~Skybox()
