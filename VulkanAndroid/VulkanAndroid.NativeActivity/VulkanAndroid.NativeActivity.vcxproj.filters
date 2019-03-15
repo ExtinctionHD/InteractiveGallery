@@ -121,6 +121,9 @@
     <ClInclude Include="DescriptorInfo.h">
       <Filter>Engine\Descriptors</Filter>
     </ClInclude>
+    <ClInclude Include="PositionUv.h">
+      <Filter>Engine\Vertex</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -230,6 +233,9 @@
     </ClCompile>
     <ClCompile Include="Pipeline.cpp">
       <Filter>Engine\Pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="PositionUv.cpp">
+      <Filter>Engine\Vertex</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
