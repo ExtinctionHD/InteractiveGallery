@@ -103,12 +103,6 @@
     <ClInclude Include="Skybox.h">
       <Filter>Scene\Models</Filter>
     </ClInclude>
-    <ClInclude Include="cube.h">
-      <Filter>Scene\Models</Filter>
-    </ClInclude>
-    <ClInclude Include="sphere.h">
-      <Filter>Scene\Models</Filter>
-    </ClInclude>
     <ClInclude Include="Clouds.h">
       <Filter>Scene\Models</Filter>
     </ClInclude>
@@ -123,6 +117,18 @@
     </ClInclude>
     <ClInclude Include="PositionUv.h">
       <Filter>Engine\Vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="card.h">
+      <Filter>Scene\Models\Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="cube.h">
+      <Filter>Scene\Models\Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="sphere.h">
+      <Filter>Scene\Models\Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="PhotoCard.h">
+      <Filter>Scene\Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -237,6 +243,9 @@
     <ClCompile Include="PositionUv.cpp">
       <Filter>Engine\Vertex</Filter>
     </ClCompile>
+    <ClCompile Include="PhotoCard.cpp">
+      <Filter>Scene\Models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Main">
@@ -310,6 +319,9 @@
     </Filter>
     <Filter Include="Scene\Lighting">
       <UniqueIdentifier>{9cda8118-ef80-43ad-b36b-cec7bb1d523c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\Models\Meshes">
+      <UniqueIdentifier>{ce7feca3-c1ab-4562-9830-1d4faeb1f613}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

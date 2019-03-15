@@ -275,6 +275,7 @@
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="card.h" />
     <ClInclude Include="Clouds.h" />
     <ClInclude Include="ComputePipeline.h" />
     <ClInclude Include="Controller.h" />
@@ -292,6 +293,7 @@
     <ClInclude Include="Instance.h" />
     <ClInclude Include="Macro.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="PhotoCard.h" />
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="Position.h" />
     <ClInclude Include="PositionUv.h" />
@@ -334,6 +336,7 @@
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="PhotoCard.cpp" />
     <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="Position.cpp" />
     <ClCompile Include="PositionUv.cpp" />

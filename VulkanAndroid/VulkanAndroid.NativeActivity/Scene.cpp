@@ -1,7 +1,6 @@
 #include "Scene.h"
 #include "sphere.h"
 #include "cube.h"
-#include "utils.h"
 
 Scene::Scene(Device *device, VkExtent2D extent)
 {
@@ -33,6 +32,7 @@ Scene::Scene(Device *device, VkExtent2D extent)
     earth = new Earth(device, "textures/earth/2K/");
     clouds = new Clouds(device, "textures/earth/2K/");
     skybox = new Skybox(device, "textures/Stars/");
+    photoCard = new PhotoCard(device, "textures/Photo/");
 
     initMeshes(device);
 

@@ -6,6 +6,7 @@
 #include "Controller.h"
 #include "Skybox.h"
 #include "Clouds.h"
+#include "PhotoCard.h"
 
 class Scene
 {
@@ -70,6 +71,8 @@ private:
     Clouds *clouds;
 
     Skybox *skybox;
+
+    PhotoCard *photoCard;
 
     void initMeshes(Device *device);
 
