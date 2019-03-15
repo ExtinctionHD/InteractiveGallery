@@ -6,20 +6,14 @@ class Model
 public:
     virtual ~Model();
 
-    glm::mat4 getTransformation() const;
-
     Buffer* getTransformationBuffer() const;
 
-    void rotate(float angle, glm::vec3 axis);
+    glm::mat4 getTransformation() const;
 
-    void setPosition(glm::vec3 position);
-
-    void setScale(glm::vec3 scale);
+    void setTransformation(glm::mat4 transformation);
 
 protected:
     Model(Device *device);
-
-    void setTransformation(glm::mat4 transformation);
 
 private:
     glm::mat4 transformation;

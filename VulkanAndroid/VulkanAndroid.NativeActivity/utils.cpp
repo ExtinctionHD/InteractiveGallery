@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <android/native_window.h>
+#include <glm/gtx/rotate_vector.hpp>
 
 uint32_t math::ceilLog2(uint32_t x)
 {
@@ -32,4 +33,21 @@ VkExtent2D window::getExtent(ANativeWindow *window)
         uint32_t(ANativeWindow_getWidth(window)),
         uint32_t(ANativeWindow_getHeight(window))
     };
+}
+
+glm::vec3 axis::rotate(glm::vec3 baseAxis, glm::vec2 angle, glm::vec3 *outHorizontalAxis)
+{
+    glm::vec3 result = glm::rotate(baseAxis, glm::radians(angle.x), -Y);
+    result = normalize(result);
+
+    glm::vec3 hAxis = cross(result, -Y);
+    hAxis = normalize(hAxis);
+    result = glm::rotate(result, glm::radians(angle.y), hAxis);
+
+    if (outHorizontalAxis)
+    {
+        *outHorizontalAxis = hAxis;
+    }
+
+    return normalize(result);
 }

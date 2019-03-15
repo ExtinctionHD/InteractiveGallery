@@ -4,7 +4,7 @@
 
 Controller::Controller(glm::vec3 target, glm::vec3 position)
     : target(target),
-      radius(glm::distance(target, position)),
+      radius(distance(target, position)),
       delta(glm::vec2(0.0f))
 {
     const glm::vec3 view = normalize(target - position);
@@ -42,16 +42,9 @@ Controller::Controller(glm::vec3 target, glm::vec3 position)
 
 Camera::Location Controller::getLocation() const
 {
-    const glm::vec3 vAxis = -axis::Y;
+    glm::vec3 hAxis;
 
-    glm::vec3 view = rotate(-axis::Z, glm::radians(angle.x), vAxis);
-    view = normalize(view);
-
-    glm::vec3 hAxis = cross(view, vAxis);
-    hAxis = normalize(hAxis);
-    view = rotate(view, glm::radians(angle.y), hAxis);
-
-    view = normalize(view);
+    const glm::vec3 view = axis::rotate(-axis::Z, angle, &hAxis);
     const glm::vec3 up = normalize(cross(-view, hAxis));
 
     return Camera::Location{ target + view * radius, target, up };

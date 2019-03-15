@@ -11,8 +11,14 @@ public:
 
     TextureImage* getTexture() const;
 
+    void setLocation(float latitude, float longitude);
+
 private:
     const std::string TEXTURE_FILE = "Photo.jpg";
 
     TextureImage *texture;
+
+    glm::vec3 position = glm::vec3(0.0f);
+
+    glm::vec2 angle = glm::vec2(0.0f);
 };
