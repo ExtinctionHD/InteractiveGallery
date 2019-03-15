@@ -20,11 +20,17 @@ public:
 
     std::vector<TextureImage*> getTextures() const;
 
+    float getAngle() const;
+
+    void rotate(float angle);
+
 private:
     const std::vector<std::string> TEXTURE_FILES{
         "Day.jpg", "Night.jpg", "Normal.jpg"
     };
 
     std::vector<TextureImage*> textures;
+
+    float angle{};
 };
 

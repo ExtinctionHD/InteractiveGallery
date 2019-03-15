@@ -1,10 +1,9 @@
 #include "PhotoCard.h"
 #include <glm/ext/matrix_transform.hpp>
-#include <glm/gtx/rotate_vector.hpp>
 #include "sphere.h"
 #include "utils.h"
 
-PhotoCard::PhotoCard(Device *device, const std::string &texturePath) : Model(device)
+PhotoCard::PhotoCard(Device *device, const std::string &texturePath, Earth *earth) : Model(device), earth(earth)
 {
     texture = new TextureImage(
         device,
@@ -27,10 +26,10 @@ TextureImage * PhotoCard::getTexture() const
 
 void PhotoCard::setLocation(float latitude, float longitude)
 {
-    position = axis::rotate(-axis::X, glm::vec2(longitude, latitude), nullptr) * sphere::R;
+    position = axis::rotate(-axis::X, glm::vec2(longitude + earth->getAngle(), latitude), nullptr) * sphere::R;
 
     glm::mat4 transformation = translate(glm::mat4(1.0f), position);
-    transformation = glm::scale(transformation, glm::vec3(10.0f, 5.6f, 1.0f));
+    transformation = scale(transformation, glm::vec3(10.0f, 5.6f, 1.0f));
 
     setTransformation(transformation);
 }

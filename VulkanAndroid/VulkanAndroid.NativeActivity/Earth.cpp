@@ -1,4 +1,6 @@
 #include "Earth.h"
+#include <glm/ext/matrix_transform.inl>
+#include "utils.h"
 
 Earth::Earth(Device *device, const std::string &texturePath) : Model(device), textures(EARTH_TEXTURE_TYPE_COUNT)
 {
@@ -24,4 +26,15 @@ Earth::~Earth()
 std::vector<TextureImage*> Earth::getTextures() const
 {
     return textures;
+}
+
+float Earth::getAngle() const
+{
+    return angle;
+}
+
+void Earth::rotate(float angle)
+{
+    this->angle += angle;
+    setTransformation(glm::rotate(getTransformation(), glm::radians(angle), -axis::Y));
 }

@@ -33,8 +33,7 @@ Scene::Scene(Device *device, VkExtent2D extent)
     earth = new Earth(device, "textures/earth/2K/");
     clouds = new Clouds(device, "textures/earth/2K/");
     skybox = new Skybox(device, "textures/Stars/");
-    photoCard = new PhotoCard(device, "textures/Photo/");
-    photoCard->setLocation(7.0f, 80.0f);
+    photoCard = new PhotoCard(device, "textures/Photo/", earth);
 
     initMeshes(device);
 
@@ -124,9 +123,10 @@ void Scene::update()
     controller->update(deltaSec);
     camera->update(controller->getLocation());
 
-    // earth->rotate(5.0f * deltaSec, -axis::Y);
+    earth->rotate(5.0f * deltaSec);
     clouds->setEarthTransformation(earth->getTransformation());
     skybox->setTransformation(translate(glm::mat4(1.0f), camera->getPosition()));
+    photoCard->setLocation(7.0f, 80.0f);
 
 #ifndef NDEBUG
     logFps(deltaSec);
