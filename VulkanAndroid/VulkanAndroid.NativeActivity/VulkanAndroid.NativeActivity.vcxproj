@@ -276,6 +276,7 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="card.h" />
+    <ClInclude Include="PhotoCardRenderPass.h" />
     <ClInclude Include="Clouds.h" />
     <ClInclude Include="ComputePipeline.h" />
     <ClInclude Include="Controller.h" />
@@ -288,7 +289,7 @@
     <ClInclude Include="Engine.h" />
     <ClInclude Include="GraphicsPipeline.h" />
     <ClInclude Include="Lighting.h" />
-    <ClInclude Include="MainRenderPass.h" />
+    <ClInclude Include="EarthRenderPass.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="Macro.h" />
@@ -321,6 +322,7 @@
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="PhotoCardRenderPass.cpp" />
     <ClCompile Include="Clouds.cpp" />
     <ClCompile Include="ComputePipeline.cpp" />
     <ClCompile Include="Controller.cpp" />
@@ -331,7 +333,7 @@
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="GraphicsPipeline.cpp" />
     <ClCompile Include="Lighting.cpp" />
-    <ClCompile Include="MainRenderPass.cpp" />
+    <ClCompile Include="EarthRenderPass.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="main.cpp" />

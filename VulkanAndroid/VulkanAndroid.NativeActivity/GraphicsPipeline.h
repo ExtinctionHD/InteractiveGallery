@@ -15,6 +15,7 @@ public:
         std::vector<std::shared_ptr<ShaderModule>> shaderModules,
         std::vector<VkVertexInputBindingDescription> bindingDescriptions,
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions,
+        bool depthTestEnabled,
 		bool blendEnable);
 
 	~GraphicsPipeline() = default;
@@ -27,6 +28,8 @@ private:
 	std::vector<VkVertexInputBindingDescription> bindingDescriptions;
 
 	std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+
+    bool depthTestEnabled;
 
 	bool blendEnable;
 

@@ -14,6 +14,8 @@ public:
 
     void setPosition(glm::vec3 position);
 
+    void setScale(glm::vec3 scale);
+
 protected:
     Model(Device *device);
 

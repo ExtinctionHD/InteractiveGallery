@@ -11,8 +11,8 @@
 class Scene
 {
 public:
-    static const uint32_t BUFFER_COUNT = 5;
-    static const uint32_t TEXTURE_COUNT = EARTH_TEXTURE_TYPE_COUNT + 3;
+    static const uint32_t BUFFER_COUNT = 6;
+    static const uint32_t TEXTURE_COUNT = EARTH_TEXTURE_TYPE_COUNT + 4;
 
     Scene(Device *device, VkExtent2D extent);
 
@@ -26,6 +26,8 @@ public:
 
     Buffer* getSkyboxTransformationBuffer() const;
 
+    Buffer* getPhotoCardTransformationBuffer() const;
+
     Buffer* getLightingBuffer() const;
 
     std::vector<TextureImage*> getEarthTextures() const;
@@ -33,6 +35,8 @@ public:
     TextureImage* getCloudsTexture() const;
 
     TextureImage* getSkyboxTexture() const;
+
+    TextureImage* getPhotoCardTexture() const;
 
     void handleMotion(glm::vec2 delta);
 
@@ -46,6 +50,8 @@ public:
 
     void drawCube(VkCommandBuffer commandBuffer) const;
 
+    void drawCard(VkCommandBuffer commandBuffer) const;
+
 private:
     enum MeshBufferType
     {
@@ -53,6 +59,8 @@ private:
         SPHERE_INDEX_BUFFER,
         CUBE_VERTEX_BUFFER,
         CUBE_INDEX_BUFFER,
+        CARD_VERTEX_BUFFER,
+        CARD_INDEX_BUFFER,
         MESH_BUFFER_COUNT
     };
 

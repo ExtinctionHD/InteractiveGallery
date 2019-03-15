@@ -49,9 +49,6 @@
     <ClInclude Include="RenderPass.h">
       <Filter>Engine\RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="MainRenderPass.h">
-      <Filter>Engine\RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="DescriptorPool.h">
       <Filter>Engine\Descriptors</Filter>
     </ClInclude>
@@ -130,6 +127,12 @@
     <ClInclude Include="PhotoCard.h">
       <Filter>Scene\Models</Filter>
     </ClInclude>
+    <ClInclude Include="EarthRenderPass.h">
+      <Filter>Engine\RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="PhotoCardRenderPass.h">
+      <Filter>Engine\RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -175,9 +178,6 @@
       <Filter>Utils\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass.cpp">
-      <Filter>Engine\RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="MainRenderPass.cpp">
       <Filter>Engine\RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="DescriptorPool.cpp">
@@ -245,6 +245,12 @@
     </ClCompile>
     <ClCompile Include="PhotoCard.cpp">
       <Filter>Scene\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="EarthRenderPass.cpp">
+      <Filter>Engine\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="PhotoCardRenderPass.cpp">
+      <Filter>Engine\RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

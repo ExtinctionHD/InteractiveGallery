@@ -28,6 +28,12 @@ void Model::setPosition(glm::vec3 position)
     transformationBuffer->updateData(&transformation);
 }
 
+void Model::setScale(glm::vec3 scale)
+{
+    transformation = glm::scale(glm::mat4(1.0f), scale);
+    transformationBuffer->updateData(&transformation);
+}
+
 Model::Model(Device *device) : transformation(glm::mat4(1.0f))
 {
     transformationBuffer = new Buffer(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4));

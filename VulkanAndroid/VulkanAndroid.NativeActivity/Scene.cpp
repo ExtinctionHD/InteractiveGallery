@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include "sphere.h"
 #include "cube.h"
+#include "card.h"
 
 Scene::Scene(Device *device, VkExtent2D extent)
 {
@@ -33,6 +34,7 @@ Scene::Scene(Device *device, VkExtent2D extent)
     clouds = new Clouds(device, "textures/earth/2K/");
     skybox = new Skybox(device, "textures/Stars/");
     photoCard = new PhotoCard(device, "textures/Photo/");
+    photoCard->setScale(glm::vec3(10.0f, 5.6f, 1.0f));
 
     initMeshes(device);
 
@@ -46,6 +48,7 @@ Scene::~Scene()
         delete buffer;
     }
 
+    delete photoCard;
     delete skybox;
     delete clouds;
     delete earth;
@@ -74,6 +77,11 @@ Buffer* Scene::getSkyboxTransformationBuffer() const
     return skybox->getTransformationBuffer();
 }
 
+Buffer* Scene::getPhotoCardTransformationBuffer() const
+{
+    return photoCard->getTransformationBuffer();
+}
+
 Buffer* Scene::getLightingBuffer() const
 {
     return lighting->getBuffer();
@@ -94,6 +102,11 @@ TextureImage* Scene::getSkyboxTexture() const
     return skybox->getCubeTexture();
 }
 
+TextureImage * Scene::getPhotoCardTexture() const
+{
+    return photoCard->getTexture();
+}
+
 void Scene::handleMotion(glm::vec2 delta)
 {
     controller->setDelta(delta);
@@ -111,9 +124,10 @@ void Scene::update()
     controller->update(deltaSec);
     camera->update(controller->getLocation());
 
-    skybox->setPosition(camera->getPosition());
     // earth->rotate(5.0f * deltaSec, -axis::Y);
     clouds->setEarthTransformation(earth->getTransformation());
+    skybox->setPosition(camera->getPosition());
+
 
 #ifndef NDEBUG
     logFps(deltaSec);
@@ -149,6 +163,18 @@ void Scene::drawCube(VkCommandBuffer commandBuffer) const
     vkCmdDrawIndexed(commandBuffer, cube::INDICES.size(), 1, 0, 0, 0);
 }
 
+void Scene::drawCard(VkCommandBuffer commandBuffer) const
+{
+    VkBuffer buffer = meshBuffers[CARD_VERTEX_BUFFER]->get();
+    VkDeviceSize offset = 0;
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &buffer, &offset);
+
+    buffer = meshBuffers[CARD_INDEX_BUFFER]->get();
+    vkCmdBindIndexBuffer(commandBuffer, buffer, 0, VK_INDEX_TYPE_UINT32);
+
+    vkCmdDrawIndexed(commandBuffer, card::INDICES.size(), 1, 0, 0, 0);
+}
+
 void Scene::initMeshes(Device *device)
 {
     meshBuffers.resize(MESH_BUFFER_COUNT);
@@ -162,6 +188,11 @@ void Scene::initMeshes(Device *device)
     meshBuffers[CUBE_INDEX_BUFFER] = new Buffer(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, cube::INDICES.size() * sizeof(uint32_t));
     meshBuffers[CUBE_VERTEX_BUFFER]->updateData(cube::VERTICES.data());
     meshBuffers[CUBE_INDEX_BUFFER]->updateData(cube::INDICES.data());
+
+    meshBuffers[CARD_VERTEX_BUFFER] = new Buffer(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, card::VERTICES.size() * sizeof(PositionUv));
+    meshBuffers[CARD_INDEX_BUFFER] = new Buffer(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, card::INDICES.size() * sizeof(uint32_t));
+    meshBuffers[CARD_VERTEX_BUFFER]->updateData(card::VERTICES.data());
+    meshBuffers[CARD_INDEX_BUFFER]->updateData(card::INDICES.data());
 }
 
 void Scene::logFps(float deltaSec)
