@@ -8,35 +8,8 @@ Controller::Controller(glm::vec3 target, glm::vec3 position)
       delta(glm::vec2(0.0f))
 {
     const glm::vec3 view = normalize(target - position);
-    const glm::vec3 horizontal = normalize(glm::vec3(view.x, 0.0f, view.z ));
 
-    if (horizontal.x >= 0.0f)
-    {
-        if (horizontal.z >= 0.0f)
-        {
-            // first quarter
-            angle.x = 360.0f - glm::degrees(glm::asin(horizontal.x));
-        }
-        else
-        {
-            // second quarter
-            angle.x = 180.0f + glm::degrees(glm::asin(horizontal.x));
-        }
-    }
-    else
-    {
-        if (horizontal.z >= 0.0f)
-        {
-            // third quarter
-            angle.x = glm::degrees(glm::asin(-horizontal.x));
-        }
-        else
-        {
-            // fourth quarter
-            angle.x = 90.0f + glm::degrees(glm::asin(-horizontal.x));
-        }
-    }
-
+    angle.x = glm::radians(90.0f) + std::atan2(view.z, view.x);
     angle.y = glm::degrees(glm::asin(view.y));
 }
 
