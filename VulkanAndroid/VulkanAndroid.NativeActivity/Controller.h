@@ -8,6 +8,8 @@ public:
 
     Camera::Location getLocation() const;
 
+    glm::vec2 getCoordinates(float earthAngle) const;
+
     void setDelta(glm::vec2 newDelta);
 
     void update(float deltaSec);

@@ -23,6 +23,16 @@ Camera::Location Controller::getLocation() const
     return Camera::Location{ target + view * radius, target, up };
 }
 
+glm::vec2 Controller::getCoordinates(float earthAngle) const
+{
+    float longitude = std::fmod(90.0f + angle.x - earthAngle, 360.0f);
+    if (longitude > 180.0f)
+    {
+        longitude = 360.0f - longitude;
+    }
+    return glm::vec2(longitude, angle.y);
+}
+
 void Controller::setDelta(glm::vec2 newDelta)
 {
     newDelta.x = -newDelta.x;

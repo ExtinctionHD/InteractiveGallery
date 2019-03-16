@@ -353,12 +353,18 @@ void Engine::initDescriptorSets()
         descriptorPool,
         {
             { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { VK_SHADER_STAGE_FRAGMENT_BIT } },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT } }
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT } }
         });
     descriptors[DESCRIPTOR_TYPE_PHOTO_CARD]->pushDescriptorSet(
         {
             { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getPhotoCardTexture()->getCombineSamplerInfo() } },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getPhotoCardTransformationBuffer()->getUniformBufferInfo() } }
+            {
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                {
+                    scene->getPhotoCardTransformationBuffer()->getUniformBufferInfo(),
+                    scene->getPhotoCardOpacityBuffer()->getUniformBufferInfo()
+                }
+            }
         });
 }
 
@@ -493,7 +499,7 @@ void Engine::initPipelines()
         { PositionUv::getBindingDescription(0) },
         PositionUv::getAttributeDescriptions(0, 0),
         false,
-        false);
+        true);
 }
 
 VkSemaphore Engine::createSemaphore() const

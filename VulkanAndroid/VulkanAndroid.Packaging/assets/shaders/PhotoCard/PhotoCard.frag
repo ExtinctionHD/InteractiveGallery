@@ -12,11 +12,16 @@ layout(set = 0, binding = 1) uniform Lighting
 
 layout(set = 1, binding = 0) uniform sampler2D photo;
 
+layout(set = 1, binding = 2) uniform Opacity
+{
+    float opacity;
+};
+
 layout(location = 0) in vec2 inUV;
 
 layout(location = 0) out vec4 outColor;
 
 void main() 
 {
-    outColor = vec4(texture(photo, inUV).rgb, 1.0f);
+    outColor = vec4(texture(photo, inUV).rgb, opacity);
 }

@@ -11,7 +11,7 @@
 class Scene
 {
 public:
-    static const uint32_t BUFFER_COUNT = 6;
+    static const uint32_t BUFFER_COUNT = 7;
     static const uint32_t TEXTURE_COUNT = EARTH_TEXTURE_TYPE_COUNT + 4;
 
     Scene(Device *device, VkExtent2D extent);
@@ -37,6 +37,8 @@ public:
     TextureImage* getSkyboxTexture() const;
 
     TextureImage* getPhotoCardTexture() const;
+
+    Buffer* getPhotoCardOpacityBuffer() const;
 
     void handleMotion(glm::vec2 delta);
 
