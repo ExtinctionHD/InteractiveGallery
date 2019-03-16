@@ -52,9 +52,6 @@
     <ClInclude Include="DescriptorPool.h">
       <Filter>Engine\Descriptors</Filter>
     </ClInclude>
-    <ClInclude Include="AssetManager.h">
-      <Filter>Utils\Android</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsPipeline.h">
       <Filter>Engine\Pipelines</Filter>
     </ClInclude>
@@ -133,6 +130,9 @@
     <ClInclude Include="PhotoCardRenderPass.h">
       <Filter>Engine\RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="ActivityManager.h">
+      <Filter>Utils\Android</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -182,9 +182,6 @@
     </ClCompile>
     <ClCompile Include="DescriptorPool.cpp">
       <Filter>Engine\Descriptors</Filter>
-    </ClCompile>
-    <ClCompile Include="AssetManager.cpp">
-      <Filter>Utils\Android</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsPipeline.cpp">
       <Filter>Engine\Pipelines</Filter>
@@ -251,6 +248,9 @@
     </ClCompile>
     <ClCompile Include="PhotoCardRenderPass.cpp">
       <Filter>Engine\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="ActivityManager.cpp">
+      <Filter>Utils\Android</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

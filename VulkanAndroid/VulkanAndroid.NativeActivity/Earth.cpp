@@ -1,6 +1,7 @@
 #include "Earth.h"
 #include <glm/ext/matrix_transform.inl>
 #include "utils.h"
+#include "ActivityManager.h"
 
 Earth::Earth(Device *device, const std::string &texturePath) : Model(device), textures(EARTH_TEXTURE_TYPE_COUNT)
 {
@@ -8,7 +9,7 @@ Earth::Earth(Device *device, const std::string &texturePath) : Model(device), te
     {
         textures[i] = new TextureImage(
             device,
-            { texturePath + TEXTURE_FILES[i] },
+            { ActivityManager::readFromAssets(texturePath + TEXTURE_FILES[i]) },
             false);
         textures[i]->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
         textures[i]->pushSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);

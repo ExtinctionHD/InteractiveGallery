@@ -1,10 +1,10 @@
 #include "ShaderModule.h"
-#include "AssetManager.h"
+#include "ActivityManager.h"
 
 ShaderModule::ShaderModule(Device *device, const std::string &path, VkShaderStageFlagBits stage)
     : device(device), stage(stage), data(nullptr), specializationInfo(nullptr)
 {
-	std::vector<uint8_t> code = AssetManager::getBytes(path);
+	std::vector<uint8_t> code = ActivityManager::readFromAssets(path);
 
 	VkShaderModuleCreateInfo createInfo{
 		VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,

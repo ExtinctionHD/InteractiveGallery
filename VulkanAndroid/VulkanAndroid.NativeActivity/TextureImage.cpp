@@ -1,17 +1,16 @@
 #include "TextureImage.h"
-#include "AssetManager.h"
 
 TextureImage::TextureImage(
 	Device *device,
-	const std::vector<std::string> &paths,
+	const std::vector<std::vector<uint8_t>> &buffers,
 	bool cubeMap)
 {
     extent = VkExtent3D{0, 0, 1};
 
-	std::vector<const void*> pixels(paths.size());
-	for (uint32_t i = 0; i < paths.size(); i++)
+	std::vector<const void*> pixels(buffers.size());
+	for (uint32_t i = 0; i < buffers.size(); i++)
 	{
-		pixels[i] = loadPixels(paths[i]);
+		pixels[i] = loadPixels(buffers[i]);
 	}
 
 	createThisImage(
@@ -20,7 +19,7 @@ TextureImage::TextureImage(
         VK_FORMAT_R8G8B8A8_UNORM,
 		extent,
         calculateMipLevelCount(extent),
-        paths.size(),
+        pixels.size(),
 		VK_SAMPLE_COUNT_1_BIT,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		cubeMap);
@@ -124,23 +123,19 @@ void TextureImage::pushSampler(VkFilter filter, VkSamplerAddressMode addressMode
     samplers.push_back(sampler);
 }
 
-stbi_uc* TextureImage::loadPixels(const std::string &path)
+stbi_uc* TextureImage::loadPixels(const std::vector<uint8_t> &buffer)
 {
-    std::vector<stbi_uc> buffer = AssetManager::getBytes(path);
-
     int width, height;
 
     stbi_uc *pixels = stbi_load_from_memory(
-        buffer.data(), 
-        buffer.size(), 
+        buffer.data(),
+        buffer.size(),
         &width, 
         &height, 
         nullptr,
         STBI_rgb_alpha);
 
     LOGA(pixels);
-
-    LOGI("Texture [%s] loaded, width: %d, height %d.", path.c_str(), width, height);
 
     if (extent.width && extent.height)
     {

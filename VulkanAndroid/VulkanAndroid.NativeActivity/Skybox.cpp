@@ -1,14 +1,15 @@
 #include "Skybox.h"
+#include "ActivityManager.h"
 
 Skybox::Skybox(Device *device, const std::string &texturePath) : Model(device)
 {
-    std::vector<std::string> paths(CUBE_MAP_FILES.size());
-    for(size_t i = 0; i < paths.size(); i++)
+    std::vector<std::vector<uint8_t>> buffers(CUBE_MAP_FILES.size());
+    for(size_t i = 0; i < buffers.size(); i++)
     {
-        paths[i] = texturePath + CUBE_MAP_FILES[i];
+        buffers[i] = ActivityManager::readFromAssets(texturePath + CUBE_MAP_FILES[i]);
     }
 
-    cubeTexture = new TextureImage(device, paths, true);
+    cubeTexture = new TextureImage(device, buffers, true);
     cubeTexture->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
     cubeTexture->pushSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);
 }

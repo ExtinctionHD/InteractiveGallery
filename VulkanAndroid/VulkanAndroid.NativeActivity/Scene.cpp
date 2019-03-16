@@ -25,15 +25,14 @@ Scene::Scene(Device *device, VkExtent2D extent)
         10.0f,
         cameraLocation.position,
         8.0f,
-        0.05f
-
+        0.05f,
     };
     lighting = new Lighting(device, lightingAttributes);
 
     earth = new Earth(device, "textures/earth/2K/");
     clouds = new Clouds(device, "textures/earth/2K/");
     skybox = new Skybox(device, "textures/Stars/");
-    photoCard = new PhotoCard(device, "textures/Photo/", earth, camera, controller);
+    photoCard = new PhotoCard(device, "Gallery/", earth, camera, controller);
 
     initMeshes(device);
 

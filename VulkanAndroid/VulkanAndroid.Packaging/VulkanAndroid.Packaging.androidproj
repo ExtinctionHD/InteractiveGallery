@@ -138,7 +138,6 @@
     <Content Include="assets\textures\earth\2K\Day.jpg" />
     <Content Include="assets\textures\earth\2K\Night.jpg" />
     <Content Include="assets\textures\earth\2K\Normal.jpg" />
-    <Content Include="assets\textures\Photo\Photo.jpg" />
     <Content Include="assets\textures\Stars\Back.png" />
     <Content Include="assets\textures\Stars\Down.png" />
     <Content Include="assets\textures\Stars\Front.png" />

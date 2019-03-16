@@ -8,7 +8,7 @@ class TextureImage : public Image
 public:
     TextureImage(
         Device *device,
-        const std::vector<std::string> &paths,
+        const std::vector<std::vector<uint8_t>> &buffers,
         bool cubeMap);
 
     TextureImage(
@@ -33,6 +33,6 @@ public:
 protected:
 	std::vector<VkSampler> samplers;
 
-	stbi_uc* loadPixels(const std::string &path);
+	stbi_uc* loadPixels(const std::vector<uint8_t> &buffer);
 };
 
