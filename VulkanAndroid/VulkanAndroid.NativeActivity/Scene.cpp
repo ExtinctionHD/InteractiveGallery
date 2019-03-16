@@ -126,7 +126,7 @@ void Scene::update()
     earth->rotate(5.0f * deltaSec);
     clouds->setEarthTransformation(earth->getTransformation());
     skybox->setTransformation(translate(glm::mat4(1.0f), camera->getPosition()));
-    photoCard->setLocation(7.0f, 80.0f);
+    photoCard->update(7.0f, 80.0f, camera->getPosition(), camera->getRight());
 
 #ifndef NDEBUG
     logFps(deltaSec);

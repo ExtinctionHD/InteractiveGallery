@@ -28,6 +28,12 @@ glm::vec3 Camera::getUp() const
     return location.up;
 }
 
+glm::vec3 Camera::getRight() const
+{
+    const glm::vec3 forward = normalize(location.target - location.position);
+    return cross(forward, location.up);
+}
+
 Buffer* Camera::getBuffer() const
 {
     return buffer;

@@ -2,6 +2,7 @@
 #include "Model.h"
 #include "TextureImage.h"
 #include "Earth.h"
+#include <glm/common.hpp>
 
 class PhotoCard : public Model
 {
@@ -12,7 +13,7 @@ public:
 
     TextureImage* getTexture() const;
 
-    void setLocation(float latitude, float longitude);
+    void update(float latitude, float longitude, glm::vec3 cameraPos, glm::vec3 cameraRight);
 
 private:
     const std::string TEXTURE_FILE = "Photo.jpg";
