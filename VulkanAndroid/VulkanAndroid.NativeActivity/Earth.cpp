@@ -9,7 +9,7 @@ Earth::Earth(Device *device, const std::string &texturePath) : Model(device), te
     {
         textures[i] = new TextureImage(
             device,
-            { ActivityManager::readFromAssets(texturePath + TEXTURE_FILES[i]) },
+            { ActivityManager::readAsset(texturePath + TEXTURE_FILES[i]) },
             false);
         textures[i]->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
         textures[i]->pushSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);

@@ -4,7 +4,7 @@
 ShaderModule::ShaderModule(Device *device, const std::string &path, VkShaderStageFlagBits stage)
     : device(device), stage(stage), data(nullptr), specializationInfo(nullptr)
 {
-	std::vector<uint8_t> code = ActivityManager::readFromAssets(path);
+	std::vector<uint8_t> code = ActivityManager::readAsset(path);
 
 	VkShaderModuleCreateInfo createInfo{
 		VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,

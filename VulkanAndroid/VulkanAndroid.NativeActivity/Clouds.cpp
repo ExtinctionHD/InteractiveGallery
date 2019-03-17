@@ -6,7 +6,7 @@ Clouds::Clouds(Device *device, const std::string &texturePath) : Model(device)
 {
     texture = new TextureImage(
         device,
-        { ActivityManager::readFromAssets(texturePath + TEXTURE_FILE) },
+        { ActivityManager::readAsset(texturePath + TEXTURE_FILE) },
         false);
     texture->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
     texture->pushSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);
