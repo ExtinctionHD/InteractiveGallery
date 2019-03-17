@@ -54,22 +54,21 @@ void Gallery::update()
         }
     }
 
-    Parameters parameters{};
+    Parameters parameters{ float(index), 0.0f };
+    const float maxDistance = (controller->getRadius() - sphere::R) * MAX_DISTANCE_FACTOR;
 
-    if (nearestDistance < MAX_DISTANCE)
+    if (nearestDistance < maxDistance)
     {
-        parameters.opacity = calculateOpacity(nearestDistance);
-
-        setLocation(COORDINATES[index]);
+        parameters.opacity = calculateOpacity(nearestDistance, maxDistance);
+        setTransformation(calculateTransformation(COORDINATES[index]));
     }
 
-    parameters.index = float(index);
     parameterBuffer->updateData(&parameters);
 }
 
 void Gallery::loadPhotographs(Device *device, const std::string &path)
 {
-    std::vector<std::string> fileNames = ActivityManager::getFileNames(path, EXTENSIONS);
+    std::vector<std::string> fileNames = ActivityManager::getFileNames(path, { ".jpg", ".jpeg", ".png" });
 
     std::vector<std::vector<uint8_t>> buffers;
     for (const auto &fileName : fileNames)
@@ -106,23 +105,50 @@ float Gallery::loopDistance(glm::vec2 a, glm::vec2 b)
     return result;
 }
 
-float Gallery::calculateOpacity(float nearestDistance)
+float Gallery::calculateOpacity(float nearestDistance, float maxDistance)
 {
-    const float minDistance = MAX_DISTANCE / 2.0f;
+    const float transparencyDistance = maxDistance / 2.0f;
 
-    float opacity = 1.0f - (nearestDistance - minDistance) / (MAX_DISTANCE - minDistance);
+    float opacity = 1.0f - (nearestDistance - transparencyDistance) / (maxDistance - transparencyDistance);
+
     opacity = opacity > 1.0f ? 1.0f : opacity;
     opacity = std::pow(opacity, 0.5f);
 
     return opacity;
 }
 
-void Gallery::setLocation(glm::vec2 photoCoordinates)
+glm::vec3 Gallery::calculateScale()
+{
+    // TODO: replace sphere::R to earth->getRadius()
+
+    const float distance = controller->getRadius() - sphere::R;
+
+    const float biggerSide = distance * SCALE_FACTOR;
+
+    const VkExtent3D extent = texture->getExtent();
+    const float aspect = extent.width / float(extent.height);
+
+    glm::vec3 scale;
+    if (aspect > 1.0f)
+    {
+        scale = glm::vec3(biggerSide, biggerSide / aspect, 1.0f);
+    }
+    else
+    {
+        scale = glm::vec3(biggerSide / aspect, biggerSide, 1.0f);
+    }
+
+    return scale;
+}
+
+glm::mat4 Gallery::calculateTransformation(glm::vec2 photoCoordinates)
 {
     const glm::vec3 position = sphere::R * axis::rotate(
         -axis::X,
         glm::vec2(photoCoordinates.x + earth->getAngle(), photoCoordinates.y),
         nullptr);
+
+    // TODO: fix y angle calculation 
 
     const glm::vec3 direction = normalize(camera->getPosition() - position);
     const glm::vec2 angle(glm::radians(90.0f) + std::atan2(direction.z, direction.x), glm::asin(direction.y));
@@ -130,7 +156,7 @@ void Gallery::setLocation(glm::vec2 photoCoordinates)
     glm::mat4 transformation = translate(glm::mat4(1.0f), position);
     transformation = rotate(transformation, angle.y, camera->getRight());
     transformation = rotate(transformation, angle.x, -axis::Y);
-    transformation = scale(transformation, glm::vec3(5.0f, 2.8f, 1.0f));
+    transformation = scale(transformation, calculateScale());
 
-    setTransformation(transformation);
+    return transformation;
 }

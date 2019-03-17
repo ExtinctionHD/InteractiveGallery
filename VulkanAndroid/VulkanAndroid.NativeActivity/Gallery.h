@@ -25,16 +25,14 @@ private:
         float opacity;
     };
 
-    const float MAX_DISTANCE = 20.0f;
-
-    const std::vector<std::string> EXTENSIONS{
-        ".jpg", ".jpeg", ".png"
-    };
-
     const std::vector<glm::vec2> COORDINATES{
         glm::vec2(2.293966f, 48.858187f),
         glm::vec2(151.215297, -33.856829f),
     };
+
+    const float MAX_DISTANCE_FACTOR = 1.25;
+
+    const float SCALE_FACTOR = 0.4f;
 
     Buffer *parameterBuffer;
 
@@ -50,7 +48,9 @@ private:
 
     float loopDistance(glm::vec2 a, glm::vec2 b);
 
-    float calculateOpacity(float nearestDistance);
+    float calculateOpacity(float nearestDistance, float maxDistance);
 
-    void setLocation(glm::vec2 photoCoordinates);
+    glm::vec3 calculateScale();
+
+    glm::mat4 calculateTransformation(glm::vec2 photoCoordinates);
 };

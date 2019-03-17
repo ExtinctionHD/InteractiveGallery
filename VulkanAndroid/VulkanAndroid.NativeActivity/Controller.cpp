@@ -1,6 +1,7 @@
 #include "Controller.h"
 #include <glm/gtx/rotate_vector.hpp>
 #include "utils.h"
+#include "sphere.h"
 
 Controller::Controller(glm::vec3 target, glm::vec3 position)
     : target(target),
@@ -39,6 +40,11 @@ glm::vec2 Controller::getCoordinates(float earthAngle) const
     return glm::vec2(longitude, angle.y);
 }
 
+float Controller::getRadius()
+{
+    return radius;
+}
+
 void Controller::setDelta(glm::vec2 newDelta)
 {
     newDelta.x = -newDelta.x;
@@ -47,7 +53,7 @@ void Controller::setDelta(glm::vec2 newDelta)
 
 void Controller::update(float deltaSec)
 {
-    angle += SENSITIVITY * delta * deltaSec;
+    angle += radius / SENSITIVITY * delta * deltaSec;
 
     const glm::vec2 fading = FADING * delta * deltaSec;
     

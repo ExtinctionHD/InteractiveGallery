@@ -127,7 +127,7 @@ void Scene::update()
     controller->update(deltaSec);
     camera->update(controller->getLocation());
 
-    earth->rotate(2.0f * deltaSec);
+    // earth->rotate(2.0f * deltaSec);
     clouds->setEarthTransformation(earth->getTransformation());
     skybox->setTransformation(translate(glm::mat4(1.0f), camera->getPosition()));
     gallery->update();
