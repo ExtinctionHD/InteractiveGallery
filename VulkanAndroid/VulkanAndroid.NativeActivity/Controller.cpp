@@ -30,6 +30,10 @@ glm::vec2 Controller::getCoordinates(float earthAngle) const
     {
         longitude = 360.0f - longitude;
     }
+    if (longitude < -180.0f)
+    {
+        longitude = 360.0f + longitude;
+    }
     return glm::vec2(longitude, angle.y);
 }
 

@@ -280,7 +280,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="card.h" />
     <ClInclude Include="ActivityManager.h" />
-    <ClInclude Include="PhotoCardRenderPass.h" />
+    <ClInclude Include="GalleryRenderPass.h" />
     <ClInclude Include="Clouds.h" />
     <ClInclude Include="ComputePipeline.h" />
     <ClInclude Include="Controller.h" />
@@ -298,7 +298,7 @@
     <ClInclude Include="Instance.h" />
     <ClInclude Include="Macro.h" />
     <ClInclude Include="Model.h" />
-    <ClInclude Include="PhotoCard.h" />
+    <ClInclude Include="Gallery.h" />
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="Position.h" />
     <ClInclude Include="PositionUv.h" />
@@ -326,7 +326,7 @@
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ActivityManager.cpp" />
-    <ClCompile Include="PhotoCardRenderPass.cpp" />
+    <ClCompile Include="GalleryRenderPass.cpp" />
     <ClCompile Include="Clouds.cpp" />
     <ClCompile Include="ComputePipeline.cpp" />
     <ClCompile Include="Controller.cpp" />
@@ -342,7 +342,7 @@
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Model.cpp" />
-    <ClCompile Include="PhotoCard.cpp" />
+    <ClCompile Include="Gallery.cpp" />
     <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="Position.cpp" />
     <ClCompile Include="PositionUv.cpp" />

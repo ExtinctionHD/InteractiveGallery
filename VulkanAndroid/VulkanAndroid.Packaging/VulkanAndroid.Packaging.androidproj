@@ -129,8 +129,8 @@
   <ItemGroup>
     <Content Include="assets\shaders\Clouds\frag.spv" />
     <Content Include="assets\shaders\Clouds\vert.spv" />
-    <Content Include="assets\shaders\PhotoCard\frag.spv" />
-    <Content Include="assets\shaders\PhotoCard\vert.spv" />
+    <Content Include="assets\shaders\Gallery\frag.spv" />
+    <Content Include="assets\shaders\Gallery\vert.spv" />
     <Content Include="assets\shaders\Skybox\frag.spv" />
     <Content Include="assets\shaders\Skybox\vert.spv" />
     <Content Include="assets\shaders\Tone\comp.spv" />

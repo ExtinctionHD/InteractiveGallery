@@ -124,7 +124,7 @@ float Gallery::calculateOpacity(float nearestDistance)
 
 void Gallery::setLocation(glm::vec2 photoCoordinates)
 {
-    position = sphere::R * axis::rotate(
+    const glm::vec3 position = sphere::R * axis::rotate(
         -axis::X,
         glm::vec2(photoCoordinates.x + earth->getAngle(), photoCoordinates.y),
         nullptr);

@@ -30,9 +30,9 @@ bool Engine::create(ANativeWindow *window)
     scene = new Scene(device, swapChain->getExtent());
 
     earthRenderPass = new EarthRenderPass(device, swapChain->getExtent(), VK_SAMPLE_COUNT_1_BIT);
-    photoCardRenderPass = new PhotoCardRenderPass(device, swapChain, VK_SAMPLE_COUNT_1_BIT);
+    galleryRenderPass = new GalleryRenderPass(device, swapChain, VK_SAMPLE_COUNT_1_BIT);
     earthRenderPass->create();
-    photoCardRenderPass->create();
+    galleryRenderPass->create();
 
     descriptorPool = new DescriptorPool(
         device,
@@ -49,12 +49,12 @@ bool Engine::create(ANativeWindow *window)
 
     earthRenderingFinished = createSemaphore();
     computingFinished = createSemaphore();
-    photoCardRenderingFinished = createSemaphore();
+    galleryRenderingFinished = createSemaphore();
     imageAvailable = createSemaphore();
 
     initEarthRenderingCommands(); 
     initComputingCommands();
-    initPhotoCardRenderingCommands();
+    initGalleryRenderingCommands();
 
     LOGI("Engine created.");
 
@@ -76,7 +76,7 @@ bool Engine::recreate(ANativeWindow *window)
         const auto extent = window::getExtent(window);
         swapChain->recreate(surface->get(), extent);
         earthRenderPass->recreate(extent);
-        photoCardRenderPass->recreate(extent);
+        galleryRenderPass->recreate(extent);
         scene->resize(extent);
         for (auto pipeline : pipelines)
         {
@@ -87,7 +87,7 @@ bool Engine::recreate(ANativeWindow *window)
 
         initEarthRenderingCommands();
         initComputingCommands();
-        initPhotoCardRenderingCommands();
+        initGalleryRenderingCommands();
 
         outdated = false;
     }
@@ -181,30 +181,30 @@ bool Engine::drawFrame()
     };
     CALL_VK(vkQueueSubmit(device->getComputeQueue(), 1, &computingSubmitInfo, nullptr));
 
-    // Photo card rendering:
+    // Gallery rendering:
 
-    std::vector<VkSemaphore> photoCardRenderingWaitSemaphores{ computingFinished };
-    std::vector<VkPipelineStageFlags> photoCardWaitStages{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    std::vector<VkSemaphore> photoCardSignalSemaphores{ photoCardRenderingFinished };
-    VkSubmitInfo photoCardSubmitInfo{
+    std::vector<VkSemaphore> galleryRenderingWaitSemaphores{ computingFinished };
+    std::vector<VkPipelineStageFlags> galleryWaitStages{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    std::vector<VkSemaphore> gallerySignalSemaphores{ galleryRenderingFinished };
+    VkSubmitInfo gallerySubmitInfo{
         VK_STRUCTURE_TYPE_SUBMIT_INFO,
         nullptr,
-        uint32_t(photoCardRenderingWaitSemaphores.size()),
-        photoCardRenderingWaitSemaphores.data(),
-        photoCardWaitStages.data(),
+        uint32_t(galleryRenderingWaitSemaphores.size()),
+        galleryRenderingWaitSemaphores.data(),
+        galleryWaitStages.data(),
         1,
-        &photoCardRenderingCommands[imageIndex],
-        uint32_t(photoCardSignalSemaphores.size()),
-        photoCardSignalSemaphores.data(),
+        &galleryRenderingCommands[imageIndex],
+        uint32_t(gallerySignalSemaphores.size()),
+        gallerySignalSemaphores.data(),
     };
-    CALL_VK(vkQueueSubmit(device->getComputeQueue(), 1, &photoCardSubmitInfo, nullptr));
+    CALL_VK(vkQueueSubmit(device->getComputeQueue(), 1, &gallerySubmitInfo, nullptr));
 
     std::vector<VkSwapchainKHR> swapChains{ swapChain->get() };
     VkPresentInfoKHR presentInfo{
         VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         nullptr,
-        uint32_t(photoCardSignalSemaphores.size()),
-        photoCardSignalSemaphores.data(),
+        uint32_t(gallerySignalSemaphores.size()),
+        gallerySignalSemaphores.data(),
         uint32_t(swapChains.size()),
         swapChains.data(),
         &imageIndex,
@@ -230,7 +230,7 @@ bool Engine::destroy()
     vkDeviceWaitIdle(device->get());
 
     vkDestroySemaphore(device->get(), imageAvailable, nullptr);
-    vkDestroySemaphore(device->get(), photoCardRenderingFinished, nullptr);
+    vkDestroySemaphore(device->get(), galleryRenderingFinished, nullptr);
     vkDestroySemaphore(device->get(), computingFinished, nullptr);
     vkDestroySemaphore(device->get(), earthRenderingFinished, nullptr);
 
@@ -244,7 +244,7 @@ bool Engine::destroy()
         delete descriptor;
     }
 
-    delete photoCardRenderPass;
+    delete galleryRenderPass;
     delete earthRenderPass;
     delete descriptorPool;
     delete scene;
@@ -347,22 +347,22 @@ void Engine::initDescriptorSets()
             { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImage->getStorageImageInfo() } } });
     }
 
-    // Photo card:
+    // Gallery:
 
-    descriptors[DESCRIPTOR_TYPE_PHOTO_CARD] = new DescriptorSets(
+    descriptors[DESCRIPTOR_TYPE_GALLERY] = new DescriptorSets(
         descriptorPool,
         {
             { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { VK_SHADER_STAGE_FRAGMENT_BIT } },
             { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT } }
         });
-    descriptors[DESCRIPTOR_TYPE_PHOTO_CARD]->pushDescriptorSet(
+    descriptors[DESCRIPTOR_TYPE_GALLERY]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getPhotoCardTexture()->getCombineSamplerInfo() } },
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getGalleryTexture()->getCombineSamplerInfo() } },
             {
                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 {
-                    scene->getPhotoCardTransformationBuffer()->getUniformBufferInfo(),
-                    scene->getPhotoCardOpacityBuffer()->getUniformBufferInfo()
+                    scene->getGalleryTransformationBuffer()->getUniformBufferInfo(),
+                    scene->getGalleryOpacityBuffer()->getUniformBufferInfo()
                 }
             }
         });
@@ -480,19 +480,19 @@ void Engine::initPipelines()
         {},
         computeShader);
 
-    // Photo card:
+    // Gallery:
 
-    shadersPath = "shaders/PhotoCard/";
+    shadersPath = "shaders/Gallery/";
     shaders = {
         std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
         std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
     };
-    pipelines[PIPELINE_TYPE_PHOTO_CARD] = new GraphicsPipeline(
+    pipelines[PIPELINE_TYPE_GALLERY] = new GraphicsPipeline(
         device,
-        photoCardRenderPass,
+        galleryRenderPass,
         {
             descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(),
-            descriptors[DESCRIPTOR_TYPE_PHOTO_CARD]->getLayout()
+            descriptors[DESCRIPTOR_TYPE_GALLERY]->getLayout()
         },
         {},
         shaders,
@@ -776,17 +776,17 @@ void Engine::initComputingCommands()
     LOGI("Computing commands initialized.");
 }
 
-void Engine::initPhotoCardRenderingCommands()
+void Engine::initGalleryRenderingCommands()
 {
     const VkCommandPool commandPool = device->getCommandPool();
     const uint32_t count = swapChain->getImageCount();
 
-    if (!photoCardRenderingCommands.empty())
+    if (!galleryRenderingCommands.empty())
     {
-        vkFreeCommandBuffers(device->get(), commandPool, uint32_t(photoCardRenderingCommands.size()), photoCardRenderingCommands.data());
+        vkFreeCommandBuffers(device->get(), commandPool, uint32_t(galleryRenderingCommands.size()), galleryRenderingCommands.data());
     }
 
-    photoCardRenderingCommands.resize(count);
+    galleryRenderingCommands.resize(count);
 
     VkCommandBufferAllocateInfo allocInfo{
         VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -796,7 +796,7 @@ void Engine::initPhotoCardRenderingCommands()
         count,
     };
 
-    CALL_VK(vkAllocateCommandBuffers(device->get(), &allocInfo, photoCardRenderingCommands.data()));
+    CALL_VK(vkAllocateCommandBuffers(device->get(), &allocInfo, galleryRenderingCommands.data()));
 
     for (uint32_t i = 0; i < count; i++)
     {
@@ -808,50 +808,50 @@ void Engine::initPhotoCardRenderingCommands()
             nullptr,
         };
 
-        CALL_VK(vkBeginCommandBuffer(photoCardRenderingCommands[i], &beginInfo));
+        CALL_VK(vkBeginCommandBuffer(galleryRenderingCommands[i], &beginInfo));
 
         {
             const VkRect2D renderArea{
             { 0, 0 },
-            photoCardRenderPass->getExtent()
+            galleryRenderPass->getExtent()
             };
-            auto clearValues = photoCardRenderPass->getClearValues();
-            VkRenderPassBeginInfo photoCardRenderPassBeginInfo{
+            auto clearValues = galleryRenderPass->getClearValues();
+            VkRenderPassBeginInfo galleryRenderPassBeginInfo{
                 VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
                 nullptr,
-                photoCardRenderPass->get(),
-                photoCardRenderPass->getFramebuffers()[i],
+                galleryRenderPass->get(),
+                galleryRenderPass->getFramebuffers()[i],
                 renderArea,
                 uint32_t(clearValues.size()),
                 clearValues.data()
             };
 
-            vkCmdBeginRenderPass(photoCardRenderingCommands[i], &photoCardRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+            vkCmdBeginRenderPass(galleryRenderingCommands[i], &galleryRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
             
-            vkCmdBindPipeline(photoCardRenderingCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_PHOTO_CARD]->get());
+            vkCmdBindPipeline(galleryRenderingCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_GALLERY]->get());
             std::vector<VkDescriptorSet> descriptorSets{
                 descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
-                descriptors[DESCRIPTOR_TYPE_PHOTO_CARD]->getDescriptorSet(0),
+                descriptors[DESCRIPTOR_TYPE_GALLERY]->getDescriptorSet(0),
             };
             vkCmdBindDescriptorSets(
-                photoCardRenderingCommands[i],
+                galleryRenderingCommands[i],
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipelines[PIPELINE_TYPE_PHOTO_CARD]->getLayout(),
+                pipelines[PIPELINE_TYPE_GALLERY]->getLayout(),
                 0,
                 descriptorSets.size(),
                 descriptorSets.data(),
                 0,
                 nullptr);
 
-            scene->drawCard(photoCardRenderingCommands[i]);
+            scene->drawCard(galleryRenderingCommands[i]);
 
-            vkCmdEndRenderPass(photoCardRenderingCommands[i]);
+            vkCmdEndRenderPass(galleryRenderingCommands[i]);
         }
 
-        CALL_VK(vkEndCommandBuffer(photoCardRenderingCommands[i]));
+        CALL_VK(vkEndCommandBuffer(galleryRenderingCommands[i]));
     }
 
-    LOGI("Photo card rendering commands initialized.");
+    LOGI("Gallery rendering commands initialized.");
 }
 
 void Engine::updateChangedDescriptorSets()

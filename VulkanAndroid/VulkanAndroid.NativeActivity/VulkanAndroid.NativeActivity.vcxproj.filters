@@ -121,17 +121,17 @@
     <ClInclude Include="sphere.h">
       <Filter>Scene\Models\Meshes</Filter>
     </ClInclude>
-    <ClInclude Include="PhotoCard.h">
-      <Filter>Scene\Models</Filter>
-    </ClInclude>
     <ClInclude Include="EarthRenderPass.h">
-      <Filter>Engine\RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="PhotoCardRenderPass.h">
       <Filter>Engine\RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="ActivityManager.h">
       <Filter>Utils\Android</Filter>
+    </ClInclude>
+    <ClInclude Include="Gallery.h">
+      <Filter>Scene\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="GalleryRenderPass.h">
+      <Filter>Engine\RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -240,17 +240,17 @@
     <ClCompile Include="PositionUv.cpp">
       <Filter>Engine\Vertex</Filter>
     </ClCompile>
-    <ClCompile Include="PhotoCard.cpp">
-      <Filter>Scene\Models</Filter>
-    </ClCompile>
     <ClCompile Include="EarthRenderPass.cpp">
-      <Filter>Engine\RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="PhotoCardRenderPass.cpp">
       <Filter>Engine\RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="ActivityManager.cpp">
       <Filter>Utils\Android</Filter>
+    </ClCompile>
+    <ClCompile Include="Gallery.cpp">
+      <Filter>Scene\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="GalleryRenderPass.cpp">
+      <Filter>Engine\RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

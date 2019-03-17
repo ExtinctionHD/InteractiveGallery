@@ -5,8 +5,6 @@ Application::Application(android_app *app) : app(app)
 {
     ActivityManager::init(app->activity);
 
-    ActivityManager::getFileNames("Download/", { ".jpg", ".jpeg" });
-
     app->userData = &engine;
     app->onAppCmd = handleAppCommand;
     app->onInputEvent = handleAppInput;

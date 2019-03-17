@@ -6,7 +6,7 @@
 #include "Controller.h"
 #include "Skybox.h"
 #include "Clouds.h"
-#include "PhotoCard.h"
+#include "Gallery.h"
 
 class Scene
 {
@@ -26,7 +26,7 @@ public:
 
     Buffer* getSkyboxTransformationBuffer() const;
 
-    Buffer* getPhotoCardTransformationBuffer() const;
+    Buffer* getGalleryTransformationBuffer() const;
 
     Buffer* getLightingBuffer() const;
 
@@ -36,9 +36,9 @@ public:
 
     TextureImage* getSkyboxTexture() const;
 
-    TextureImage* getPhotoCardTexture() const;
+    TextureImage* getGalleryTexture() const;
 
-    Buffer* getPhotoCardOpacityBuffer() const;
+    Buffer* getGalleryOpacityBuffer() const;
 
     void handleMotion(glm::vec2 delta);
 
@@ -82,7 +82,7 @@ private:
 
     Skybox *skybox;
 
-    PhotoCard *photoCard;
+    Gallery *gallery;
 
     void initMeshes(Device *device);
 

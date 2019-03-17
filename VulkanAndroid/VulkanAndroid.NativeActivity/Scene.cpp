@@ -32,7 +32,7 @@ Scene::Scene(Device *device, VkExtent2D extent)
     earth = new Earth(device, "textures/earth/2K/");
     clouds = new Clouds(device, "textures/earth/2K/");
     skybox = new Skybox(device, "textures/Stars/");
-    photoCard = new PhotoCard(device, "Gallery/", earth, camera, controller);
+    gallery = new Gallery(device, "Gallery/", earth, camera, controller);
 
     initMeshes(device);
 
@@ -46,7 +46,7 @@ Scene::~Scene()
         delete buffer;
     }
 
-    delete photoCard;
+    delete gallery;
     delete skybox;
     delete clouds;
     delete earth;
@@ -75,9 +75,9 @@ Buffer* Scene::getSkyboxTransformationBuffer() const
     return skybox->getTransformationBuffer();
 }
 
-Buffer* Scene::getPhotoCardTransformationBuffer() const
+Buffer* Scene::getGalleryTransformationBuffer() const
 {
-    return photoCard->getTransformationBuffer();
+    return gallery->getTransformationBuffer();
 }
 
 Buffer* Scene::getLightingBuffer() const
@@ -100,14 +100,14 @@ TextureImage* Scene::getSkyboxTexture() const
     return skybox->getCubeTexture();
 }
 
-TextureImage* Scene::getPhotoCardTexture() const
+TextureImage* Scene::getGalleryTexture() const
 {
-    return photoCard->getTexture();
+    return gallery->getTextures()[0];
 }
 
-Buffer* Scene::getPhotoCardOpacityBuffer() const
+Buffer* Scene::getGalleryOpacityBuffer() const
 {
-    return photoCard->getOpacityBuffer();
+    return gallery->getOpacityBuffer();
 }
 
 void Scene::handleMotion(glm::vec2 delta)
@@ -130,7 +130,7 @@ void Scene::update()
     earth->rotate(2.0f * deltaSec);
     clouds->setEarthTransformation(earth->getTransformation());
     skybox->setTransformation(translate(glm::mat4(1.0f), camera->getPosition()));
-    photoCard->update();
+    gallery->update();
 
 #ifndef NDEBUG
     logFps(deltaSec);

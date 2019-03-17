@@ -40,8 +40,6 @@ private:
 
     std::vector<TextureImage*> textures;
 
-    glm::vec3 position = glm::vec3(0.0f);
-
     void loadPhotographs(Device *device, const std::string &path);
 
     float loopDistance(glm::vec2 a, glm::vec2 b);

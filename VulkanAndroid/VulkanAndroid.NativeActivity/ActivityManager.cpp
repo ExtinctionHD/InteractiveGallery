@@ -67,7 +67,6 @@ std::vector<std::string> ActivityManager::getFileNames(
                 if (fileName.find(extension, fileName.length() - extension.length()) != std::string::npos)
                 {
                     fileNames.push_back(path + fileName);
-                    LOGD("[%s]", fileNames.back().c_str());
                 }
             }
         }
