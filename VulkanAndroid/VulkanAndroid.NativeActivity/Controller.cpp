@@ -26,14 +26,16 @@ Camera::Location Controller::getLocation() const
 glm::vec2 Controller::getCoordinates(float earthAngle) const
 {
     float longitude = std::fmod(90.0f + angle.x - earthAngle, 360.0f);
+
     if (longitude > 180.0f)
     {
-        longitude = 360.0f - longitude;
+        longitude = -(360.0f - longitude);
     }
     if (longitude < -180.0f)
     {
         longitude = 360.0f + longitude;
     }
+
     return glm::vec2(longitude, angle.y);
 }
 
