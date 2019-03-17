@@ -41,10 +41,10 @@ void Gallery::update()
 {
     const glm::vec2 cameraCoordinates = controller->getCoordinates(earth->getAngle());
 
-    size_t index = 0;
+    uint32_t index = 0;
     float nearestDistance = 360.0f;
 
-    for (size_t i = 0; i < COORDINATES.size(); i++)
+    for (uint32_t i = 0; i < COORDINATES.size(); i++)
     {
         const float distance = loopDistance(cameraCoordinates, COORDINATES[i]);
         if (distance < nearestDistance)

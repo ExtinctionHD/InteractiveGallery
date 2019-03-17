@@ -5,7 +5,7 @@
 
 Earth::Earth(Device *device, const std::string &texturePath) : Model(device), textures(EARTH_TEXTURE_TYPE_COUNT)
 {
-    for (size_t i = 0; i < textures.size(); i++)
+    for (uint32_t i = 0; i < textures.size(); i++)
     {
         textures[i] = new TextureImage(
             device,

@@ -4,7 +4,7 @@
 Skybox::Skybox(Device *device, const std::string &texturePath) : Model(device)
 {
     std::vector<std::vector<uint8_t>> buffers(CUBE_MAP_FILES.size());
-    for(size_t i = 0; i < buffers.size(); i++)
+    for(uint32_t i = 0; i < buffers.size(); i++)
     {
         buffers[i] = ActivityManager::readAsset(texturePath + CUBE_MAP_FILES[i]);
     }
