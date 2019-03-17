@@ -3,6 +3,7 @@
 TextureImage::TextureImage(
 	Device *device,
 	const std::vector<std::vector<uint8_t>> &buffers,
+    bool mipLevels,
 	bool cubeMap)
 {
     extent = VkExtent3D{0, 0, 1};
@@ -18,7 +19,7 @@ TextureImage::TextureImage(
         0,
         VK_FORMAT_R8G8B8A8_UNORM,
 		extent,
-        calculateMipLevelCount(extent),
+        mipLevels ? calculateMipLevelCount(extent) : 1,
         pixels.size(),
 		VK_SAMPLE_COUNT_1_BIT,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,

@@ -38,7 +38,7 @@ public:
 
     TextureImage* getGalleryTexture() const;
 
-    Buffer* getGalleryOpacityBuffer() const;
+    Buffer* getGalleryParameterBuffer() const;
 
     void handleMotion(glm::vec2 delta);
 

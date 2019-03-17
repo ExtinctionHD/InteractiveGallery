@@ -9,6 +9,7 @@ public:
     TextureImage(
         Device *device,
         const std::vector<std::vector<uint8_t>> &buffers,
+        bool mipLevels,
         bool cubeMap);
 
     TextureImage(

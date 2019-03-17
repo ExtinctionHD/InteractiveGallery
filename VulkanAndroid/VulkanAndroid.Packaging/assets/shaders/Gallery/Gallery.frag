@@ -10,10 +10,11 @@ layout(set = 0, binding = 1) uniform Lighting
     float ambientIntensity;
 };
 
-layout(set = 1, binding = 0) uniform sampler2D photo;
+layout(set = 1, binding = 0) uniform sampler2DArray photo;
 
-layout(set = 1, binding = 2) uniform Opacity
+layout(set = 1, binding = 2) uniform Parameters
 {
+    float index;
     float opacity;
 };
 
@@ -23,5 +24,5 @@ layout(location = 0) out vec4 outColor;
 
 void main() 
 {
-    outColor = vec4(texture(photo, inUV).rgb, opacity);
+    outColor = vec4(texture(photo, vec3(inUV, index)).rgb, opacity);
 }

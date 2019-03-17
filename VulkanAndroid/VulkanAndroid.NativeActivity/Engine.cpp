@@ -362,7 +362,7 @@ void Engine::initDescriptorSets()
                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 {
                     scene->getGalleryTransformationBuffer()->getUniformBufferInfo(),
-                    scene->getGalleryOpacityBuffer()->getUniformBufferInfo()
+                    scene->getGalleryParameterBuffer()->getUniformBufferInfo()
                 }
             }
         });

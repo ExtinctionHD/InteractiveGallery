@@ -18,35 +18,32 @@ Gallery::Gallery(
 {
     loadPhotographs(device, path);
 
-    opacityBuffer = new Buffer(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(float));
+    parameterBuffer = new Buffer(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(Parameters));
 }
 
 Gallery::~Gallery()
 {
-    delete opacityBuffer;
-
-    for (auto texture : textures)
-    {
-        delete texture;
-    }
+    delete parameterBuffer;
+    delete texture;
 }
 
-std::vector<TextureImage*> Gallery::getTextures() const
+TextureImage* Gallery::getTexture() const
 {
-    return textures;
+    return texture;
 }
 
-Buffer* Gallery::getOpacityBuffer() const
+Buffer* Gallery::getParameterBuffer() const
 {
-    return opacityBuffer;
+    return parameterBuffer;
 }
 
 void Gallery::update()
 {
     const glm::vec2 cameraCoordinates = controller->getCoordinates(earth->getAngle());
 
-    size_t index;
+    size_t index = 0;
     float nearestDistance = 360.0f;
+
     for (size_t i = 0; i < COORDINATES.size(); i++)
     {
         const float distance = loopDistance(cameraCoordinates, COORDINATES[i]);
@@ -57,34 +54,32 @@ void Gallery::update()
         }
     }
 
-    float opacity = 0.0f;
+    Parameters parameters{};
 
     if (nearestDistance < MAX_DISTANCE)
     {
-        opacity = calculateOpacity(nearestDistance);
+        parameters.opacity = calculateOpacity(nearestDistance);
 
         setLocation(COORDINATES[index]);
     }
 
-    opacityBuffer->updateData(&opacity);
+    parameters.index = float(index);
+    parameterBuffer->updateData(&parameters);
 }
 
 void Gallery::loadPhotographs(Device *device, const std::string &path)
 {
     std::vector<std::string> fileNames = ActivityManager::getFileNames(path, EXTENSIONS);
 
-    textures.reserve(fileNames.size());
-
+    std::vector<std::vector<uint8_t>> buffers;
     for (const auto &fileName : fileNames)
     {
-        TextureImage *texture = new TextureImage(
-            device,
-            { ActivityManager::read(fileName) },
-            false);
-        texture->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
-        texture->pushSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
-        textures.push_back(texture);
+        buffers.push_back(ActivityManager::read(fileName));
     }
+
+    texture = new TextureImage( device, buffers, false, false);
+    texture->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
+    texture->pushSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 }
 
 float Gallery::loopDistance(glm::vec2 a, glm::vec2 b)

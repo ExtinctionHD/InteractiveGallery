@@ -12,13 +12,19 @@ public:
 
     virtual ~Gallery();
 
-    std::vector<TextureImage *> getTextures() const;
+    TextureImage* getTexture() const;
 
-    Buffer* getOpacityBuffer() const;
+    Buffer* getParameterBuffer() const;
 
     void update();
 
 private:
+    struct Parameters
+    {
+        float index;
+        float opacity;
+    };
+
     const float MAX_DISTANCE = 20.0f;
 
     const std::vector<std::string> EXTENSIONS{
@@ -30,7 +36,7 @@ private:
         glm::vec2(151.215297, -33.856829f),
     };
 
-    Buffer *opacityBuffer;
+    Buffer *parameterBuffer;
 
     Earth *earth;
 
@@ -38,7 +44,7 @@ private:
 
     Controller *controller;
 
-    std::vector<TextureImage*> textures;
+    TextureImage *texture;
 
     void loadPhotographs(Device *device, const std::string &path);
 

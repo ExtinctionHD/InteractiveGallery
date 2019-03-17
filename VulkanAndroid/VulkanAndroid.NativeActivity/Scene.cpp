@@ -102,12 +102,12 @@ TextureImage* Scene::getSkyboxTexture() const
 
 TextureImage* Scene::getGalleryTexture() const
 {
-    return gallery->getTextures()[0];
+    return gallery->getTexture();
 }
 
-Buffer* Scene::getGalleryOpacityBuffer() const
+Buffer* Scene::getGalleryParameterBuffer() const
 {
-    return gallery->getOpacityBuffer();
+    return gallery->getParameterBuffer();
 }
 
 void Scene::handleMotion(glm::vec2 delta)
