@@ -20,6 +20,8 @@ public:
 
     Buffer* getCameraBuffer() const;
 
+    // TODO: combine into one function 
+
     Buffer* getEarthTransformationBuffer() const;
 
     Buffer* getCloudsTransformationBuffer() const;

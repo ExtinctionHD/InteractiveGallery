@@ -83,6 +83,8 @@ private:
 
     Scene *scene;
 
+    // TODO: combine semaphores
+
     VkSemaphore earthRenderingFinished;
 
     VkSemaphore computingFinished;
@@ -90,6 +92,8 @@ private:
     VkSemaphore galleryRenderingFinished;
 
     VkSemaphore imageAvailable;
+
+    // TODO: combine commands
 
     VkCommandBuffer earthRenderingCommands{};
 
