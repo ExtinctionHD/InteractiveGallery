@@ -1,7 +1,6 @@
 #include "Gallery.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include "sphere.h"
 #include "utils.h"
 #include "ActivityManager.h"
 
@@ -55,7 +54,7 @@ void Gallery::update()
     }
 
     Parameters parameters{ float(index), 0.0f };
-    const float maxDistance = (controller->getRadius() - sphere::R) * MAX_DISTANCE_FACTOR;
+    const float maxDistance = (controller->getRadius() - earth->getRadius()) * MAX_DISTANCE_FACTOR;
 
     if (nearestDistance < maxDistance)
     {
@@ -119,9 +118,7 @@ float Gallery::calculateOpacity(float nearestDistance, float maxDistance)
 
 glm::vec3 Gallery::calculateScale()
 {
-    // TODO: replace sphere::R to earth->getRadius()
-
-    const float distance = controller->getRadius() - sphere::R;
+    const float distance = controller->getRadius() - earth->getRadius();
 
     const float biggerSide = distance * SCALE_FACTOR;
 
@@ -143,7 +140,7 @@ glm::vec3 Gallery::calculateScale()
 
 glm::mat4 Gallery::calculateTransformation(glm::vec2 photoCoordinates)
 {
-    const glm::vec3 position = sphere::R * axis::rotate(
+    const glm::vec3 position = earth->getRadius() * axis::rotate(
         -axis::X,
         glm::vec2(photoCoordinates.x + earth->getAngle(), photoCoordinates.y),
         nullptr);

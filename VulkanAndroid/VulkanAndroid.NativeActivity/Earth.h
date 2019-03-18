@@ -22,6 +22,8 @@ public:
 
     float getAngle() const;
 
+    float getRadius() const;
+
     void rotate(float angle);
 
 private:

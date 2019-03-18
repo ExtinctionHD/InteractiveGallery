@@ -2,6 +2,7 @@
 #include <glm/ext/matrix_transform.inl>
 #include "utils.h"
 #include "ActivityManager.h"
+#include "sphere.h"
 
 Earth::Earth(Device *device, const std::string &texturePath) : Model(device), textures(EARTH_TEXTURE_TYPE_COUNT)
 {
@@ -33,6 +34,11 @@ std::vector<TextureImage*> Earth::getTextures() const
 float Earth::getAngle() const
 {
     return angle;
+}
+
+float Earth::getRadius() const
+{
+    return sphere::R;
 }
 
 void Earth::rotate(float angle)
