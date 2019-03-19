@@ -1,14 +1,13 @@
 #include "Controller.h"
 #include <glm/gtx/rotate_vector.hpp>
 #include "utils.h"
-#include "sphere.h"
 
 Controller::Controller(glm::vec3 target, glm::vec3 position)
     : target(target),
-      radius(distance(target, position)),
+      radius(glm::distance(target, position)),
       delta(glm::vec2(0.0f))
 {
-    const glm::vec3 view = normalize(target - position);
+    const glm::vec3 view = glm::normalize(target - position);
 
     angle.x = glm::radians(90.0f) + std::atan2(view.z, view.x);
     angle.y = glm::degrees(glm::asin(view.y));
@@ -19,7 +18,7 @@ Camera::Location Controller::getLocation() const
     glm::vec3 hAxis;
 
     const glm::vec3 view = axis::rotate(-axis::Z, angle, &hAxis);
-    const glm::vec3 up = normalize(cross(-view, hAxis));
+    const glm::vec3 up = glm::normalize(glm::cross(-view, hAxis));
 
     return Camera::Location{ target + view * radius, target, up };
 }

@@ -38,10 +38,10 @@ VkExtent2D window::getExtent(ANativeWindow *window)
 glm::vec3 axis::rotate(glm::vec3 baseAxis, glm::vec2 angle, glm::vec3 *outHorizontalAxis)
 {
     glm::vec3 result = glm::rotate(baseAxis, glm::radians(angle.x), -Y);
-    result = normalize(result);
+    result = glm::normalize(result);
 
-    glm::vec3 hAxis = cross(result, -Y);
-    hAxis = normalize(hAxis);
+    glm::vec3 hAxis = glm::cross(result, -Y);
+    hAxis = glm::normalize(hAxis);
     result = glm::rotate(result, glm::radians(angle.y), hAxis);
 
     if (outHorizontalAxis)
@@ -49,5 +49,5 @@ glm::vec3 axis::rotate(glm::vec3 baseAxis, glm::vec2 angle, glm::vec3 *outHorizo
         *outHorizontalAxis = hAxis;
     }
 
-    return normalize(result);
+    return glm::normalize(result);
 }

@@ -40,26 +40,16 @@ void Gallery::update()
 {
     const glm::vec2 cameraCoordinates = controller->getCoordinates(earth->getAngle());
 
-    uint32_t index = 0;
-    float nearestDistance = 360.0f;
-
-    for (uint32_t i = 0; i < COORDINATES.size(); i++)
-    {
-        const float distance = loopDistance(cameraCoordinates, COORDINATES[i]);
-        if (distance < nearestDistance)
-        {
-            nearestDistance = distance;
-            index = i;
-        }
-    }
+    uint32_t index;
+    const float nearestDistance = calculateNearestDistance(cameraCoordinates, &index);
 
     Parameters parameters{ float(index), 0.0f };
-    const float maxDistance = (controller->getRadius() - earth->getRadius()) * MAX_DISTANCE_FACTOR;
+    const float distanceLimit = (controller->getRadius() - earth->getRadius()) * DISTANCE_LIMIT_FACTOR;
 
-    if (nearestDistance < maxDistance)
+    if (nearestDistance < distanceLimit)
     {
-        parameters.opacity = calculateOpacity(nearestDistance, maxDistance);
-        setTransformation(calculateTransformation(COORDINATES[index]));
+        parameters.opacity = calculateOpacity(nearestDistance, distanceLimit);
+        setTransformation(calculateTransformation(COORDINATES[index], cameraCoordinates));
     }
 
     parameterBuffer->updateData(&parameters);
@@ -86,7 +76,7 @@ float Gallery::loopDistance(glm::vec2 a, glm::vec2 b)
 
     if (glm::abs(a.x - b.x) < 180.0f)
     {
-        result = distance(a, b);
+        result = glm::distance(a, b);
     }
     else
     {
@@ -98,17 +88,34 @@ float Gallery::loopDistance(glm::vec2 a, glm::vec2 b)
         {
             b.x += 360.0f;
         }
-        result = distance(a, b);
+        result = glm::distance(a, b);
     }
 
     return result;
 }
 
-float Gallery::calculateOpacity(float nearestDistance, float maxDistance)
+float Gallery::calculateNearestDistance(glm::vec2 cameraCoordinates, uint32_t *outIndex)
 {
-    const float transparencyDistance = maxDistance / 2.0f;
+    float nearestDistance = 360.0f;
 
-    float opacity = 1.0f - (nearestDistance - transparencyDistance) / (maxDistance - transparencyDistance);
+    for (uint32_t i = 0; i < COORDINATES.size(); i++)
+    {
+        const float distance = loopDistance(cameraCoordinates, COORDINATES[i]);
+        if (distance < nearestDistance)
+        {
+            nearestDistance = distance;
+            *outIndex = i;
+        }
+    }
+
+    return nearestDistance;
+}
+
+float Gallery::calculateOpacity(float nearestDistance, float distanceLimit)
+{
+    const float transparencyDistance = distanceLimit / 2.0f;
+
+    float opacity = 1.0f - (nearestDistance - transparencyDistance) / (distanceLimit - transparencyDistance);
 
     opacity = opacity > 1.0f ? 1.0f : opacity;
     opacity = std::pow(opacity, 0.5f);
@@ -138,22 +145,21 @@ glm::vec3 Gallery::calculateScale()
     return scale;
 }
 
-glm::mat4 Gallery::calculateTransformation(glm::vec2 photoCoordinates)
+glm::mat4 Gallery::calculateTransformation(glm::vec2 photoCoordinates, glm::vec2 cameraCoordinates)
 {
     const glm::vec3 position = earth->getRadius() * axis::rotate(
         -axis::X,
         glm::vec2(photoCoordinates.x + earth->getAngle(), photoCoordinates.y),
         nullptr);
+    const glm::vec3 scale = calculateScale();
 
-    // TODO: fix y angle calculation 
+    const glm::vec3 direction = glm::normalize(camera->getPosition() - position);
+    const glm::vec2 angleRadians(glm::radians(90.0f + cameraCoordinates.x), glm::asin(direction.y));
 
-    const glm::vec3 direction = normalize(camera->getPosition() - position);
-    const glm::vec2 angle(glm::radians(90.0f) + std::atan2(direction.z, direction.x), glm::asin(direction.y));
-
-    glm::mat4 transformation = translate(glm::mat4(1.0f), position);
-    transformation = rotate(transformation, angle.y, camera->getRight());
-    transformation = rotate(transformation, angle.x, -axis::Y);
-    transformation = scale(transformation, calculateScale());
+    glm::mat4 transformation = glm::translate(glm::mat4(1.0f), position);
+    transformation = glm::rotate(transformation, angleRadians.y, camera->getRight());
+    transformation = glm::rotate(transformation, angleRadians.x, -axis::Y);
+    transformation = glm::scale(transformation, scale);
 
     return transformation;
 }

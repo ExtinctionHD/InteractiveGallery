@@ -3,7 +3,8 @@
 
 namespace card
 {
-    const float A = 2.0f;
+    const float WIDTH = 2.0f;
+    const float HEIGHT = 2.15f;
 
     const std::vector<PositionUv> VERTICES{
         { glm::vec3(-1.0f, -2.15f, 0.0f), glm::vec2(-0.02f, -0.02f) },

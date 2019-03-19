@@ -20,7 +20,7 @@ public:
 
     Buffer* getCameraBuffer() const;
 
-    // TODO: combine into one function 
+    // TODO: combine into one function with descriptor info return type
 
     Buffer* getEarthTransformationBuffer() const;
 

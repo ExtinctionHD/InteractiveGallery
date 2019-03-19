@@ -30,7 +30,7 @@ private:
         glm::vec2(151.215297, -33.856829f),
     };
 
-    const float MAX_DISTANCE_FACTOR = 1.25;
+    const float DISTANCE_LIMIT_FACTOR = 1.25;
 
     const float SCALE_FACTOR = 0.4f;
 
@@ -48,9 +48,11 @@ private:
 
     float loopDistance(glm::vec2 a, glm::vec2 b);
 
-    float calculateOpacity(float nearestDistance, float maxDistance);
+    float calculateNearestDistance(glm::vec2 cameraCoordinates, uint32_t *outIndex);
+
+    float calculateOpacity(float nearestDistance, float distanceLimit);
 
     glm::vec3 calculateScale();
 
-    glm::mat4 calculateTransformation(glm::vec2 photoCoordinates);
+    glm::mat4 calculateTransformation(glm::vec2 photoCoordinates, glm::vec2 cameraCoordinates);
 };
