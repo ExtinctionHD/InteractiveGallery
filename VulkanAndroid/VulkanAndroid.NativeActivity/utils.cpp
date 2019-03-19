@@ -51,3 +51,24 @@ glm::vec3 axis::rotate(glm::vec3 baseAxis, glm::vec2 angle, glm::vec3 *outHorizo
 
     return glm::normalize(result);
 }
+
+std::string file::getFileName(const std::string &path)
+{
+    const std::vector<char> delimiters{ '/', '\\' };
+
+    std::string result;
+
+    auto index = path.find_last_of(delimiters.data());
+    if (index != std::string::npos)
+    {
+        result = path.substr(index + 1);
+    }
+
+    index = result.find('.');
+    if (index != std::string::npos)
+    {
+        result = result.substr(0, index);
+    }
+
+    return result;
+}

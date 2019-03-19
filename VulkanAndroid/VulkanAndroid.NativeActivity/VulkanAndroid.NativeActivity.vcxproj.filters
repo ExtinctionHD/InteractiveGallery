@@ -133,6 +133,9 @@
     <ClInclude Include="GalleryRenderPass.h">
       <Filter>Engine\RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="cities.h">
+      <Filter>Scene\Models</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -251,6 +254,9 @@
     </ClCompile>
     <ClCompile Include="GalleryRenderPass.cpp">
       <Filter>Engine\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="cities.cpp">
+      <Filter>Scene\Models</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

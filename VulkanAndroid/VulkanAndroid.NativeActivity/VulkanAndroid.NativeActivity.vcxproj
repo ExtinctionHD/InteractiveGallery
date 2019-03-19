@@ -288,6 +288,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="card.h" />
     <ClInclude Include="ActivityManager.h" />
+    <ClInclude Include="cities.h" />
     <ClInclude Include="GalleryRenderPass.h" />
     <ClInclude Include="Clouds.h" />
     <ClInclude Include="ComputePipeline.h" />
@@ -334,6 +335,7 @@
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ActivityManager.cpp" />
+    <ClCompile Include="cities.cpp" />
     <ClCompile Include="GalleryRenderPass.cpp" />
     <ClCompile Include="Clouds.cpp" />
     <ClCompile Include="ComputePipeline.cpp" />

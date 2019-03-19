@@ -47,7 +47,7 @@ std::vector<uint8_t> ActivityManager::readAsset(const std::string &path)
     return buffer;
 }
 
-std::vector<std::string> ActivityManager::getFileNames(
+std::vector<std::string> ActivityManager::getFilePaths(
     const std::string &path,
     const std::vector<std::string> &extensions)
 {

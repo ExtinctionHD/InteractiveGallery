@@ -19,3 +19,8 @@ namespace axis
     // rotates baseAxis around -Y on angle.x and then around horizontal axis on angle.y
     glm::vec3 rotate(glm::vec3 baseAxis, glm::vec2 angle, glm::vec3 *outHorizontalAxis);
 }
+
+namespace file
+{
+    std::string getFileName(const std::string &path);
+}

@@ -25,11 +25,6 @@ private:
         float opacity;
     };
 
-    const std::vector<glm::vec2> COORDINATES{
-        glm::vec2(2.293966f, 48.858187f),
-        glm::vec2(151.215297, -33.856829f),
-    };
-
     const float DISTANCE_LIMIT_FACTOR = 1.25;
 
     const float SCALE_FACTOR = 0.4f;
@@ -43,6 +38,8 @@ private:
     Controller *controller;
 
     TextureImage *texture;
+
+    std::vector<glm::vec2> coordinates;
 
     void loadPhotographs(Device *device, const std::string &path);
 

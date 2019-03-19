@@ -1,8 +1,10 @@
 #include "Gallery.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include <algorithm>
 #include "utils.h"
 #include "ActivityManager.h"
+#include "cities.h"
 
 Gallery::Gallery(
     Device *device,
@@ -49,7 +51,7 @@ void Gallery::update()
     if (nearestDistance < distanceLimit)
     {
         parameters.opacity = calculateOpacity(nearestDistance, distanceLimit);
-        setTransformation(calculateTransformation(COORDINATES[index], cameraCoordinates));
+        setTransformation(calculateTransformation(coordinates[index], cameraCoordinates));
     }
 
     parameterBuffer->updateData(&parameters);
@@ -57,12 +59,24 @@ void Gallery::update()
 
 void Gallery::loadPhotographs(Device *device, const std::string &path)
 {
-    std::vector<std::string> fileNames = ActivityManager::getFileNames(path, { ".jpg", ".jpeg", ".png" });
+    std::vector<std::string> paths = ActivityManager::getFilePaths(path, { ".jpg", ".jpeg", ".png" });
 
     std::vector<std::vector<uint8_t>> buffers;
-    for (const auto &fileName : fileNames)
+    for (const auto &filePath : paths)
     {
-        buffers.push_back(ActivityManager::read(fileName));
+        std::string fileName = file::getFileName(filePath);
+        std::transform(fileName.begin(), fileName.end(), fileName.begin(), ::tolower);
+
+        auto it = cities::COORDINATES.find(fileName);
+        if (it != cities::COORDINATES.end())
+        {
+            coordinates.push_back(it->second);
+            buffers.push_back(ActivityManager::read(filePath));
+        }
+        else
+        {
+            LOGE("%s coordinates not found.", fileName.c_str());
+        }
     }
 
     texture = new TextureImage( device, buffers, false, false);
@@ -98,9 +112,9 @@ float Gallery::calculateNearestDistance(glm::vec2 cameraCoordinates, uint32_t *o
 {
     float nearestDistance = 360.0f;
 
-    for (uint32_t i = 0; i < COORDINATES.size(); i++)
+    for (uint32_t i = 0; i < coordinates.size(); i++)
     {
-        const float distance = loopDistance(cameraCoordinates, COORDINATES[i]);
+        const float distance = loopDistance(cameraCoordinates, coordinates[i]);
         if (distance < nearestDistance)
         {
             nearestDistance = distance;

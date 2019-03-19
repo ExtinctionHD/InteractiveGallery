@@ -10,7 +10,7 @@ public:
 
     static std::vector<uint8_t> readAsset(const std::string &path);
 
-    static std::vector<std::string> getFileNames(const std::string &path, const std::vector<std::string> &extensions);
+    static std::vector<std::string> getFilePaths(const std::string &path, const std::vector<std::string> &extensions);
 
 private:
     static ANativeActivity *activity;
