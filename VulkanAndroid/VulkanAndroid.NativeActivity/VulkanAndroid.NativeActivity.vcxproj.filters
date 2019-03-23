@@ -67,12 +67,6 @@
     <ClInclude Include="utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>Scene\Models</Filter>
-    </ClInclude>
-    <ClInclude Include="Earth.h">
-      <Filter>Scene\Models</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Scene\Camera</Filter>
     </ClInclude>
@@ -93,12 +87,6 @@
     </ClInclude>
     <ClInclude Include="Position.h">
       <Filter>Engine\Vertex</Filter>
-    </ClInclude>
-    <ClInclude Include="Skybox.h">
-      <Filter>Scene\Models</Filter>
-    </ClInclude>
-    <ClInclude Include="Clouds.h">
-      <Filter>Scene\Models</Filter>
     </ClInclude>
     <ClInclude Include="ComputePipeline.h">
       <Filter>Engine\Pipelines</Filter>
@@ -127,14 +115,26 @@
     <ClInclude Include="ActivityManager.h">
       <Filter>Utils\Android</Filter>
     </ClInclude>
-    <ClInclude Include="Gallery.h">
-      <Filter>Scene\Models</Filter>
-    </ClInclude>
     <ClInclude Include="GalleryRenderPass.h">
       <Filter>Engine\RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="cities.h">
-      <Filter>Scene\Models</Filter>
+      <Filter>Scene\Models\cities</Filter>
+    </ClInclude>
+    <ClInclude Include="Clouds.h">
+      <Filter>Scene\Models\Clouds</Filter>
+    </ClInclude>
+    <ClInclude Include="Earth.h">
+      <Filter>Scene\Models\Earth</Filter>
+    </ClInclude>
+    <ClInclude Include="Gallery.h">
+      <Filter>Scene\Models\Gallery</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Scene\Models\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Skybox.h">
+      <Filter>Scene\Models\Skybox</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -201,12 +201,6 @@
     <ClCompile Include="utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Model.cpp">
-      <Filter>Scene\Models</Filter>
-    </ClCompile>
-    <ClCompile Include="Earth.cpp">
-      <Filter>Scene\Models</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Scene\Camera</Filter>
     </ClCompile>
@@ -228,12 +222,6 @@
     <ClCompile Include="Position.cpp">
       <Filter>Engine\Vertex</Filter>
     </ClCompile>
-    <ClCompile Include="Skybox.cpp">
-      <Filter>Scene\Models</Filter>
-    </ClCompile>
-    <ClCompile Include="Clouds.cpp">
-      <Filter>Scene\Models</Filter>
-    </ClCompile>
     <ClCompile Include="ComputePipeline.cpp">
       <Filter>Engine\Pipelines</Filter>
     </ClCompile>
@@ -249,14 +237,26 @@
     <ClCompile Include="ActivityManager.cpp">
       <Filter>Utils\Android</Filter>
     </ClCompile>
-    <ClCompile Include="Gallery.cpp">
-      <Filter>Scene\Models</Filter>
-    </ClCompile>
     <ClCompile Include="GalleryRenderPass.cpp">
       <Filter>Engine\RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="cities.cpp">
-      <Filter>Scene\Models</Filter>
+      <Filter>Scene\Models\cities</Filter>
+    </ClCompile>
+    <ClCompile Include="Clouds.cpp">
+      <Filter>Scene\Models\Clouds</Filter>
+    </ClCompile>
+    <ClCompile Include="Earth.cpp">
+      <Filter>Scene\Models\Earth</Filter>
+    </ClCompile>
+    <ClCompile Include="Gallery.cpp">
+      <Filter>Scene\Models\Gallery</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Scene\Models\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="Skybox.cpp">
+      <Filter>Scene\Models\Skybox</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -334,6 +334,24 @@
     </Filter>
     <Filter Include="Scene\Models\Meshes">
       <UniqueIdentifier>{ce7feca3-c1ab-4562-9830-1d4faeb1f613}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\Models\cities">
+      <UniqueIdentifier>{bd118cc1-08b1-4b55-a8af-aa0e7412f8c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\Models\Clouds">
+      <UniqueIdentifier>{2318b26b-b331-41b7-9c31-33a471462c9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\Models\Earth">
+      <UniqueIdentifier>{3ecd2753-c14d-40fe-bebe-f2c804bd6cc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\Models\Gallery">
+      <UniqueIdentifier>{8b566ebe-4a03-4652-a7ed-54e1a3856fce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\Models\Model">
+      <UniqueIdentifier>{98f20e54-9a7e-42cf-9dc3-7fa1d9431406}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene\Models\Skybox">
+      <UniqueIdentifier>{6ad205f6-857a-4dc9-8e72-559aea908296}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

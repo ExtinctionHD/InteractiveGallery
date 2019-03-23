@@ -12,9 +12,9 @@ public:
 
     virtual ~Gallery();
 
-    TextureImage* getTexture() const;
+    std::vector<DescriptorInfo> getTextureInfos() const override;
 
-    Buffer* getParameterBuffer() const;
+    std::vector<DescriptorInfo> getUniformBufferInfos() const override;
 
     void update();
 

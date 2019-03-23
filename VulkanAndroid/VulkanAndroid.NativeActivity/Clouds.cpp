@@ -18,9 +18,14 @@ Clouds::~Clouds()
     delete texture;
 }
 
-TextureImage * Clouds::getTexture() const
+std::vector<DescriptorInfo> Clouds::getTextureInfos() const
 {
-    return texture;
+    return { texture->getCombineSamplerInfo() };
+}
+
+std::vector<DescriptorInfo> Clouds::getUniformBufferInfos() const
+{
+    return {};
 }
 
 void Clouds::setEarthTransformation(glm::mat4 earthTransformation)

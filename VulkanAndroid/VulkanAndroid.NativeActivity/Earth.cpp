@@ -26,9 +26,22 @@ Earth::~Earth()
     }
 }
 
-std::vector<TextureImage*> Earth::getTextures() const
+std::vector<DescriptorInfo> Earth::getTextureInfos() const
 {
-    return textures;
+    std::vector<DescriptorInfo> result;
+    result.reserve(textures.size());
+
+    for (const auto &texture : textures)
+    {
+        result.push_back(texture->getCombineSamplerInfo());
+    }
+
+    return result;
+}
+
+std::vector<DescriptorInfo> Earth::getUniformBufferInfos() const
+{
+    return {};
 }
 
 float Earth::getAngle() const

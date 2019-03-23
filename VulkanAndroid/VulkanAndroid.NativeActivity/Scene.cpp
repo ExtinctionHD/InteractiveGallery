@@ -29,10 +29,17 @@ Scene::Scene(Device *device, VkExtent2D extent)
     };
     lighting = new Lighting(device, lightingAttributes);
 
+
     earth = new Earth(device, "textures/earth/2K/");
     clouds = new Clouds(device, "textures/earth/2K/");
     skybox = new Skybox(device, "textures/Stars/");
     gallery = new Gallery(device, "Gallery/", earth, camera, controller);
+
+    models.resize(uint32_t(ModelId::COUNT));
+    models[uint32_t(ModelId::EARTH)] = earth;
+    models[uint32_t(ModelId::CLOUDS)] = clouds;
+    models[uint32_t(ModelId::SKYBOX)] = skybox;
+    models[uint32_t(ModelId::GALLERY)] = gallery;
 
     initMeshes(device);
 
@@ -46,10 +53,11 @@ Scene::~Scene()
         delete buffer;
     }
 
-    delete gallery;
-    delete skybox;
-    delete clouds;
-    delete earth;
+    for (auto &model : models)
+    {
+        delete model;
+    }
+
     delete lighting;
     delete controller;
     delete camera;
@@ -60,54 +68,24 @@ Buffer* Scene::getCameraBuffer() const
     return camera->getBuffer();
 }
 
-Buffer* Scene::getEarthTransformationBuffer() const
+DescriptorInfo Scene::getLightingBufferInfo() const
 {
-    return earth->getTransformationBuffer();
+    return lighting->getBuffer()->getUniformBufferInfo();
 }
 
-Buffer* Scene::getCloudsTransformationBuffer() const
+std::vector<DescriptorInfo> Scene::getModelTextureInfos(ModelId id)
 {
-    return  clouds->getTransformationBuffer();
+    return models[uint32_t(id)]->getTextureInfos();
 }
 
-Buffer* Scene::getSkyboxTransformationBuffer() const
+std::vector<DescriptorInfo> Scene::getModelUniformBufferInfo(ModelId id)
 {
-    return skybox->getTransformationBuffer();
+    return models[uint32_t(id)]->getUniformBufferInfos();
 }
 
-Buffer* Scene::getGalleryTransformationBuffer() const
+DescriptorInfo Scene::getModelTransformationBufferInfo(ModelId id)
 {
-    return gallery->getTransformationBuffer();
-}
-
-Buffer* Scene::getLightingBuffer() const
-{
-    return lighting->getBuffer();
-}
-
-std::vector<TextureImage*> Scene::getEarthTextures() const
-{
-    return earth->getTextures();
-}
-
-TextureImage* Scene::getCloudsTexture() const
-{
-    return clouds->getTexture();
-}
-
-TextureImage* Scene::getSkyboxTexture() const
-{
-    return skybox->getCubeTexture();
-}
-
-TextureImage* Scene::getGalleryTexture() const
-{
-    return gallery->getTexture();
-}
-
-Buffer* Scene::getGalleryParameterBuffer() const
-{
-    return gallery->getParameterBuffer();
+    return models[uint32_t(id)]->getTransformationBufferInfo();
 }
 
 void Scene::handleMotion(glm::vec2 delta)

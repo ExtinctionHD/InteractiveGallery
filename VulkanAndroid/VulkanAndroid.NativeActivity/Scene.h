@@ -11,6 +11,15 @@
 class Scene
 {
 public:
+    enum class ModelId
+    {
+        EARTH,
+        CLOUDS,
+        SKYBOX,
+        GALLERY,
+        COUNT,
+    };
+
     static const uint32_t BUFFER_COUNT = 7;
     static const uint32_t TEXTURE_COUNT = EARTH_TEXTURE_TYPE_COUNT + 4;
 
@@ -20,27 +29,13 @@ public:
 
     Buffer* getCameraBuffer() const;
 
-    // TODO: combine into one function with descriptor info return type
+    DescriptorInfo getLightingBufferInfo() const;
 
-    Buffer* getEarthTransformationBuffer() const;
+    std::vector<DescriptorInfo> getModelTextureInfos(ModelId id);
 
-    Buffer* getCloudsTransformationBuffer() const;
+    std::vector<DescriptorInfo> getModelUniformBufferInfo(ModelId id);
 
-    Buffer* getSkyboxTransformationBuffer() const;
-
-    Buffer* getGalleryTransformationBuffer() const;
-
-    Buffer* getLightingBuffer() const;
-
-    std::vector<TextureImage*> getEarthTextures() const;
-
-    TextureImage* getCloudsTexture() const;
-
-    TextureImage* getSkyboxTexture() const;
-
-    TextureImage* getGalleryTexture() const;
-
-    Buffer* getGalleryParameterBuffer() const;
+    DescriptorInfo getModelTransformationBufferInfo(ModelId id);
 
     void handleMotion(glm::vec2 delta);
 
@@ -77,6 +72,8 @@ private:
     std::vector<Buffer*> meshBuffers;
 
     Timer timer;
+
+    std::vector<Model*> models;
 
     Earth *earth;
 

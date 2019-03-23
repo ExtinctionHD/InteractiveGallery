@@ -18,7 +18,9 @@ public:
 
     virtual ~Earth();
 
-    std::vector<TextureImage*> getTextures() const;
+    std::vector<DescriptorInfo> getTextureInfos() const override;
+
+    std::vector<DescriptorInfo> getUniformBufferInfos() const override;
 
     float getAngle() const;
 

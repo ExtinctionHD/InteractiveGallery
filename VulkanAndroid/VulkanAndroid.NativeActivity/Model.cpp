@@ -6,9 +6,9 @@ Model::~Model()
     delete transformationBuffer;
 }
 
-Buffer* Model::getTransformationBuffer() const
+DescriptorInfo Model::getTransformationBufferInfo() const
 {
-    return transformationBuffer;
+    return transformationBuffer->getUniformBufferInfo();
 }
 
 glm::mat4 Model::getTransformation() const

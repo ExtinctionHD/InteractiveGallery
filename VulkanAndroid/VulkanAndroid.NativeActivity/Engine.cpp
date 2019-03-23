@@ -265,6 +265,8 @@ void Engine::initDescriptorSets()
 
     // Scene:
 
+    LOGI("S.");
+
     descriptors[DESCRIPTOR_TYPE_SCENE] = new DescriptorSets(
         descriptorPool,
         { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT } } });
@@ -272,18 +274,15 @@ void Engine::initDescriptorSets()
         {
             {
                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                { scene->getCameraBuffer()->getUniformBufferInfo(), scene->getLightingBuffer()->getUniformBufferInfo() }
+                { scene->getCameraBuffer()->getUniformBufferInfo(), scene->getLightingBufferInfo() }
             }
         });
 
     // Earth:
 
-    std::vector<DescriptorInfo> earthTextureInfos;
-    for (const auto texture : scene->getEarthTextures())
-    {
-        earthTextureInfos.push_back(texture->getCombineSamplerInfo());
-    }
+    LOGI("E.");
 
+    std::vector<DescriptorInfo> earthTextureInfos = scene->getModelTextureInfos(Scene::ModelId::EARTH);
     descriptors[DESCRIPTOR_TYPE_EARTH] = new DescriptorSets(
         descriptorPool,
         {
@@ -296,10 +295,12 @@ void Engine::initDescriptorSets()
     descriptors[DESCRIPTOR_TYPE_EARTH]->pushDescriptorSet(
         {
             { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, earthTextureInfos },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getEarthTransformationBuffer()->getUniformBufferInfo() } }
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getModelTransformationBufferInfo(Scene::ModelId::EARTH) } }
         });
 
     // Clouds and skybox:
+
+    LOGI("CS.");
 
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX] = new DescriptorSets(
         descriptorPool,
@@ -309,13 +310,13 @@ void Engine::initDescriptorSets()
         });
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getCloudsTexture()->getCombineSamplerInfo() } },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getCloudsTransformationBuffer()->getUniformBufferInfo() } }
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, scene->getModelTextureInfos(Scene::ModelId::CLOUDS) },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getModelTransformationBufferInfo(Scene::ModelId::CLOUDS) } }
         });
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getSkyboxTexture()->getCombineSamplerInfo() } },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getSkyboxTransformationBuffer()->getUniformBufferInfo() } }
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, scene->getModelTextureInfos(Scene::ModelId::SKYBOX) },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getModelTransformationBufferInfo(Scene::ModelId::SKYBOX) } }
         });
 
     // Tone:
@@ -349,6 +350,8 @@ void Engine::initDescriptorSets()
 
     // Gallery:
 
+    LOGI("Gallery.");
+
     descriptors[DESCRIPTOR_TYPE_GALLERY] = new DescriptorSets(
         descriptorPool,
         {
@@ -357,12 +360,12 @@ void Engine::initDescriptorSets()
         });
     descriptors[DESCRIPTOR_TYPE_GALLERY]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getGalleryTexture()->getCombineSamplerInfo() } },
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, scene->getModelTextureInfos(Scene::ModelId::GALLERY) },
             {
                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 {
-                    scene->getGalleryTransformationBuffer()->getUniformBufferInfo(),
-                    scene->getGalleryParameterBuffer()->getUniformBufferInfo()
+                    scene->getModelTransformationBufferInfo(Scene::ModelId::GALLERY),
+                    scene->getModelUniformBufferInfo(Scene::ModelId::GALLERY)[0]
                 }
             }
         });

@@ -9,7 +9,9 @@ public:
 
     virtual ~Clouds();
 
-    TextureImage* getTexture() const;
+    std::vector<DescriptorInfo> getTextureInfos() const override;
+
+    std::vector<DescriptorInfo> getUniformBufferInfos() const override;
 
     void setEarthTransformation(glm::mat4 earthTransformation);
 

@@ -9,7 +9,9 @@ public:
 
     virtual ~Skybox();
 
-    TextureImage* getCubeTexture() const;
+    std::vector<DescriptorInfo> getTextureInfos() const override;
+
+    std::vector<DescriptorInfo> getUniformBufferInfos() const override;
 
 private:
     const std::vector<std::string> CUBE_MAP_FILES{

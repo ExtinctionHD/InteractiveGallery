@@ -19,7 +19,12 @@ Skybox::~Skybox()
     delete cubeTexture;
 }
 
-TextureImage* Skybox::getCubeTexture() const
+std::vector<DescriptorInfo> Skybox::getTextureInfos() const
 {
-    return cubeTexture;
+    return { cubeTexture->getCombineSamplerInfo() };
+}
+
+std::vector<DescriptorInfo> Skybox::getUniformBufferInfos() const
+{
+    return {};
 }

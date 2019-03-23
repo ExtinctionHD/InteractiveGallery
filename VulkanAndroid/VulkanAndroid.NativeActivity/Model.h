@@ -1,12 +1,17 @@
 #pragma once
 #include "Buffer.h"
+#include "TextureImage.h"
 
 class Model
 {
 public:
     virtual ~Model();
 
-    Buffer* getTransformationBuffer() const;
+    virtual std::vector<DescriptorInfo> getTextureInfos() const = 0;
+
+    virtual std::vector<DescriptorInfo> getUniformBufferInfos() const = 0;
+
+    DescriptorInfo getTransformationBufferInfo() const;
 
     glm::mat4 getTransformation() const;
 

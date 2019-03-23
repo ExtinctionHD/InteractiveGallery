@@ -28,14 +28,14 @@ Gallery::~Gallery()
     delete texture;
 }
 
-TextureImage* Gallery::getTexture() const
+std::vector<DescriptorInfo> Gallery::getTextureInfos() const
 {
-    return texture;
+    return { texture->getCombineSamplerInfo() };
 }
 
-Buffer* Gallery::getParameterBuffer() const
+std::vector<DescriptorInfo> Gallery::getUniformBufferInfos() const
 {
-    return parameterBuffer;
+    return { parameterBuffer->getUniformBufferInfo() };
 }
 
 void Gallery::update()
