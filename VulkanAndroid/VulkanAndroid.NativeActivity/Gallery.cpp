@@ -163,6 +163,14 @@ float Gallery::calculateOpacity(float nearestDistance, float distanceLimit)
     return opacity;
 }
 
+glm::vec3 Gallery::calculatePosition(glm::vec2 photoCoordinates)
+{
+    return earth->getRadius() * axis::rotate(
+        -axis::X,
+        glm::vec2(photoCoordinates.x + earth->getAngle(), photoCoordinates.y),
+        nullptr);
+}
+
 glm::vec3 Gallery::calculateScale()
 {
     const float distance = controller->getRadius() - earth->getRadius();
@@ -187,12 +195,7 @@ glm::vec3 Gallery::calculateScale()
 
 glm::mat4 Gallery::calculateTransformation(glm::vec2 photoCoordinates, glm::vec2 cameraCoordinates)
 {
-    const glm::vec3 position = earth->getRadius() * axis::rotate(
-        -axis::X,
-        glm::vec2(photoCoordinates.x + earth->getAngle(), photoCoordinates.y),
-        nullptr);
-    const glm::vec3 scale = calculateScale();
-
+    const glm::vec3 position = calculatePosition(photoCoordinates);
     const glm::vec3 direction = glm::normalize(camera->getPosition() - position);
     const glm::vec2 angleRadians(
         glm::radians(90.0f + cameraCoordinates.x + earth->getAngle()),
@@ -201,7 +204,7 @@ glm::mat4 Gallery::calculateTransformation(glm::vec2 photoCoordinates, glm::vec2
     glm::mat4 transformation = glm::translate(glm::mat4(1.0f), position);
     transformation = glm::rotate(transformation, angleRadians.y, camera->getRight());
     transformation = glm::rotate(transformation, angleRadians.x, -axis::Y);
-    transformation = glm::scale(transformation, scale);
+    transformation = glm::scale(transformation, calculateScale());
 
     return transformation;
 }

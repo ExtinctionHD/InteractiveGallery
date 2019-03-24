@@ -51,6 +51,8 @@ private:
 
     float calculateOpacity(float nearestDistance, float distanceLimit);
 
+    glm::vec3 calculatePosition(glm::vec2 photoCoordinates);
+
     glm::vec3 calculateScale();
 
     glm::mat4 calculateTransformation(glm::vec2 photoCoordinates, glm::vec2 cameraCoordinates);
