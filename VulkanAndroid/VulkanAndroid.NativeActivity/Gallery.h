@@ -43,6 +43,8 @@ private:
 
     void loadPhotographs(Device *device, const std::string &path);
 
+    static glm::vec2 parseCoordinates(std::string str);
+
     float loopDistance(glm::vec2 a, glm::vec2 b);
 
     float calculateNearestDistance(glm::vec2 cameraCoordinates, uint32_t *outIndex);

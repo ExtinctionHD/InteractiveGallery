@@ -22,5 +22,5 @@ namespace axis
 
 namespace file
 {
-    std::string getFileName(const std::string &path);
+    std::string getFileName(std::string path);
 }

@@ -2,6 +2,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <algorithm>
+#include <sstream>
 #include "utils.h"
 #include "ActivityManager.h"
 #include "cities.h"
@@ -65,23 +66,48 @@ void Gallery::loadPhotographs(Device *device, const std::string &path)
     for (const auto &filePath : paths)
     {
         std::string fileName = file::getFileName(filePath);
-        std::transform(fileName.begin(), fileName.end(), fileName.begin(), ::tolower);
-
-        auto it = cities::COORDINATES.find(fileName);
-        if (it != cities::COORDINATES.end())
+        const auto index = fileName.find_first_of('{');
+        if (index != std::string::npos)
         {
-            coordinates.push_back(it->second);
+            coordinates.push_back(parseCoordinates(fileName.substr(index + 1)));
             buffers.push_back(ActivityManager::read(filePath));
         }
         else
         {
-            LOGE("%s coordinates not found.", fileName.c_str());
+            std::transform(fileName.begin(), fileName.end(), fileName.begin(), ::tolower);
+
+            auto it = cities::COORDINATES.find(fileName);
+            if (it != cities::COORDINATES.end())
+            {
+                coordinates.push_back(it->second);
+                buffers.push_back(ActivityManager::read(filePath));
+            }
+            else
+            {
+                LOGE("%s coordinates not found.", fileName.c_str());
+            }
         }
     }
 
     texture = new TextureImage( device, buffers, false, false);
     texture->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
     texture->pushSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+}
+
+glm::vec2 Gallery::parseCoordinates(std::string str)
+{
+    std::replace(str.begin(), str.end(), ',', '.');
+
+    std::stringstream ss;
+    glm::vec2 coordinates;
+
+    ss << str;
+
+    ss >> coordinates.y;
+    ss.get();
+    ss >> coordinates.x;
+
+    return coordinates;
 }
 
 float Gallery::loopDistance(glm::vec2 a, glm::vec2 b)
@@ -168,7 +194,9 @@ glm::mat4 Gallery::calculateTransformation(glm::vec2 photoCoordinates, glm::vec2
     const glm::vec3 scale = calculateScale();
 
     const glm::vec3 direction = glm::normalize(camera->getPosition() - position);
-    const glm::vec2 angleRadians(glm::radians(90.0f + cameraCoordinates.x), glm::asin(direction.y));
+    const glm::vec2 angleRadians(
+        glm::radians(90.0f + cameraCoordinates.x + earth->getAngle()),
+        glm::asin(direction.y));
 
     glm::mat4 transformation = glm::translate(glm::mat4(1.0f), position);
     transformation = glm::rotate(transformation, angleRadians.y, camera->getRight());

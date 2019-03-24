@@ -265,8 +265,6 @@ void Engine::initDescriptorSets()
 
     // Scene:
 
-    LOGI("S.");
-
     descriptors[DESCRIPTOR_TYPE_SCENE] = new DescriptorSets(
         descriptorPool,
         { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT } } });
@@ -279,8 +277,6 @@ void Engine::initDescriptorSets()
         });
 
     // Earth:
-
-    LOGI("E.");
 
     std::vector<DescriptorInfo> earthTextureInfos = scene->getModelTextureInfos(Scene::ModelId::EARTH);
     descriptors[DESCRIPTOR_TYPE_EARTH] = new DescriptorSets(
@@ -299,8 +295,6 @@ void Engine::initDescriptorSets()
         });
 
     // Clouds and skybox:
-
-    LOGI("CS.");
 
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX] = new DescriptorSets(
         descriptorPool,

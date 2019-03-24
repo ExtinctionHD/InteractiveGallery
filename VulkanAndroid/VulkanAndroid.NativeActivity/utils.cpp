@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <android/native_window.h>
 #include <glm/gtx/rotate_vector.hpp>
+#include <algorithm>
 
 uint32_t math::ceilLog2(uint32_t x)
 {
@@ -52,23 +53,21 @@ glm::vec3 axis::rotate(glm::vec3 baseAxis, glm::vec2 angle, glm::vec3 *outHorizo
     return glm::normalize(result);
 }
 
-std::string file::getFileName(const std::string &path)
+std::string file::getFileName(std::string path)
 {
-    const std::vector<char> delimiters{ '/', '\\' };
+    std::replace(path.begin(), path.end(), '\\', '/');
 
-    std::string result;
-
-    auto index = path.find_last_of(delimiters.data());
+    auto index = path.find_last_of('/');
     if (index != std::string::npos)
     {
-        result = path.substr(index + 1);
+        path = path.substr(index + 1);
     }
 
-    index = result.find('.');
+    index = path.find_last_of('.');
     if (index != std::string::npos)
     {
-        result = result.substr(0, index);
+        path = path.substr(0, index);
     }
 
-    return result;
+    return path;
 }
