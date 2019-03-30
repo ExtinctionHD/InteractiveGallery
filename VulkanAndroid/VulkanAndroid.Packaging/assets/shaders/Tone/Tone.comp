@@ -26,13 +26,11 @@ void main()
 	float T = pow(lum + MIN_LUM, -1);
 	vec3 result = 1 - exp(-T * hdrColor);
 
+	imageStore(resultImage, uv, vec4(result, 1.0f));
+
 	// debug
-	if (uv.x < 64 && uv.y < 64)
-	{
-		imageStore(resultImage, uv, vec4(vec3(lum), 1.0f));
-	}
-	else
-	{
-		imageStore(resultImage, uv, vec4(result, 1.0f));
-	}
+	// if (uv.x < 64 && uv.y < 64)
+	// {
+	// 	imageStore(resultImage, uv, vec4(vec3(lum), 1.0f));
+	// }
 }

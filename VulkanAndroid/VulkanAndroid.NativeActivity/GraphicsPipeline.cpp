@@ -116,8 +116,8 @@ void GraphicsPipeline::createPipeline()
 		nullptr,      
 		0,            
 		renderPass->getSampleCount(),  
-		true,      
-		0.2f,         
+		false,      
+		0.0f,         
 		nullptr,      
 		false,     
 		false      

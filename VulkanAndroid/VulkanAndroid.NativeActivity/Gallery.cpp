@@ -3,9 +3,10 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <algorithm>
 #include <sstream>
-#include "utils.h"
 #include "ActivityManager.h"
 #include "cities.h"
+#include <cstdlib>
+#include <regex>
 
 Gallery::Gallery(
     Device *device,
@@ -66,48 +67,62 @@ void Gallery::loadPhotographs(Device *device, const std::string &path)
     for (const auto &filePath : paths)
     {
         std::string fileName = file::getFileName(filePath);
-        const auto index = fileName.find_first_of('{');
-        if (index != std::string::npos)
+
+        const Optional<glm::vec2> coord = getCoordinates(fileName);
+        if (coord.second)
         {
-            coordinates.push_back(parseCoordinates(fileName.substr(index + 1)));
+            coordinates.push_back(coord.first);
             buffers.push_back(ActivityManager::read(filePath));
         }
         else
         {
-            std::transform(fileName.begin(), fileName.end(), fileName.begin(), ::tolower);
-
-            auto it = cities::COORDINATES.find(fileName);
-            if (it != cities::COORDINATES.end())
-            {
-                coordinates.push_back(it->second);
-                buffers.push_back(ActivityManager::read(filePath));
-            }
-            else
-            {
-                LOGE("%s coordinates not found.", fileName.c_str());
-            }
+            LOGE("[%s] coordinates not found", fileName.c_str());
         }
     }
 
-    texture = new TextureImage( device, buffers, false, false);
+    texture = new TextureImage(device, buffers, false, false);
     texture->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
     texture->pushSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 }
 
-glm::vec2 Gallery::parseCoordinates(std::string str)
+Optional<glm::vec2> Gallery::getCoordinates(const std::string &fileName)
 {
-    std::replace(str.begin(), str.end(), ',', '.');
+    Optional<glm::vec2> result(glm::vec2(), true);
 
-    std::stringstream ss;
-    glm::vec2 coordinates;
+    std::cmatch matches;
+    std::regex regular(R"(\{([-+]?[0-9]*[,\.]?[0-9]+) +([-+]?[0-9]*[,\.]?[0-9]+)\})");
 
-    ss << str;
+    if (std::regex_search(fileName.c_str(), matches, regular))
+    {
+        std::string latitude = matches[1].str();
+        std::string longitude = matches[2].str();
 
-    ss >> coordinates.y;
-    ss.get();
-    ss >> coordinates.x;
+        std::replace(latitude.begin(), latitude.end(), ',', '.');
+        std::replace(longitude.begin(), longitude.end(), ',', '.');
 
-    return coordinates;
+        result.first.x = std::strtod(longitude.c_str(), nullptr);
+        result.first.y = std::strtod(latitude.c_str(), nullptr);
+    }
+    else
+    {
+        regular = std::regex(R"(\w[\w\s-]+\w)");
+        if (std::regex_search(fileName.c_str(), matches, regular))
+        {
+            std::string cityName = matches[0];
+            std::transform(cityName.begin(), cityName.end(), cityName.begin(), ::tolower);
+            const auto it = cities::COORDINATES.find(cityName);
+            if (it != cities::COORDINATES.end())
+            {
+                result.first = it->second;
+            }
+            else
+            {
+                result.second = false;
+            }
+        }
+    }
+
+    return result;
 }
 
 float Gallery::loopDistance(glm::vec2 a, glm::vec2 b)

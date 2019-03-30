@@ -24,3 +24,8 @@ namespace file
 {
     std::string getFileName(std::string path);
 }
+
+// Types:
+
+template<class T>
+using Optional = std::pair<T, bool>;

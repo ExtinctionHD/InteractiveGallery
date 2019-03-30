@@ -4,6 +4,7 @@
 #include "Earth.h"
 #include "Camera.h"
 #include "Controller.h"
+#include "utils.h"
 
 class Gallery : public Model
 {
@@ -43,7 +44,7 @@ private:
 
     void loadPhotographs(Device *device, const std::string &path);
 
-    static glm::vec2 parseCoordinates(std::string str);
+    static Optional<glm::vec2> getCoordinates(const std::string &fileName);
 
     float loopDistance(glm::vec2 a, glm::vec2 b);
 
