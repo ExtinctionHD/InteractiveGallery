@@ -4,6 +4,7 @@
 #include "Position.h"
 #include "GraphicsPipeline.h"
 #include "ComputePipeline.h"
+#include "PositionUv.h"
 
 Engine::Engine() : created(false), outdated(false)
 {
@@ -28,8 +29,10 @@ bool Engine::create(ANativeWindow *window)
     swapChain = new SwapChain(device, surface->get(), window::getExtent(window));
     scene = new Scene(device, swapChain->getExtent());
 
-    mainRenderPass = new MainRenderPass(device, swapChain->getExtent(), VK_SAMPLE_COUNT_1_BIT);
-    mainRenderPass->create();
+    earthRenderPass = new EarthRenderPass(device, swapChain->getExtent(), VK_SAMPLE_COUNT_1_BIT);
+    galleryRenderPass = new GalleryRenderPass(device, swapChain, VK_SAMPLE_COUNT_1_BIT);
+    earthRenderPass->create();
+    galleryRenderPass->create();
 
     descriptorPool = new DescriptorPool(
         device,
@@ -44,12 +47,14 @@ bool Engine::create(ANativeWindow *window)
     initLocalGroupSize();
     initPipelines();
 
-    renderingFinished = createSemaphore();
+    earthRenderingFinished = createSemaphore();
     computingFinished = createSemaphore();
+    galleryRenderingFinished = createSemaphore();
     imageAvailable = createSemaphore();
 
-    initRenderingCommands(); 
+    initEarthRenderingCommands(); 
     initComputingCommands();
+    initGalleryRenderingCommands();
 
     LOGI("Engine created.");
 
@@ -70,7 +75,8 @@ bool Engine::recreate(ANativeWindow *window)
 
         const auto extent = window::getExtent(window);
         swapChain->recreate(surface->get(), extent);
-        mainRenderPass->recreate(extent);
+        earthRenderPass->recreate(extent);
+        galleryRenderPass->recreate(extent);
         scene->resize(extent);
         for (auto pipeline : pipelines)
         {
@@ -79,8 +85,9 @@ bool Engine::recreate(ANativeWindow *window)
 
         updateChangedDescriptorSets();
 
-        initRenderingCommands();
+        initEarthRenderingCommands();
         initComputingCommands();
+        initGalleryRenderingCommands();
 
         outdated = false;
     }
@@ -140,7 +147,9 @@ bool Engine::drawFrame()
         CALL_VK(result);
     }
 
-    std::vector<VkSemaphore> renderingSignalSemaphores{ renderingFinished };
+    // Earth rendering:
+
+    std::vector<VkSemaphore> earthRenderingSignalSemaphores{ earthRenderingFinished };
     VkSubmitInfo renderingSubmitInfo{
         VK_STRUCTURE_TYPE_SUBMIT_INFO,
         nullptr,
@@ -148,13 +157,15 @@ bool Engine::drawFrame()
         nullptr,
         nullptr,
         1,
-        &renderingCommands,
-        uint32_t(renderingSignalSemaphores.size()),
-        renderingSignalSemaphores.data(),
+        &earthRenderingCommands,
+        uint32_t(earthRenderingSignalSemaphores.size()),
+        earthRenderingSignalSemaphores.data(),
     };
     CALL_VK(vkQueueSubmit(device->getGraphicsQueue(), 1, &renderingSubmitInfo, nullptr));
 
-    std::vector<VkSemaphore> computingWaitSemaphores{ renderingFinished, imageAvailable};
+    // Computing:
+
+    std::vector<VkSemaphore> computingWaitSemaphores{ earthRenderingFinished, imageAvailable};
     std::vector<VkPipelineStageFlags> computingWaitStages{ VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT };
     std::vector<VkSemaphore> computingSignalSemaphores{ computingFinished };
     VkSubmitInfo computingSubmitInfo{
@@ -170,12 +181,30 @@ bool Engine::drawFrame()
     };
     CALL_VK(vkQueueSubmit(device->getComputeQueue(), 1, &computingSubmitInfo, nullptr));
 
+    // Gallery rendering:
+
+    std::vector<VkSemaphore> galleryRenderingWaitSemaphores{ computingFinished };
+    std::vector<VkPipelineStageFlags> galleryWaitStages{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    std::vector<VkSemaphore> gallerySignalSemaphores{ galleryRenderingFinished };
+    VkSubmitInfo gallerySubmitInfo{
+        VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        nullptr,
+        uint32_t(galleryRenderingWaitSemaphores.size()),
+        galleryRenderingWaitSemaphores.data(),
+        galleryWaitStages.data(),
+        1,
+        &galleryRenderingCommands[imageIndex],
+        uint32_t(gallerySignalSemaphores.size()),
+        gallerySignalSemaphores.data(),
+    };
+    CALL_VK(vkQueueSubmit(device->getComputeQueue(), 1, &gallerySubmitInfo, nullptr));
+
     std::vector<VkSwapchainKHR> swapChains{ swapChain->get() };
     VkPresentInfoKHR presentInfo{
         VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         nullptr,
-        uint32_t(computingSignalSemaphores.size()),
-        computingSignalSemaphores.data(),
+        uint32_t(gallerySignalSemaphores.size()),
+        gallerySignalSemaphores.data(),
         uint32_t(swapChains.size()),
         swapChains.data(),
         &imageIndex,
@@ -200,9 +229,10 @@ bool Engine::destroy()
 
     vkDeviceWaitIdle(device->get());
 
-    vkDestroySemaphore(device->get(), computingFinished, nullptr);
-    vkDestroySemaphore(device->get(), renderingFinished, nullptr);
     vkDestroySemaphore(device->get(), imageAvailable, nullptr);
+    vkDestroySemaphore(device->get(), galleryRenderingFinished, nullptr);
+    vkDestroySemaphore(device->get(), computingFinished, nullptr);
+    vkDestroySemaphore(device->get(), earthRenderingFinished, nullptr);
 
     for (auto pipeline : pipelines)
     {
@@ -214,7 +244,8 @@ bool Engine::destroy()
         delete descriptor;
     }
 
-    delete mainRenderPass;
+    delete galleryRenderPass;
+    delete earthRenderPass;
     delete descriptorPool;
     delete scene;
     delete swapChain;
@@ -241,18 +272,13 @@ void Engine::initDescriptorSets()
         {
             {
                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                { scene->getCameraBuffer()->getUniformBufferInfo(), scene->getLightingBuffer()->getUniformBufferInfo() }
+                { scene->getCameraBuffer()->getUniformBufferInfo(), scene->getLightingBufferInfo() }
             }
         });
 
     // Earth:
 
-    std::vector<DescriptorInfo> earthTextureInfos;
-    for (const auto texture : scene->getEarthTextures())
-    {
-        earthTextureInfos.push_back(texture->getCombineSamplerInfo());
-    }
-
+    std::vector<DescriptorInfo> earthTextureInfos = scene->getModelTextureInfos(Scene::ModelId::EARTH);
     descriptors[DESCRIPTOR_TYPE_EARTH] = new DescriptorSets(
         descriptorPool,
         {
@@ -265,7 +291,7 @@ void Engine::initDescriptorSets()
     descriptors[DESCRIPTOR_TYPE_EARTH]->pushDescriptorSet(
         {
             { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, earthTextureInfos },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getEarthTransformationBuffer()->getUniformBufferInfo() } }
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getModelTransformationBufferInfo(Scene::ModelId::EARTH) } }
         });
 
     // Clouds and skybox:
@@ -278,18 +304,18 @@ void Engine::initDescriptorSets()
         });
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getCloudsTexture()->getCombineSamplerInfo() } },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getCloudsTransformationBuffer()->getUniformBufferInfo() } }
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, scene->getModelTextureInfos(Scene::ModelId::CLOUDS) },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getModelTransformationBufferInfo(Scene::ModelId::CLOUDS) } }
         });
     descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->pushDescriptorSet(
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { scene->getSkyboxTexture()->getCombineSamplerInfo() } },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getSkyboxTransformationBuffer()->getUniformBufferInfo() } }
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, scene->getModelTextureInfos(Scene::ModelId::SKYBOX) },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getModelTransformationBufferInfo(Scene::ModelId::SKYBOX) } }
         });
 
     // Tone:
 
-    const auto colorTexture = mainRenderPass->getColorTexture();
+    const auto colorTexture = earthRenderPass->getColorTexture();
 
     descriptors[DESCRIPTOR_TYPE_TONE_SRC] = new DescriptorSets(
         descriptorPool,
@@ -315,6 +341,28 @@ void Engine::initDescriptorSets()
         descriptors[DESCRIPTOR_TYPE_TONE_DST]->pushDescriptorSet(
             { { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, { swapChainImage->getStorageImageInfo() } } });
     }
+
+    // Gallery:
+
+    LOGI("Gallery.");
+
+    descriptors[DESCRIPTOR_TYPE_GALLERY] = new DescriptorSets(
+        descriptorPool,
+        {
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, { VK_SHADER_STAGE_FRAGMENT_BIT } },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT } }
+        });
+    descriptors[DESCRIPTOR_TYPE_GALLERY]->pushDescriptorSet(
+        {
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, scene->getModelTextureInfos(Scene::ModelId::GALLERY) },
+            {
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                {
+                    scene->getModelTransformationBufferInfo(Scene::ModelId::GALLERY),
+                    scene->getModelUniformBufferInfo(Scene::ModelId::GALLERY)[0]
+                }
+            }
+        });
 }
 
 void Engine::initLocalGroupSize()
@@ -347,7 +395,7 @@ void Engine::initPipelines()
     };
     pipelines[PIPELINE_TYPE_EARTH] = new GraphicsPipeline(
         device,
-        mainRenderPass,
+        earthRenderPass,
         {
             descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(),
             descriptors[DESCRIPTOR_TYPE_EARTH]->getLayout()
@@ -356,7 +404,8 @@ void Engine::initPipelines()
         shaders,
         { Vertex::getBindingDescription(0) },
         Vertex::getAttributeDescriptions(0, 0),
-        true);
+        true,
+        false);
 
     // Clouds:
 
@@ -367,7 +416,7 @@ void Engine::initPipelines()
     };
     pipelines[PIPELINE_TYPE_CLOUDS] = new GraphicsPipeline(
         device,
-        mainRenderPass,
+        earthRenderPass,
         {
             descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(),
             descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getLayout()
@@ -376,6 +425,7 @@ void Engine::initPipelines()
         shaders,
         { Vertex::getBindingDescription(0) },
         Vertex::getAttributeDescriptions(0, 0),
+        true,
         true);
 
     // Skybox:
@@ -387,7 +437,7 @@ void Engine::initPipelines()
     };
     pipelines[PIPELINE_TYPE_SKYBOX] = new GraphicsPipeline(
         device,
-        mainRenderPass,
+        earthRenderPass,
         {
             descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(),
             descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getLayout()
@@ -396,7 +446,8 @@ void Engine::initPipelines()
         shaders,
         { Position::getBindingDescription(0) },
         Position::getAttributeDescriptions(0, 0),
-        true);
+        true,
+        false);
 
     // Tone:
 
@@ -425,6 +476,27 @@ void Engine::initPipelines()
         },
         {},
         computeShader);
+
+    // Gallery:
+
+    shadersPath = "shaders/Gallery/";
+    shaders = {
+        std::make_shared<ShaderModule>(device, shadersPath + "vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+        std::make_shared<ShaderModule>(device, shadersPath + "frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+    };
+    pipelines[PIPELINE_TYPE_GALLERY] = new GraphicsPipeline(
+        device,
+        galleryRenderPass,
+        {
+            descriptors[DESCRIPTOR_TYPE_SCENE]->getLayout(),
+            descriptors[DESCRIPTOR_TYPE_GALLERY]->getLayout()
+        },
+        {},
+        shaders,
+        { PositionUv::getBindingDescription(0) },
+        PositionUv::getAttributeDescriptions(0, 0),
+        false,
+        true);
 }
 
 VkSemaphore Engine::createSemaphore() const
@@ -442,13 +514,13 @@ VkSemaphore Engine::createSemaphore() const
     return semaphore;
 }
 
-void Engine::initRenderingCommands()
+void Engine::initEarthRenderingCommands()
 {
     const VkCommandPool commandPool = device->getCommandPool();
 
-    if (renderingCommands)
+    if (earthRenderingCommands)
     {
-        vkFreeCommandBuffers(device->get(), commandPool, 1, &renderingCommands);
+        vkFreeCommandBuffers(device->get(), commandPool, 1, &earthRenderingCommands);
     }
 
     VkCommandBufferAllocateInfo allocInfo{
@@ -459,7 +531,7 @@ void Engine::initRenderingCommands()
         1,
     };
 
-    CALL_VK(vkAllocateCommandBuffers(device->get(), &allocInfo, &renderingCommands));
+    CALL_VK(vkAllocateCommandBuffers(device->get(), &allocInfo, &earthRenderingCommands));
 
     VkCommandBufferBeginInfo beginInfo{
         VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -468,35 +540,35 @@ void Engine::initRenderingCommands()
         nullptr,
     };
 
-    CALL_VK(vkBeginCommandBuffer(renderingCommands, &beginInfo));
+    CALL_VK(vkBeginCommandBuffer(earthRenderingCommands, &beginInfo));
 
     {
         const VkRect2D renderArea{
         { 0, 0 },
-        mainRenderPass->getExtent()
+        earthRenderPass->getExtent()
         };
-        auto clearValues = mainRenderPass->getClearValues();
+        auto clearValues = earthRenderPass->getClearValues();
         VkRenderPassBeginInfo mainRenderPassBeginInfo{
             VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
             nullptr,
-            mainRenderPass->get(),
-            mainRenderPass->getFramebuffers().front(),
+            earthRenderPass->get(),
+            earthRenderPass->getFramebuffers().front(),
             renderArea,
             uint32_t(clearValues.size()),
             clearValues.data()
         };
 
-        vkCmdBeginRenderPass(renderingCommands, &mainRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(earthRenderingCommands, &mainRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         // Skybox:
 
-        vkCmdBindPipeline(renderingCommands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_SKYBOX]->get());
+        vkCmdBindPipeline(earthRenderingCommands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_SKYBOX]->get());
         std::vector<VkDescriptorSet> descriptorSets{
             descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
             descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getDescriptorSet(1)
         };
         vkCmdBindDescriptorSets(
-            renderingCommands,
+            earthRenderingCommands,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipelines[PIPELINE_TYPE_SKYBOX]->getLayout(),
             0,
@@ -504,17 +576,17 @@ void Engine::initRenderingCommands()
             descriptorSets.data(),
             0,
             nullptr);
-        scene->drawCube(renderingCommands);
+        scene->drawCube(earthRenderingCommands);
 
         // Earth:
 
-        vkCmdBindPipeline(renderingCommands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_EARTH]->get());
+        vkCmdBindPipeline(earthRenderingCommands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_EARTH]->get());
         descriptorSets = {
             descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
             descriptors[DESCRIPTOR_TYPE_EARTH]->getDescriptorSet(0)
         };
         vkCmdBindDescriptorSets(
-            renderingCommands,
+            earthRenderingCommands,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipelines[PIPELINE_TYPE_EARTH]->getLayout(),
             0,
@@ -522,17 +594,17 @@ void Engine::initRenderingCommands()
             descriptorSets.data(),
             0,
             nullptr);
-        scene->drawSphere(renderingCommands);
+        scene->drawSphere(earthRenderingCommands);
 
         // Clouds:
 
-        vkCmdBindPipeline(renderingCommands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_CLOUDS]->get());
+        vkCmdBindPipeline(earthRenderingCommands, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_CLOUDS]->get());
         descriptorSets = {
             descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
             descriptors[DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX]->getDescriptorSet(0)
         };
         vkCmdBindDescriptorSets(
-            renderingCommands,
+            earthRenderingCommands,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipelines[PIPELINE_TYPE_CLOUDS]->getLayout(),
             0,
@@ -540,14 +612,14 @@ void Engine::initRenderingCommands()
             descriptorSets.data(),
             0,
             nullptr);
-        scene->drawSphere(renderingCommands);
+        scene->drawSphere(earthRenderingCommands);
 
-        vkCmdEndRenderPass(renderingCommands);
+        vkCmdEndRenderPass(earthRenderingCommands);
     }
 
-    CALL_VK(vkEndCommandBuffer(renderingCommands));
+    CALL_VK(vkEndCommandBuffer(earthRenderingCommands));
 
-    LOGI("Rendering commands initialized.");
+    LOGI("Earth rendering commands initialized.");
 }
 
 void Engine::initComputingCommands()
@@ -585,7 +657,7 @@ void Engine::initComputingCommands()
         CALL_VK(vkBeginCommandBuffer(computingCommands[i], &beginInfo));
 
         {
-            const auto colorTexture = mainRenderPass->getColorTexture();
+            const auto colorTexture = earthRenderPass->getColorTexture();
 
             colorTexture->memoryBarrier(
                 computingCommands[i],
@@ -681,11 +753,11 @@ void Engine::initComputingCommands()
             swapChainImage->memoryBarrier(
                 computingCommands[i],
                 VK_IMAGE_LAYOUT_GENERAL,
-                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                 VK_ACCESS_SHADER_WRITE_BIT,
-                0,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                 {
                     VK_IMAGE_ASPECT_COLOR_BIT,
                     0,
@@ -701,9 +773,87 @@ void Engine::initComputingCommands()
     LOGI("Computing commands initialized.");
 }
 
+void Engine::initGalleryRenderingCommands()
+{
+    const VkCommandPool commandPool = device->getCommandPool();
+    const uint32_t count = swapChain->getImageCount();
+
+    if (!galleryRenderingCommands.empty())
+    {
+        vkFreeCommandBuffers(device->get(), commandPool, uint32_t(galleryRenderingCommands.size()), galleryRenderingCommands.data());
+    }
+
+    galleryRenderingCommands.resize(count);
+
+    VkCommandBufferAllocateInfo allocInfo{
+        VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        nullptr,
+        commandPool,
+        VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        count,
+    };
+
+    CALL_VK(vkAllocateCommandBuffers(device->get(), &allocInfo, galleryRenderingCommands.data()));
+
+    for (uint32_t i = 0; i < count; i++)
+    {
+
+        VkCommandBufferBeginInfo beginInfo{
+            VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            nullptr,
+            VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
+            nullptr,
+        };
+
+        CALL_VK(vkBeginCommandBuffer(galleryRenderingCommands[i], &beginInfo));
+
+        {
+            const VkRect2D renderArea{
+            { 0, 0 },
+            galleryRenderPass->getExtent()
+            };
+            auto clearValues = galleryRenderPass->getClearValues();
+            VkRenderPassBeginInfo galleryRenderPassBeginInfo{
+                VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+                nullptr,
+                galleryRenderPass->get(),
+                galleryRenderPass->getFramebuffers()[i],
+                renderArea,
+                uint32_t(clearValues.size()),
+                clearValues.data()
+            };
+
+            vkCmdBeginRenderPass(galleryRenderingCommands[i], &galleryRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+            
+            vkCmdBindPipeline(galleryRenderingCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[PIPELINE_TYPE_GALLERY]->get());
+            std::vector<VkDescriptorSet> descriptorSets{
+                descriptors[DESCRIPTOR_TYPE_SCENE]->getDescriptorSet(0),
+                descriptors[DESCRIPTOR_TYPE_GALLERY]->getDescriptorSet(0),
+            };
+            vkCmdBindDescriptorSets(
+                galleryRenderingCommands[i],
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                pipelines[PIPELINE_TYPE_GALLERY]->getLayout(),
+                0,
+                descriptorSets.size(),
+                descriptorSets.data(),
+                0,
+                nullptr);
+
+            scene->drawCard(galleryRenderingCommands[i]);
+
+            vkCmdEndRenderPass(galleryRenderingCommands[i]);
+        }
+
+        CALL_VK(vkEndCommandBuffer(galleryRenderingCommands[i]));
+    }
+
+    LOGI("Gallery rendering commands initialized.");
+}
+
 void Engine::updateChangedDescriptorSets()
 {
-    const auto colorTexture = mainRenderPass->getColorTexture();
+    const auto colorTexture = earthRenderPass->getColorTexture();
 
     descriptors[DESCRIPTOR_TYPE_TONE_SRC]->updateDescriptorSet(
         0,

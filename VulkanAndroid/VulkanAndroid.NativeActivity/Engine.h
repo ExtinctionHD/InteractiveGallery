@@ -3,11 +3,12 @@
 #include "Surface.h"
 #include "Device.h"
 #include "SwapChain.h"
-#include "MainRenderPass.h"
+#include "EarthRenderPass.h"
 #include "DescriptorPool.h"
 #include "Pipeline.h"
 #include "Scene.h"
 #include "DescriptorSets.h"
+#include "GalleryRenderPass.h"
 
 class Engine
 {
@@ -42,6 +43,7 @@ private:
         DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX,
         DESCRIPTOR_TYPE_TONE_SRC,
         DESCRIPTOR_TYPE_TONE_DST,
+        DESCRIPTOR_TYPE_GALLERY,
         DESCRIPTOR_TYPE_COUNT
     };
 
@@ -51,6 +53,7 @@ private:
         PIPELINE_TYPE_CLOUDS,
         PIPELINE_TYPE_SKYBOX,
         PIPELINE_TYPE_TONE,
+        PIPELINE_TYPE_GALLERY,
         PIPELINE_TYPE_COUNT
     };
 
@@ -70,7 +73,9 @@ private:
 
     DescriptorPool *descriptorPool;
 
-    MainRenderPass *mainRenderPass;
+    EarthRenderPass *earthRenderPass;
+
+    GalleryRenderPass *galleryRenderPass;
 
     std::vector<DescriptorSets*> descriptors;
 
@@ -78,17 +83,25 @@ private:
 
     Scene *scene;
 
-    VkSemaphore renderingFinished;
+    // TODO: combine semaphores
+
+    VkSemaphore earthRenderingFinished;
 
     VkSemaphore computingFinished;
 
+    VkSemaphore galleryRenderingFinished;
+
     VkSemaphore imageAvailable;
 
-    VkCommandBuffer renderingCommands{};
+    // TODO: combine commands
+
+    VkCommandBuffer earthRenderingCommands{};
 
     glm::uvec2 localGroupSize{ 16 };
 
     std::vector<VkCommandBuffer> computingCommands{};
+
+    std::vector<VkCommandBuffer> galleryRenderingCommands{};
 
     void initDescriptorSets();
 
@@ -98,9 +111,11 @@ private:
 
     VkSemaphore createSemaphore() const;
 
-    void initRenderingCommands();
+    void initEarthRenderingCommands();
 
     void initComputingCommands();
+
+    void initGalleryRenderingCommands();
 
     void updateChangedDescriptorSets();
 };

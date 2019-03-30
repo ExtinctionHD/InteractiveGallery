@@ -7,54 +7,41 @@ Controller::Controller(glm::vec3 target, glm::vec3 position)
       radius(glm::distance(target, position)),
       delta(glm::vec2(0.0f))
 {
-    const glm::vec3 view = normalize(target - position);
-    const glm::vec3 horizontal = normalize(glm::vec3(view.x, 0.0f, view.z ));
+    const glm::vec3 view = glm::normalize(target - position);
 
-    if (horizontal.x >= 0.0f)
-    {
-        if (horizontal.z >= 0.0f)
-        {
-            // first quarter
-            angle.x = 360.0f - glm::degrees(glm::asin(horizontal.x));
-        }
-        else
-        {
-            // second quarter
-            angle.x = 180.0f + glm::degrees(glm::asin(horizontal.x));
-        }
-    }
-    else
-    {
-        if (horizontal.z >= 0.0f)
-        {
-            // third quarter
-            angle.x = glm::degrees(glm::asin(-horizontal.x));
-        }
-        else
-        {
-            // fourth quarter
-            angle.x = 90.0f + glm::degrees(glm::asin(-horizontal.x));
-        }
-    }
-
+    angle.x = glm::radians(90.0f) + std::atan2(view.z, view.x);
     angle.y = glm::degrees(glm::asin(view.y));
 }
 
 Camera::Location Controller::getLocation() const
 {
-    const glm::vec3 vAxis = -axis::Y;
+    glm::vec3 hAxis;
 
-    glm::vec3 view = rotate(-axis::Z, glm::radians(angle.x), vAxis);
-    view = normalize(view);
-
-    glm::vec3 hAxis = cross(view, vAxis);
-    hAxis = normalize(hAxis);
-    view = rotate(view, glm::radians(angle.y), hAxis);
-
-    view = normalize(view);
-    const glm::vec3 up = normalize(cross(-view, hAxis));
+    const glm::vec3 view = axis::rotate(-axis::Z, angle, &hAxis);
+    const glm::vec3 up = glm::normalize(glm::cross(-view, hAxis));
 
     return Camera::Location{ target + view * radius, target, up };
+}
+
+glm::vec2 Controller::getCoordinates(float earthAngle) const
+{
+    float longitude = std::fmod(90.0f + angle.x - earthAngle, 360.0f);
+
+    if (longitude > 180.0f)
+    {
+        longitude = -(360.0f - longitude);
+    }
+    if (longitude < -180.0f)
+    {
+        longitude = 360.0f + longitude;
+    }
+
+    return glm::vec2(longitude, angle.y);
+}
+
+float Controller::getRadius()
+{
+    return radius;
 }
 
 void Controller::setDelta(glm::vec2 newDelta)
@@ -65,7 +52,7 @@ void Controller::setDelta(glm::vec2 newDelta)
 
 void Controller::update(float deltaSec)
 {
-    angle += SENSITIVITY * delta * deltaSec;
+    angle += radius / SENSITIVITY * delta * deltaSec;
 
     const glm::vec2 fading = FADING * delta * deltaSec;
     

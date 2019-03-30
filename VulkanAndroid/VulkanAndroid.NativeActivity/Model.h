@@ -1,23 +1,24 @@
 #pragma once
 #include "Buffer.h"
+#include "TextureImage.h"
 
 class Model
 {
 public:
     virtual ~Model();
 
+    virtual std::vector<DescriptorInfo> getTextureInfos() const = 0;
+
+    virtual std::vector<DescriptorInfo> getUniformBufferInfos() const = 0;
+
+    DescriptorInfo getTransformationBufferInfo() const;
+
     glm::mat4 getTransformation() const;
 
-    Buffer* getTransformationBuffer() const;
-
-    void rotate(float angle, glm::vec3 axis);
-
-    void setPosition(glm::vec3 position);
+    void setTransformation(glm::mat4 transformation);
 
 protected:
     Model(Device *device);
-
-    void setTransformation(glm::mat4 transformation);
 
 private:
     glm::mat4 transformation;

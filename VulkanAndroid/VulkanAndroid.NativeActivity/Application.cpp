@@ -1,10 +1,9 @@
 #include "Application.h"
-#include "AssetManager.h"
-#include "utils.h"
+#include "ActivityManager.h"
 
 Application::Application(android_app *app) : app(app)
 {
-    AssetManager::setManager(app->activity->assetManager);
+    ActivityManager::init(app->activity);
 
     app->userData = &engine;
     app->onAppCmd = handleAppCommand;

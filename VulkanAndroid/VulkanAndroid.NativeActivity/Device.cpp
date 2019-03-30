@@ -276,7 +276,6 @@ void Device::createDevice(const std::vector<const char*> &layers)
 	}
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
-	deviceFeatures.sampleRateShading = true;
 
 	VkDeviceCreateInfo deviceCreateInfo{
 		VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,

@@ -1,10 +1,10 @@
 #include "ShaderModule.h"
-#include "AssetManager.h"
+#include "ActivityManager.h"
 
 ShaderModule::ShaderModule(Device *device, const std::string &path, VkShaderStageFlagBits stage)
     : device(device), stage(stage), data(nullptr), specializationInfo(nullptr)
 {
-	std::vector<uint8_t> code = AssetManager::getBytes(path);
+	std::vector<uint8_t> code = ActivityManager::readAsset(path);
 
 	VkShaderModuleCreateInfo createInfo{
 		VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -29,12 +29,12 @@ ShaderModule::ShaderModule(
     {
         LOGA(entries.size() == data.size());
 
-		const size_t size = entries.back().offset + entries.back().size;
+		const uint32_t size = entries.back().offset + entries.back().size;
 
 		this->data = malloc(size);
 		this->entries = entries;
 
-		for (size_t i = 0; i < data.size(); i++)
+		for (uint32_t i = 0; i < data.size(); i++)
 		{
 			memcpy(reinterpret_cast<uint8_t*>(this->data) + entries[i].offset, data[i], entries[i].size);
 		}

@@ -8,12 +8,14 @@ GraphicsPipeline::GraphicsPipeline(
     std::vector<std::shared_ptr<ShaderModule>> shaderModules,
     std::vector<VkVertexInputBindingDescription> bindingDescriptions,
     std::vector<VkVertexInputAttributeDescription> attributeDescriptions,
+    bool depthTestEnabled,
     bool blendEnable)
     : Pipeline(device, descriptorSetLayouts, pushConstantRanges),
       renderPass(renderPass),
       shaderModules(std::move(shaderModules)),
       bindingDescriptions(std::move(bindingDescriptions)),
       attributeDescriptions(std::move(attributeDescriptions)),
+      depthTestEnabled(depthTestEnabled),
       blendEnable(blendEnable)
 {
     GraphicsPipeline::createPipeline();
@@ -114,8 +116,8 @@ void GraphicsPipeline::createPipeline()
 		nullptr,      
 		0,            
 		renderPass->getSampleCount(),  
-		true,      
-		0.2f,         
+		false,      
+		0.0f,         
 		nullptr,      
 		false,     
 		false      
@@ -127,8 +129,8 @@ void GraphicsPipeline::createPipeline()
 		VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
 		nullptr,					
 		0,							
-		true,					
-		true,					
+        depthTestEnabled,
+        depthTestEnabled,
 		VK_COMPARE_OP_LESS_OR_EQUAL,
 		false,					
 		false,					

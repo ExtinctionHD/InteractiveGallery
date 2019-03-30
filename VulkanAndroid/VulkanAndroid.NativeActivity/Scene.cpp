@@ -1,7 +1,7 @@
 #include "Scene.h"
 #include "sphere.h"
 #include "cube.h"
-#include "utils.h"
+#include "card.h"
 
 Scene::Scene(Device *device, VkExtent2D extent)
 {
@@ -25,14 +25,21 @@ Scene::Scene(Device *device, VkExtent2D extent)
         10.0f,
         cameraLocation.position,
         8.0f,
-        0.05f
-
+        0.05f,
     };
     lighting = new Lighting(device, lightingAttributes);
+
 
     earth = new Earth(device, "textures/earth/2K/");
     clouds = new Clouds(device, "textures/earth/2K/");
     skybox = new Skybox(device, "textures/Stars/");
+    gallery = new Gallery(device, "Gallery/", earth, camera, controller);
+
+    models.resize(uint32_t(ModelId::COUNT));
+    models[uint32_t(ModelId::EARTH)] = earth;
+    models[uint32_t(ModelId::CLOUDS)] = clouds;
+    models[uint32_t(ModelId::SKYBOX)] = skybox;
+    models[uint32_t(ModelId::GALLERY)] = gallery;
 
     initMeshes(device);
 
@@ -46,9 +53,11 @@ Scene::~Scene()
         delete buffer;
     }
 
-    delete skybox;
-    delete clouds;
-    delete earth;
+    for (auto &model : models)
+    {
+        delete model;
+    }
+
     delete lighting;
     delete controller;
     delete camera;
@@ -59,39 +68,24 @@ Buffer* Scene::getCameraBuffer() const
     return camera->getBuffer();
 }
 
-Buffer* Scene::getEarthTransformationBuffer() const
+DescriptorInfo Scene::getLightingBufferInfo() const
 {
-    return earth->getTransformationBuffer();
+    return lighting->getBuffer()->getUniformBufferInfo();
 }
 
-Buffer* Scene::getCloudsTransformationBuffer() const
+std::vector<DescriptorInfo> Scene::getModelTextureInfos(ModelId id)
 {
-    return  clouds->getTransformationBuffer();
+    return models[uint32_t(id)]->getTextureInfos();
 }
 
-Buffer* Scene::getSkyboxTransformationBuffer() const
+std::vector<DescriptorInfo> Scene::getModelUniformBufferInfo(ModelId id)
 {
-    return skybox->getTransformationBuffer();
+    return models[uint32_t(id)]->getUniformBufferInfos();
 }
 
-Buffer* Scene::getLightingBuffer() const
+DescriptorInfo Scene::getModelTransformationBufferInfo(ModelId id)
 {
-    return lighting->getBuffer();
-}
-
-std::vector<TextureImage*> Scene::getEarthTextures() const
-{
-    return earth->getTextures();
-}
-
-TextureImage* Scene::getCloudsTexture() const
-{
-    return clouds->getTexture();
-}
-
-TextureImage* Scene::getSkyboxTexture() const
-{
-    return skybox->getCubeTexture();
+    return models[uint32_t(id)]->getTransformationBufferInfo();
 }
 
 void Scene::handleMotion(glm::vec2 delta)
@@ -111,9 +105,10 @@ void Scene::update()
     controller->update(deltaSec);
     camera->update(controller->getLocation());
 
-    skybox->setPosition(camera->getPosition());
-    // earth->rotate(5.0f * deltaSec, -axis::Y);
+    earth->rotate(2.0f * deltaSec);
     clouds->setEarthTransformation(earth->getTransformation());
+    skybox->setTransformation(translate(glm::mat4(1.0f), camera->getPosition()));
+    gallery->update();
 
 #ifndef NDEBUG
     logFps(deltaSec);
@@ -149,6 +144,18 @@ void Scene::drawCube(VkCommandBuffer commandBuffer) const
     vkCmdDrawIndexed(commandBuffer, cube::INDICES.size(), 1, 0, 0, 0);
 }
 
+void Scene::drawCard(VkCommandBuffer commandBuffer) const
+{
+    VkBuffer buffer = meshBuffers[CARD_VERTEX_BUFFER]->get();
+    VkDeviceSize offset = 0;
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &buffer, &offset);
+
+    buffer = meshBuffers[CARD_INDEX_BUFFER]->get();
+    vkCmdBindIndexBuffer(commandBuffer, buffer, 0, VK_INDEX_TYPE_UINT32);
+
+    vkCmdDrawIndexed(commandBuffer, card::INDICES.size(), 1, 0, 0, 0);
+}
+
 void Scene::initMeshes(Device *device)
 {
     meshBuffers.resize(MESH_BUFFER_COUNT);
@@ -162,6 +169,11 @@ void Scene::initMeshes(Device *device)
     meshBuffers[CUBE_INDEX_BUFFER] = new Buffer(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, cube::INDICES.size() * sizeof(uint32_t));
     meshBuffers[CUBE_VERTEX_BUFFER]->updateData(cube::VERTICES.data());
     meshBuffers[CUBE_INDEX_BUFFER]->updateData(cube::INDICES.data());
+
+    meshBuffers[CARD_VERTEX_BUFFER] = new Buffer(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, card::VERTICES.size() * sizeof(PositionUv));
+    meshBuffers[CARD_INDEX_BUFFER] = new Buffer(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, card::INDICES.size() * sizeof(uint32_t));
+    meshBuffers[CARD_VERTEX_BUFFER]->updateData(card::VERTICES.data());
+    meshBuffers[CARD_INDEX_BUFFER]->updateData(card::INDICES.data());
 }
 
 void Scene::logFps(float deltaSec)
