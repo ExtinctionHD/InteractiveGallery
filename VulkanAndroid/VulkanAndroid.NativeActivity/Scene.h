@@ -39,6 +39,8 @@ public:
 
     void handleMotion(glm::vec2 delta);
 
+    void handleZoom(float delta);
+
     void skipTime();
 
     void update();

@@ -121,6 +121,11 @@ void Engine::handleMotion(glm::vec2 delta)
     scene->handleMotion(delta);
 }
 
+void Engine::handleZoom(float delta)
+{
+    scene->handleZoom(delta);
+}
+
 bool Engine::drawFrame()
 {
     if (!created || outdated || paused) return false;

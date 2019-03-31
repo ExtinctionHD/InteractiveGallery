@@ -90,7 +90,12 @@ DescriptorInfo Scene::getModelTransformationBufferInfo(ModelId id)
 
 void Scene::handleMotion(glm::vec2 delta)
 {
-    controller->setDelta(delta);
+    controller->setMotionDelta(delta);
+}
+
+void Scene::handleZoom(float delta)
+{
+    controller->setZoomDelta(delta);
 }
 
 void Scene::skipTime()

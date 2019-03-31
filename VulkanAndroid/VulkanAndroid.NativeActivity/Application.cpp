@@ -1,5 +1,6 @@
 #include "Application.h"
 #include "ActivityManager.h"
+#include "MotionEvent.h"
 
 Application::Application(android_app *app) : app(app)
 {
@@ -73,30 +74,42 @@ int32_t Application::handleAppInput(android_app *app, AInputEvent *event)
 
     if (!engine->onPause() && AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION)
     {
-        static glm::vec2 last;
+        static MotionEvent motionEvent;
 
         const int32_t action = AMotionEvent_getAction(event);
+        const int32_t actionType = action & AMOTION_EVENT_ACTION_MASK;
+        const int32_t pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+        const int32_t pointerId = AMotionEvent_getPointerId(event, pointerIndex);
 
-        switch (action)
+        switch (actionType)
         {
         case AMOTION_EVENT_ACTION_DOWN:
-            LOGD("DOWN");
-            last.x = AMotionEvent_getX(event, 0);
-            last.y = AMotionEvent_getY(event, 0);
+        case AMOTION_EVENT_ACTION_POINTER_DOWN:
+            LOGD("DOWN index: %d, id: %d", pointerIndex, pointerId);
+            motionEvent.addPoint(pointerId);
+            motionEvent.getMotionDelta(event, pointerId);
             break;
         case AMOTION_EVENT_ACTION_MOVE:
-            glm::vec2 current;
-            current.x = AMotionEvent_getX(event, 0);
-            current.y = AMotionEvent_getY(event, 0);
-            engine->handleMotion(current - last);
-            last = current;
+            if (motionEvent.isMultitouch(event))
+            {
+                LOGI("ZOOM");
+                // TODO: movement of second touch not detected
+                engine->handleZoom(motionEvent.getZoomDelta(event, pointerId));
+            }
+            else
+            {
+                LOGI("MOTION");
+                engine->handleMotion(motionEvent.getMotionDelta(event, pointerId));
+            }
             break;
         case AMOTION_EVENT_ACTION_UP:
-            LOGD("UP");
+        case AMOTION_EVENT_ACTION_POINTER_UP:
+            LOGD("UP index: %d, id: %d", pointerIndex, pointerId);
+            motionEvent.removePoint(pointerId);
             break;
         default:
-            LOGD("DEFAULT %d", action);
-            break;;
+            LOGD("DEFAULT index: %d, id: %d", pointerIndex, pointerId);
+            break;
         }
     }
 

@@ -12,7 +12,9 @@ public:
 
     float getRadius();
 
-    void setDelta(glm::vec2 newDelta);
+    void setMotionDelta(glm::vec2 newDelta);
+
+    void setZoomDelta(float newDelta);
 
     void update(float deltaSec);
 
@@ -27,6 +29,8 @@ private:
 
     glm::vec2 angle;
 
-    glm::vec2 delta;
+    glm::vec2 motionDelta;
+
+    float zoomDelta;
 };
 

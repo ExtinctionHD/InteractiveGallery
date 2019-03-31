@@ -308,6 +308,7 @@
     <ClInclude Include="Macro.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Gallery.h" />
+    <ClInclude Include="MotionEvent.h" />
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="Position.h" />
     <ClInclude Include="PositionUv.h" />
@@ -353,6 +354,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Gallery.cpp" />
+    <ClCompile Include="MotionEvent.cpp" />
     <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="Position.cpp" />
     <ClCompile Include="PositionUv.cpp" />

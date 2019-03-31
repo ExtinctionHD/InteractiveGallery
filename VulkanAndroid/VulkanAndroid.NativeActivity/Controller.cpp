@@ -5,7 +5,7 @@
 Controller::Controller(glm::vec3 target, glm::vec3 position)
     : target(target),
       radius(glm::distance(target, position)),
-      delta(glm::vec2(0.0f))
+      motionDelta(glm::vec2(0.0f))
 {
     const glm::vec3 view = glm::normalize(target - position);
 
@@ -44,23 +44,34 @@ float Controller::getRadius()
     return radius;
 }
 
-void Controller::setDelta(glm::vec2 newDelta)
+void Controller::setMotionDelta(glm::vec2 newDelta)
 {
     newDelta.x = -newDelta.x;
-    delta = (delta + newDelta) / 2.0f;
+    motionDelta = (motionDelta + newDelta) / 2.0f;
+}
+
+void Controller::setZoomDelta(float newDelta)
+{
+    newDelta = -newDelta;
+    zoomDelta = (zoomDelta + newDelta) / 2.0f;
 }
 
 void Controller::update(float deltaSec)
 {
-    angle += radius / SENSITIVITY * delta * deltaSec;
+    angle += radius / SENSITIVITY * motionDelta * deltaSec;
+    radius += SENSITIVITY * zoomDelta * deltaSec;
 
-    const glm::vec2 fading = FADING * delta * deltaSec;
-    
-    delta.x = glm::abs(delta.x) > glm::abs(fading.x) ? delta.x - fading.x : 0.0f;
-    delta.y = glm::abs(delta.y) > glm::abs(fading.y) ? delta.y - fading.y : 0.0f;
+    const glm::vec2 motionFading = FADING * motionDelta * deltaSec;
+    motionDelta.x = glm::abs(motionDelta.x) > glm::abs(motionFading.x) ? motionDelta.x - motionFading.x : 0.0f;
+    motionDelta.y = glm::abs(motionDelta.y) > glm::abs(motionFading.y) ? motionDelta.y - motionFading.y : 0.0f;
+
+    const float zoomFading = FADING * zoomDelta * deltaSec;
+    zoomDelta = glm::abs(zoomDelta) > glm::abs(zoomFading) ? zoomDelta - zoomFading : 0.0f;
 
     // restricts Y angle
     const float maxY = 85.0f;
     const float absY = glm::abs(angle.y);
     angle.y = absY > maxY ? maxY * angle.y / absY : angle.y;
+
+    // TODO: add zoom restrictions 
 }
