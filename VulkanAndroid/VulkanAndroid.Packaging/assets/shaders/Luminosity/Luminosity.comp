@@ -1,0 +1,35 @@
+#version 450
+
+layout (local_size_x = 1) in;               
+layout (local_size_y = 1) in;
+
+layout (set = 0, binding = 0) uniform sampler2D avgColor;
+layout (set = 1, binding = 0, rgba8) uniform image2D luminosityImage;
+
+const float EYE_ADAPTATION_SPEED = 0.01f;
+
+float getColorLuminosity(vec3 color)
+{
+	return dot(vec3(0.2125f, 0.7154f, 0.0721f), color);
+}
+
+void main()
+{	
+	ivec2 uv = ivec2(0.0f);
+
+	vec3 avgColor = texelFetch(avgColor, uv, 0).rgb;
+
+	float oldLum = imageLoad(luminosityImage, uv).r;
+	float curLum = getColorLuminosity(avgColor);
+
+	if (oldLum > curLum)
+	{
+		oldLum -= EYE_ADAPTATION_SPEED;
+	}
+	else
+	{
+		oldLum += EYE_ADAPTATION_SPEED;
+	}
+	
+	imageStore(luminosityImage, uv, vec4(oldLum));
+}

@@ -37,12 +37,14 @@ bool Engine::create(ANativeWindow *window)
     descriptorPool = new DescriptorPool(
         device,
         {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Scene::TEXTURE_COUNT + 1 },
-            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, swapChain->getImageCount() },
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Scene::TEXTURE_COUNT + 2 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, swapChain->getImageCount() + 1 },
             { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Scene::BUFFER_COUNT + 0 }
         },
         DESCRIPTOR_TYPE_COUNT + 1 + swapChain->getImageCount());
-    
+
+    createLuminosityImage();
+
     initDescriptorSets();
     initLocalGroupSize();
     initPipelines();
@@ -257,6 +259,7 @@ bool Engine::destroy()
     delete galleryRenderPass;
     delete earthRenderPass;
     delete descriptorPool;
+    delete luminosityImage;
     delete scene;
     delete swapChain;
     delete device;
@@ -323,23 +326,57 @@ void Engine::initDescriptorSets()
             { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { scene->getModelTransformationBufferInfo(Scene::ModelId::SKYBOX) } }
         });
 
-    // Tone:
+    // Luminosity:
 
     const auto colorTexture = earthRenderPass->getColorTexture();
+
+    descriptors[DESCRIPTOR_TYPE_LUMINOSITY_SRC] = new DescriptorSets(
+        descriptorPool,
+        {
+            {
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                { VK_SHADER_STAGE_COMPUTE_BIT }
+            }
+        });
+    descriptors[DESCRIPTOR_TYPE_LUMINOSITY_SRC]->pushDescriptorSet(
+        {
+            {
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                { colorTexture->getCombineSamplerInfo(0, 1) }
+            }
+        });
+
+    descriptors[DESCRIPTOR_TYPE_LUMINOSITY_DST] = new DescriptorSets(
+        descriptorPool,
+        {
+            {
+                VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                { VK_SHADER_STAGE_COMPUTE_BIT }
+            }
+        });
+    descriptors[DESCRIPTOR_TYPE_LUMINOSITY_DST]->pushDescriptorSet(
+        {
+            {
+                VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                { luminosityImage->getStorageImageInfo() }
+            }
+        });
+
+    // Tone:
 
     descriptors[DESCRIPTOR_TYPE_TONE_SRC] = new DescriptorSets(
         descriptorPool,
         {
             {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                { VK_SHADER_STAGE_COMPUTE_BIT, VK_SHADER_STAGE_COMPUTE_BIT }
+                { VK_SHADER_STAGE_COMPUTE_BIT }
             }
         });
     descriptors[DESCRIPTOR_TYPE_TONE_SRC]->pushDescriptorSet(
         {
             {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                { colorTexture->getCombineSamplerInfo(), colorTexture->getCombineSamplerInfo(0, 1) }
+                { colorTexture->getCombineSamplerInfo() }
             }
         });
 
@@ -353,8 +390,6 @@ void Engine::initDescriptorSets()
     }
 
     // Gallery:
-
-    LOGI("Gallery.");
 
     descriptors[DESCRIPTOR_TYPE_GALLERY] = new DescriptorSets(
         descriptorPool,
@@ -459,6 +494,22 @@ void Engine::initPipelines()
         true,
         false);
 
+    // Luminosity:
+
+    const std::shared_ptr<ShaderModule> luminosityShader = std::make_shared<ShaderModule>(
+        device,
+        "shaders/Luminosity/comp.spv",
+        VK_SHADER_STAGE_COMPUTE_BIT);
+
+    pipelines[PIPELINE_TYPE_LUMINOSITY] = new ComputePipeline(
+        device,
+        {
+            descriptors[DESCRIPTOR_TYPE_LUMINOSITY_SRC]->getLayout(),
+            descriptors[DESCRIPTOR_TYPE_LUMINOSITY_DST]->getLayout()
+        },
+        {},
+        luminosityShader);
+
     // Tone:
 
     std::vector<VkSpecializationMapEntry> specializationEntries{
@@ -471,7 +522,7 @@ void Engine::initPipelines()
         &localGroupSize.y
     };
 
-    const std::shared_ptr<ShaderModule> computeShader = std::make_shared<ShaderModule>(
+    const std::shared_ptr<ShaderModule> toneShader = std::make_shared<ShaderModule>(
         device,
         "shaders/Tone/comp.spv",
         VK_SHADER_STAGE_COMPUTE_BIT,
@@ -480,12 +531,13 @@ void Engine::initPipelines()
 
     pipelines[PIPELINE_TYPE_TONE] = new ComputePipeline(
         device,
-        { 
+        {
+            descriptors[DESCRIPTOR_TYPE_LUMINOSITY_DST]->getLayout(),
             descriptors[DESCRIPTOR_TYPE_TONE_SRC]->getLayout(), 
             descriptors[DESCRIPTOR_TYPE_TONE_DST]->getLayout()
         },
         {},
-        computeShader);
+        toneShader);
 
     // Gallery:
 
@@ -507,6 +559,21 @@ void Engine::initPipelines()
         PositionUv::getAttributeDescriptions(0, 0),
         false,
         true);
+}
+
+void Engine::createLuminosityImage()
+{
+    luminosityImage = new Image(
+        device,
+        0,
+        VK_FORMAT_R16G16B16A16_SFLOAT,
+        { 1, 1, 1 },
+        1,
+        1,
+        VK_SAMPLE_COUNT_1_BIT,
+        VK_IMAGE_USAGE_STORAGE_BIT,
+        false);
+    luminosityImage->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 VkSemaphore Engine::createSemaphore() const
@@ -708,8 +775,23 @@ void Engine::initComputingCommands()
                 VK_ACCESS_SHADER_READ_BIT,
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 
-            const auto swapChainImage = swapChain->getImages()[i];
+            vkCmdBindPipeline(computingCommands[i], VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[PIPELINE_TYPE_LUMINOSITY]->get());
+            std::vector<VkDescriptorSet> lumDescriptorSets{
+                descriptors[DESCRIPTOR_TYPE_LUMINOSITY_SRC]->getDescriptorSet(0),
+                descriptors[DESCRIPTOR_TYPE_LUMINOSITY_DST]->getDescriptorSet(0)
+            };
+            vkCmdBindDescriptorSets(
+                computingCommands[i],
+                VK_PIPELINE_BIND_POINT_COMPUTE,
+                pipelines[PIPELINE_TYPE_LUMINOSITY]->getLayout(),
+                0,
+                lumDescriptorSets.size(),
+                lumDescriptorSets.data(),
+                0,
+                nullptr);
+            vkCmdDispatch(computingCommands[i], 1, 1, 1);
 
+            const auto swapChainImage = swapChain->getImages()[i];
             swapChainImage->memoryBarrier(
                 computingCommands[i],
                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
@@ -727,7 +809,8 @@ void Engine::initComputingCommands()
                 });
 
             vkCmdBindPipeline(computingCommands[i], VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[PIPELINE_TYPE_TONE]->get());
-            std::vector<VkDescriptorSet> descriptorSets{
+            std::vector<VkDescriptorSet> toneDescriptorSets{
+                descriptors[DESCRIPTOR_TYPE_LUMINOSITY_DST]->getDescriptorSet(0),
                 descriptors[DESCRIPTOR_TYPE_TONE_SRC]->getDescriptorSet(0),
                 descriptors[DESCRIPTOR_TYPE_TONE_DST]->getDescriptorSet(i)
             };
@@ -736,8 +819,8 @@ void Engine::initComputingCommands()
                 VK_PIPELINE_BIND_POINT_COMPUTE,
                 pipelines[PIPELINE_TYPE_TONE]->getLayout(),
                 0,
-                descriptorSets.size(),
-                descriptorSets.data(),
+                toneDescriptorSets.size(),
+                toneDescriptorSets.data(),
                 0,
                 nullptr);
 
