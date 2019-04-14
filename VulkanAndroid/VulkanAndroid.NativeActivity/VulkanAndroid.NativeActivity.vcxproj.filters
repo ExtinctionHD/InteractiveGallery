@@ -136,6 +136,9 @@
     <ClInclude Include="Skybox.h">
       <Filter>Scene\Models\Skybox</Filter>
     </ClInclude>
+    <ClInclude Include="MotionEvent.h">
+      <Filter>App</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -257,6 +260,9 @@
     </ClCompile>
     <ClCompile Include="Skybox.cpp">
       <Filter>Scene\Models\Skybox</Filter>
+    </ClCompile>
+    <ClCompile Include="MotionEvent.cpp">
+      <Filter>App</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

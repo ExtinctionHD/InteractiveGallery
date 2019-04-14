@@ -12,14 +12,18 @@ public:
 
     float getRadius();
 
-    void setDelta(glm::vec2 newDelta);
+    void setMotionDelta(glm::vec2 newDelta);
+
+    void setZoomDelta(float newDelta);
 
     void update(float deltaSec);
 
 private:
-    const float SENSITIVITY = 5.0f;
+    const float ROTATION_SENSITIVITY = 5.0f;
+    const float ROTATION_FADING = 2.0f;
 
-    const float FADING = 2.0f;
+    const float ZOOM_SENSITIVITY = 1.5f;
+    const float ZOOM_FADING = 3.0f;
 
     glm::vec3 target;
 
@@ -27,6 +31,8 @@ private:
 
     glm::vec2 angle;
 
-    glm::vec2 delta;
+    glm::vec2 motionDelta = glm::vec2(0.0f);
+
+    float zoomDelta = 0.0f;
 };
 

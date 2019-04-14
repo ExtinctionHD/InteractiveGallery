@@ -31,6 +31,8 @@ public:
 
     void handleMotion(glm::vec2 delta);
 
+    void handleZoom(float delta);
+
     bool drawFrame();
 
     bool destroy();
