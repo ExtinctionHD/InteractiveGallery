@@ -9,7 +9,7 @@ Scene::Scene(Device *device, VkExtent2D extent)
         extent,
         90.0f,
         1.0f,
-        50.0f
+        60.0f
     };
     const Camera::Location cameraLocation{
         glm::vec3(0.0f, 0.0f, -25.0f),

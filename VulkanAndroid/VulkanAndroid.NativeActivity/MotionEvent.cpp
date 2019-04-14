@@ -22,32 +22,36 @@ void MotionEvent::removePoint(int32_t id)
 glm::vec2 MotionEvent::getMotionDelta(AInputEvent *event, int32_t id)
 {
     glm::vec2 &currentPoint = points[id];
-
     const glm::vec2 newPoint = getNewPoint(event, id);
 
-    const glm::vec2 delta = newPoint - currentPoint;
+    glm::vec2 delta = newPoint - currentPoint;
+    if (currentPoint == glm::vec2(0.0f) || newPoint == glm::vec2(0.0f))
+    {
+        delta = glm::vec2(0.0f);
+    }
 
     currentPoint = newPoint;
 
     return delta;
 }
 
-float MotionEvent::getZoomDelta(AInputEvent *event, int32_t id)
+float MotionEvent::getZoomDelta(AInputEvent *event)
 {
-    LOGI("%d, %d", idList.front(), *++idList.begin());
+    if (idList.size() < 2)
+    {
+        return 0.0f;
+    }
 
-    glm::vec2 &firstPoint = points[idList.front()];
-    glm::vec2 &secondPoint = points[*++idList.begin()];
+    const int32_t firstId = idList.front();
+    const int32_t secondId = *++idList.begin();
 
-    LOGI("Id: %d", id);
-    LOGI("First x: %f, y: %f", firstPoint.x, firstPoint.y);
-    LOGI("Second x: %f, y: %f", secondPoint.x, secondPoint.y);
+    glm::vec2 &firstPoint = points[firstId];
+    glm::vec2 &secondPoint = points[secondId];
 
     const float currentDelta = glm::distance(firstPoint, secondPoint);
 
-    LOGI("Current delta: %f", currentDelta);
-
-    points[id] = getNewPoint(event, id);
+    points[firstId] = getNewPoint(event, firstId);
+    points[secondId] = getNewPoint(event, secondId);
 
     return glm::distance(firstPoint, secondPoint) - currentDelta;
 }

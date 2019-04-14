@@ -14,7 +14,7 @@ public:
 
     glm::vec2 getMotionDelta(AInputEvent *event, int32_t id);
 
-    float  getZoomDelta(AInputEvent *event, int32_t id);
+    float  getZoomDelta(AInputEvent *event);
 
 private:
     std::list<int32_t> idList;

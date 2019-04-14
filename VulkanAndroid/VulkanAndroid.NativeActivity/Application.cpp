@@ -85,30 +85,24 @@ int32_t Application::handleAppInput(android_app *app, AInputEvent *event)
         {
         case AMOTION_EVENT_ACTION_DOWN:
         case AMOTION_EVENT_ACTION_POINTER_DOWN:
-            LOGD("DOWN index: %d, id: %d", pointerIndex, pointerId);
             motionEvent.addPoint(pointerId);
             motionEvent.getMotionDelta(event, pointerId);
             break;
         case AMOTION_EVENT_ACTION_MOVE:
             if (motionEvent.isMultitouch(event))
             {
-                LOGI("ZOOM");
-                // TODO: movement of second touch not detected
-                engine->handleZoom(motionEvent.getZoomDelta(event, pointerId));
+                engine->handleZoom(motionEvent.getZoomDelta(event));
             }
             else
             {
-                LOGI("MOTION");
                 engine->handleMotion(motionEvent.getMotionDelta(event, pointerId));
             }
             break;
         case AMOTION_EVENT_ACTION_UP:
         case AMOTION_EVENT_ACTION_POINTER_UP:
-            LOGD("UP index: %d, id: %d", pointerIndex, pointerId);
             motionEvent.removePoint(pointerId);
             break;
         default:
-            LOGD("DEFAULT index: %d, id: %d", pointerIndex, pointerId);
             break;
         }
     }
