@@ -45,6 +45,8 @@ public:
 
     void update();
 
+    void activateGallery();
+
     void resize(VkExtent2D newExtent);
 
     void drawSphere(VkCommandBuffer commandBuffer) const;

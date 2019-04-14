@@ -120,6 +120,11 @@ void Scene::update()
 #endif
 }
 
+void Scene::activateGallery()
+{
+    gallery->activate();
+}
+
 void Scene::resize(VkExtent2D newExtent)
 {
     camera->resize(newExtent);

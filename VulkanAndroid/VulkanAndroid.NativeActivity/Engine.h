@@ -33,6 +33,8 @@ public:
 
     void handleZoom(float delta);
 
+    void activateGallery();
+
     bool drawFrame();
 
     bool destroy();

@@ -42,6 +42,11 @@ std::vector<DescriptorInfo> Gallery::getUniformBufferInfos() const
 
 void Gallery::update()
 {
+    if (!activated)
+    {
+        return;
+    }
+
     const glm::vec2 cameraCoordinates = controller->getCoordinates(earth->getAngle());
 
     uint32_t index;
@@ -57,6 +62,11 @@ void Gallery::update()
     }
 
     parameterBuffer->updateData(&parameters);
+}
+
+void Gallery::activate()
+{
+    activated = true;
 }
 
 void Gallery::loadPhotographs(Device *device, const std::string &path)

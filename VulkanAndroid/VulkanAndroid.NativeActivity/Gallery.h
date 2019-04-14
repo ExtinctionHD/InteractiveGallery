@@ -19,6 +19,8 @@ public:
 
     void update();
 
+    void activate();
+
 private:
     struct Parameters
     {
@@ -29,6 +31,8 @@ private:
     const float DISTANCE_LIMIT_FACTOR = 1.25;
 
     const float SCALE_FACTOR = 0.4f;
+
+    bool activated = false;
 
     Buffer *parameterBuffer;
 

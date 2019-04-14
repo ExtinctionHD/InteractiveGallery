@@ -85,6 +85,7 @@ int32_t Application::handleAppInput(android_app *app, AInputEvent *event)
         {
         case AMOTION_EVENT_ACTION_DOWN:
         case AMOTION_EVENT_ACTION_POINTER_DOWN:
+            engine->activateGallery();
             motionEvent.addPoint(pointerId);
             motionEvent.getMotionDelta(event, pointerId);
             break;

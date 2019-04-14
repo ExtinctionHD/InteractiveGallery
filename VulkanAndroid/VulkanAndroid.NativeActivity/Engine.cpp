@@ -126,6 +126,11 @@ void Engine::handleZoom(float delta)
     scene->handleZoom(delta);
 }
 
+void Engine::activateGallery()
+{
+    scene->activateGallery();
+}
+
 bool Engine::drawFrame()
 {
     if (!created || outdated || paused) return false;
