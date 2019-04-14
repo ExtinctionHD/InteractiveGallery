@@ -55,22 +55,25 @@ std::vector<std::string> ActivityManager::getFilePaths(
     std::vector<std::string> fileNames;
 
     const auto dir = opendir(fullPath.c_str());
-    auto entry = readdir(dir);
-    while (entry) 
+    if (dir)
     {
-        if (entry->d_type == DT_REG) 
+        auto entry = readdir(dir);
+        while (entry)
         {
-            std::string fileName = entry->d_name;
-
-            for (const auto &extension : extensions)
+            if (entry->d_type == DT_REG)
             {
-                if (fileName.find(extension, fileName.length() - extension.length()) != std::string::npos)
+                std::string fileName = entry->d_name;
+
+                for (const auto &extension : extensions)
                 {
-                    fileNames.push_back(path + fileName);
+                    if (fileName.find(extension, fileName.length() - extension.length()) != std::string::npos)
+                    {
+                        fileNames.push_back(path + fileName);
+                    }
                 }
             }
+            entry = readdir(dir);
         }
-        entry = readdir(dir);
     }
 
     return fileNames;

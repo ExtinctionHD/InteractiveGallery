@@ -42,7 +42,7 @@ std::vector<DescriptorInfo> Gallery::getUniformBufferInfos() const
 
 void Gallery::update()
 {
-    if (!activated)
+    if (!activated || empty)
     {
         return;
     }
@@ -90,7 +90,26 @@ void Gallery::loadPhotographs(Device *device, const std::string &path)
         }
     }
 
-    texture = new TextureImage(device, buffers, false, false);
+    empty = buffers.empty();
+    if (empty)
+    {
+        coordinates.emplace_back(0.0f);
+        texture = new TextureImage(
+            device,
+            0,
+            VK_FORMAT_R8G8B8A8_UNORM,
+            { 1, 1, 1 },
+            1,
+            2,
+            VK_SAMPLE_COUNT_1_BIT,
+            VK_IMAGE_USAGE_SAMPLED_BIT,
+            false);
+    }
+    else
+    {
+        texture = new TextureImage(device, buffers, false, false);
+    }
+
     texture->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
     texture->pushSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 }

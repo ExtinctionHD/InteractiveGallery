@@ -32,8 +32,6 @@ private:
 
     const float SCALE_FACTOR = 0.4f;
 
-    bool activated = false;
-
     Buffer *parameterBuffer;
 
     Earth *earth;
@@ -45,6 +43,10 @@ private:
     TextureImage *texture;
 
     std::vector<glm::vec2> coordinates;
+
+    bool activated = false;
+
+    bool empty;
 
     void loadPhotographs(Device *device, const std::string &path);
 
