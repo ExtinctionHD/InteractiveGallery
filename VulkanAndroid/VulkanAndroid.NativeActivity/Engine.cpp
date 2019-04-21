@@ -948,12 +948,21 @@ void Engine::updateChangedDescriptorSets()
 {
     const auto colorTexture = earthRenderPass->getColorTexture();
 
+    descriptors[DESCRIPTOR_TYPE_LUMINOSITY_SRC]->updateDescriptorSet(
+        0,
+        {
+            {
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                { colorTexture->getCombineSamplerInfo(0, 1) }
+            }
+        });
+
     descriptors[DESCRIPTOR_TYPE_TONE_SRC]->updateDescriptorSet(
         0,
         {
             {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                { colorTexture->getCombineSamplerInfo(), colorTexture->getCombineSamplerInfo(0, 1) }
+                { colorTexture->getCombineSamplerInfo() }
             }
         });
     const auto swapChainImages = swapChain->getImages();

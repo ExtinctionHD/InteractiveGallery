@@ -6,7 +6,7 @@ layout (local_size_y = 1) in;
 layout (set = 0, binding = 0) uniform sampler2D avgColor;
 layout (set = 1, binding = 0, rgba8) uniform image2D luminosityImage;
 
-const float EYE_ADAPTATION_SPEED = 0.01f;
+const float EYE_ADAPTATION_SPEED = 0.02f;
 
 float getColorLuminosity(vec3 color)
 {

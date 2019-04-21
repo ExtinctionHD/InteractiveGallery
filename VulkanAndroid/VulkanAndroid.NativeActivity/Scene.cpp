@@ -22,10 +22,10 @@ Scene::Scene(Device *device, VkExtent2D extent)
 
     const Lighting::Attributes lightingAttributes{
         glm::vec3(1.0f, 0.0f, 0.0f),
-        10.0f,
+        20.0f,
         cameraLocation.position,
         8.0f,
-        0.05f,
+        0.02f,
     };
     lighting = new Lighting(device, lightingAttributes);
 
@@ -109,6 +109,7 @@ void Scene::update()
 
     controller->update(deltaSec);
     camera->update(controller->getLocation());
+    lighting->update(camera->getPosition());
 
     earth->rotate(2.0f * deltaSec);
     clouds->setEarthTransformation(earth->getTransformation());
