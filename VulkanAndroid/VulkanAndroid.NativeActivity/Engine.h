@@ -45,6 +45,8 @@ private:
         DESCRIPTOR_TYPE_SCENE,
         DESCRIPTOR_TYPE_EARTH,
         DESCRIPTOR_TYPE_CLOUDS_AND_SKYBOX,
+        DESCRIPTOR_TYPE_LUMINOSITY_SRC,
+        DESCRIPTOR_TYPE_LUMINOSITY_DST,
         DESCRIPTOR_TYPE_TONE_SRC,
         DESCRIPTOR_TYPE_TONE_DST,
         DESCRIPTOR_TYPE_GALLERY,
@@ -56,6 +58,7 @@ private:
         PIPELINE_TYPE_EARTH,
         PIPELINE_TYPE_CLOUDS,
         PIPELINE_TYPE_SKYBOX,
+        PIPELINE_TYPE_LUMINOSITY,
         PIPELINE_TYPE_TONE,
         PIPELINE_TYPE_GALLERY,
         PIPELINE_TYPE_COUNT
@@ -85,6 +88,8 @@ private:
 
     std::vector<Pipeline*> pipelines;
 
+    Image *luminosityImage;
+
     Scene *scene;
 
     // TODO: combine semaphores
@@ -112,6 +117,8 @@ private:
     void initLocalGroupSize();
 
     void initPipelines();
+
+    void createLuminosityImage();
 
     VkSemaphore createSemaphore() const;
 

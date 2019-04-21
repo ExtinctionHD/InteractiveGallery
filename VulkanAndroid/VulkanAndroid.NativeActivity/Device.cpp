@@ -276,6 +276,7 @@ void Device::createDevice(const std::vector<const char*> &layers)
 	}
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
+    deviceFeatures.shaderStorageImageExtendedFormats = true;
 
 	VkDeviceCreateInfo deviceCreateInfo{
 		VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
