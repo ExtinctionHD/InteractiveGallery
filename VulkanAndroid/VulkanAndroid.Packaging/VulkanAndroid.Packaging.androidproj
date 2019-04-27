@@ -154,6 +154,7 @@
     <Content Include="libs\arm64-v8a\libVkLayer_swapchain.so" />
     <Content Include="libs\arm64-v8a\libVkLayer_threading.so" />
     <Content Include="libs\arm64-v8a\libVkLayer_unique_objects.so" />
+    <Content Include="res\drawable\icon.png" />
     <Content Include="res\values\strings.xml" />
     <AntBuildXml Include="build.xml" />
     <AndroidManifest Include="AndroidManifest.xml" />
