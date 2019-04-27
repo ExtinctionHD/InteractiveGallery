@@ -574,6 +574,17 @@ void Engine::createLuminosityImage()
         VK_IMAGE_USAGE_STORAGE_BIT,
         false);
     luminosityImage->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);
+
+    using namespace glm::detail;
+
+    const std::vector<hdata> defaultLuminosity{
+        toFloat16(1.0f),
+        toFloat16(1.0f),
+        toFloat16(1.0f),
+        toFloat16(1.0f),
+    };
+
+    luminosityImage->updateData({ defaultLuminosity.data() }, 0, defaultLuminosity.size() * sizeof(hdata));
 }
 
 VkSemaphore Engine::createSemaphore() const
