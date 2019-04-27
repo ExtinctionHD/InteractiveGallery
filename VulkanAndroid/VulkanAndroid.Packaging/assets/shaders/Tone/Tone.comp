@@ -7,7 +7,7 @@ layout (set = 0, binding = 0, rgba8) uniform image2D lumImage;
 layout (set = 1, binding = 0) uniform sampler2D hdrTexture;
 layout (set = 2, binding = 0, rgba8) uniform image2D resultImage;
 
-const float MIN_LUM = 0.25f;
+const float MIN_LUM = 0.4f;
 
 void main()
 {	

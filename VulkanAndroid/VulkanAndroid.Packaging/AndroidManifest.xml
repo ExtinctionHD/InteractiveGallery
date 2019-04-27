@@ -8,7 +8,6 @@
     <!-- This is the platform API where NativeActivity was introduced. -->
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="21"/>
     
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     
     <!-- This .apk has no Java code itself, so set hasCode to false. -->
