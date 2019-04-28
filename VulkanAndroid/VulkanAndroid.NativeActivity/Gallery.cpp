@@ -2,7 +2,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <algorithm>
-#include <sstream>
 #include "ActivityManager.h"
 #include "cities.h"
 #include <cstdlib>
@@ -108,6 +107,12 @@ void Gallery::loadPhotographs(Device *device, const std::string &path)
     else
     {
         texture = new TextureImage(device, buffers, false, false);
+
+        std::set<uint32_t> failedImages = texture->getFailedImages();
+        for (auto it = failedImages.rbegin(); it != failedImages.rend(); ++it)
+        {
+            coordinates.erase(coordinates.begin() + *it);
+        }
     }
 
     texture->pushFullView(VK_IMAGE_ASPECT_COLOR_BIT);

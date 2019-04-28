@@ -29,10 +29,14 @@ public:
 
     DescriptorInfo getCombineSamplerInfo(uint32_t samplerIndex = 0, uint32_t viewIndex = 0) const;
 
+    std::set<uint32_t> getFailedImages() const;
+
     void pushSampler(VkFilter filter, VkSamplerAddressMode addressMode);
 
 protected:
 	std::vector<VkSampler> samplers;
+
+    std::set<uint32_t> failedImages;
 
 	stbi_uc* loadPixels(const std::vector<uint8_t> &buffer);
 };

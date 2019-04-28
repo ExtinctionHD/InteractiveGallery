@@ -1,38 +1,46 @@
 #include "TextureImage.h"
 
 TextureImage::TextureImage(
-	Device *device,
-	const std::vector<std::vector<uint8_t>> &buffers,
+    Device *device,
+    const std::vector<std::vector<uint8_t>> &buffers,
     bool mipLevels,
-	bool cubeMap)
+    bool cubeMap)
 {
-    extent = VkExtent3D{0, 0, 1};
+    extent = VkExtent3D{ 0, 0, 1 };
 
-	std::vector<const void*> pixels(buffers.size());
-	for (uint32_t i = 0; i < buffers.size(); i++)
-	{
-		pixels[i] = loadPixels(buffers[i]);
-	}
+    std::vector<const void*> pixels;
+    for (uint32_t i = 0; i < buffers.size(); i++)
+    {
+        stbi_uc *loadedPixels = loadPixels(buffers[i]);
+        if (loadedPixels)
+        {
+            pixels.push_back(loadedPixels);
+        }
+        else
+        {
+            failedImages.insert(i);
+        }
+    }
 
-	createThisImage(
-		device,
+    createThisImage(
+        device,
         0,
         VK_FORMAT_R8G8B8A8_UNORM,
-		extent,
+        extent,
         mipLevels ? calculateMipLevelCount(extent) : 1,
         pixels.size(),
-		VK_SAMPLE_COUNT_1_BIT,
-		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		cubeMap);
+        VK_SAMPLE_COUNT_1_BIT,
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        cubeMap);
 
-	updateData(pixels, 0, STBI_rgb_alpha);
+    updateData(pixels, 0, STBI_rgb_alpha);
 
     for (auto arrayLayerPixels : pixels)
     {
-		stbi_image_free(const_cast<void*>(arrayLayerPixels));
+        stbi_image_free(const_cast<void*>(arrayLayerPixels));
     }
 
-	generateMipmaps(
+    generateMipmaps(
         VK_IMAGE_ASPECT_COLOR_BIT,
         VK_FILTER_LINEAR,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -50,7 +58,7 @@ TextureImage::TextureImage(
     VkSampleCountFlagBits sampleCount,
     VkImageUsageFlags usage,
     bool cubeMap)
-	: Image(
+    : Image(
         device,
         flags,
         format,
@@ -74,7 +82,7 @@ TextureImage::~TextureImage()
 
 VkSampler TextureImage::getSampler(uint32_t index = 0) const
 {
-	return samplers[index];
+    return samplers[index];
 }
 
 DescriptorInfo TextureImage::getCombineSamplerInfo(uint32_t samplerIndex, uint32_t viewIndex) const
@@ -87,6 +95,11 @@ DescriptorInfo TextureImage::getCombineSamplerInfo(uint32_t samplerIndex, uint32
     };
 
     return info;
+}
+
+std::set<uint32_t> TextureImage::getFailedImages() const
+{
+    return failedImages;
 }
 
 void TextureImage::pushSampler(VkFilter filter, VkSamplerAddressMode addressMode)
@@ -131,8 +144,8 @@ stbi_uc* TextureImage::loadPixels(const std::vector<uint8_t> &buffer)
     stbi_uc *pixels = stbi_load_from_memory(
         buffer.data(),
         buffer.size(),
-        &width, 
-        &height, 
+        &width,
+        &height,
         nullptr,
         STBI_rgb_alpha);
 
@@ -141,7 +154,10 @@ stbi_uc* TextureImage::loadPixels(const std::vector<uint8_t> &buffer)
     if (extent.width && extent.height)
     {
         const bool sameExtent = extent.width == uint32_t(width) && extent.height == uint32_t(height);
-        LOGA(sameExtent);
+        if (!sameExtent)
+        {
+            return nullptr;
+        }
     }
     else
     {
@@ -149,5 +165,5 @@ stbi_uc* TextureImage::loadPixels(const std::vector<uint8_t> &buffer)
         extent.height = uint32_t(height);
     }
 
-	return pixels;
+    return pixels;
 }
